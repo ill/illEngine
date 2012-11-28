@@ -1,0 +1,14 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ImportGroup Label="PropertySheets" />
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup>
+    <LibraryPath>$(SdlPath)\lib\x64;$(GlewPath)\lib\x64;$(PhysXPath)\SDKs\lib\win64;$(PhysFsPath);$(TbbPath)\lib\intel64\vc10;$(PhysFsPath)\x64;$(DevilPath)\lib\x64;$(LibraryPath)</LibraryPath>
+  </PropertyGroup>
+  <ItemDefinitionGroup>
+    <Link>
+      <AdditionalDependencies>PhysX3_x64.lib;PhysX3Gpu_x64.lib;PhysX3Cooking_x64.lib;%(AdditionalDependencies)</AdditionalDependencies>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemGroup />
+</Project>

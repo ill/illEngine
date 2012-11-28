@@ -1,0 +1,231 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|Win32">
+      <Configuration>Debug</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Debug|x64">
+      <Configuration>Debug</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|Win32">
+      <Configuration>Release</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|x64">
+      <Configuration>Release</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <ProjectGuid>{DF7A3248-6D2A-4754-980C-B68CB706DE4C}</ProjectGuid>
+    <RootNamespace>illEnginedraft</RootNamespace>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <CharacterSet>MultiByte</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <CharacterSet>MultiByte</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <CharacterSet>MultiByte</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <CharacterSet>MultiByte</CharacterSet>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+    <Import Project="..\UserConfig.props.user" />
+    <Import Project="..\ProjectConfig_Common.props" />
+    <Import Project="..\ProjectConfig_Win32.props" />
+    <Import Project="..\ProjectConfig_Debug.props" />
+    <Import Project="..\Game_CopyDll_Win32.props" />
+    <Import Project="..\Game_CopyDll_Win32_Debug.props" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+    <Import Project="..\UserConfig.props.user" />
+    <Import Project="..\ProjectConfig_Common.props" />
+    <Import Project="..\ProjectConfig_Win64.props" />
+    <Import Project="..\ProjectConfig_Debug.props" />
+    <Import Project="..\Game_CopyDll_x64.props" />
+    <Import Project="..\Game_CopyDll_x64_Debug.props" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+    <Import Project="..\UserConfig.props.user" />
+    <Import Project="..\ProjectConfig_Common.props" />
+    <Import Project="..\ProjectConfig_Win32.props" />
+    <Import Project="..\ProjectConfig_Release.props" />
+    <Import Project="..\Game_CopyDll_Win32.props" />
+    <Import Project="..\Game_CopyDll_Win32_Release.props" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+    <Import Project="..\UserConfig.props.user" />
+    <Import Project="..\ProjectConfig_Common.props" />
+    <Import Project="..\ProjectConfig_Win64.props" />
+    <Import Project="..\ProjectConfig_Release.props" />
+    <Import Project="..\Game_CopyDll_x64.props" />
+    <Import Project="..\Game_CopyDll_x64_Release.props" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup />
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <Optimization>Disabled</Optimization>
+    </ClCompile>
+    <Link>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <SubSystem>Windows</SubSystem>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <Optimization>Disabled</Optimization>
+    </ClCompile>
+    <Link>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <SubSystem>Windows</SubSystem>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <Optimization>MaxSpeed</Optimization>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+    </ClCompile>
+    <Link>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+      <SubSystem>Windows</SubSystem>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <Optimization>MaxSpeed</Optimization>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+    </ClCompile>
+    <Link>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+      <SubSystem>Windows</SubSystem>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <ClCompile Include="demoPC-draft-singleThreaded\FixedStepController.cpp" />
+    <ClCompile Include="demoPC-draft-singleThreaded\Game\MainController.cpp" />
+    <ClCompile Include="demoPC-draft-singleThreaded\Game\MainMenu\MainMenuController.cpp" />
+    <ClCompile Include="demoPC-draft-singleThreaded\main.cpp" />
+    <ClCompile Include="illConsole-draft-singleThreaded\consoleConsole.cpp" />
+    <ClCompile Include="illConsole-draft-singleThreaded\DeveloperConsole.cpp" />
+    <ClCompile Include="illGlCommon-draft-singleThreaded\GlRenderer.cpp" />
+    <ClCompile Include="illGlCommon-draft-singleThreaded\loadMesh.cpp" />
+    <ClCompile Include="illGlCommon-draft-singleThreaded\loadShader.cpp" />
+    <ClCompile Include="illGlCommon-draft-singleThreaded\loadShaderProgram.cpp" />
+    <ClCompile Include="illGlCommon-draft-singleThreaded\loadTexture.cpp" />
+    <ClCompile Include="illGraphics-draft-singleThreaded\Material\ShaderProgram.cpp" />
+    <ClCompile Include="illGraphics-draft-singleThreaded\Material\Shader.cpp" />
+    <ClCompile Include="illGraphics-draft-singleThreaded\Material\Texture.cpp" />
+    <ClCompile Include="illGraphics-draft-singleThreaded\Model\Mesh.cpp" />
+    <ClCompile Include="illInput-draft-singleThreaded\InputContext.cpp" />
+    <ClCompile Include="illInput-draft-singleThreaded\InputContextStack.cpp" />
+    <ClCompile Include="illInput-draft-singleThreaded\InputManager.cpp" />
+    <ClCompile Include="illPC-draft-singleThreaded\SdlWindow.cpp" />
+    <ClCompile Include="illUtil-draft-singleThreaded\Logging\Logger.cpp" />
+    <ClCompile Include="illUtil-draft-singleThreaded\util.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="demoPC-draft-singleThreaded\Engine.h" />
+    <ClInclude Include="demoPC-draft-singleThreaded\FixedStepController.h" />
+    <ClInclude Include="demoPC-draft-singleThreaded\GameControllerBase.h" />
+    <ClInclude Include="demoPC-draft-singleThreaded\Game\CameraController.h" />
+    <ClInclude Include="demoPC-draft-singleThreaded\Game\MainController.h" />
+    <ClInclude Include="demoPC-draft-singleThreaded\Game\MainMenu\MainMenuController.h" />
+    <ClInclude Include="illConsole-draft-singleThreaded\consoleConsole.h" />
+    <ClInclude Include="illConsole-draft-singleThreaded\ConsoleVariable.h" />
+    <ClInclude Include="illConsole-draft-singleThreaded\DeveloperConsole.h" />
+    <ClInclude Include="illConsole-draft-singleThreaded\VariableManager.h" />
+    <ClInclude Include="illGlCommon-draft-singleThreaded\glLogging.h" />
+    <ClInclude Include="illGraphics-draft-singleThreaded\Camera\Camera.h" />
+    <ClInclude Include="illGraphics-draft-singleThreaded\Camera\CameraTransform.h" />
+    <ClInclude Include="illGraphics-draft-singleThreaded\Effect.h" />
+    <ClInclude Include="illGraphics-draft-singleThreaded\graphicsLogging.h" />
+    <ClInclude Include="illGraphics-draft-singleThreaded\Light.h" />
+    <ClInclude Include="illGraphics-draft-singleThreaded\Material\Material.h" />
+    <ClInclude Include="illGraphics-draft-singleThreaded\Model\ModelAnimationController.h" />
+    <ClInclude Include="illGraphics-draft-singleThreaded\Model\Mesh.h" />
+    <ClInclude Include="illGraphics-draft-singleThreaded\RendererBackend.h" />
+    <ClInclude Include="illGraphics-draft-singleThreaded\Material\Shader.h" />
+    <ClInclude Include="illGraphics-draft-singleThreaded\Material\ShaderProgram.h" />
+    <ClInclude Include="illGraphics-draft-singleThreaded\Model\Skeleton.h" />
+    <ClInclude Include="illGraphics-draft-singleThreaded\Model\SkeletonAnimation.h" />
+    <ClInclude Include="illGraphics-draft-singleThreaded\Material\Texture.h" />
+    <ClInclude Include="illGraphics-draft-singleThreaded\RendererFrontent.h" />
+    <ClInclude Include="illGraphics-draft-singleThreaded\Scene\GraphicsScene.h" />
+    <ClInclude Include="illGraphics-draft-singleThreaded\Window.h" />
+    <ClInclude Include="illInput-draft-singleThreaded\InputListenerBase.h" />
+    <ClInclude Include="illInput-draft-singleThreaded\InputBinding.h" />
+    <ClInclude Include="illInput-draft-singleThreaded\InputContext.h" />
+    <ClInclude Include="illInput-draft-singleThreaded\InputContextStack.h" />
+    <ClInclude Include="illInput-draft-singleThreaded\inputAxisEnum.h" />
+    <ClInclude Include="illInput-draft-singleThreaded\InputListenerRange.h" />
+    <ClInclude Include="illInput-draft-singleThreaded\InputListenerState.h" />
+    <ClInclude Include="illInput-draft-singleThreaded\InputManager.h" />
+    <ClInclude Include="illGlCommon-draft-singleThreaded\GlRenderer.h" />
+    <ClInclude Include="illPC-draft-singleThreaded\SdlWindow.h" />
+    <ClInclude Include="illPC-draft-singleThreaded\sdlInputEnum.h" />
+    <ClInclude Include="illUtil-draft-singleThreaded\casting.h" />
+    <ClInclude Include="illUtil-draft-singleThreaded\FileIO\FileIO.h" />
+    <ClInclude Include="illUtil-draft-singleThreaded\Geometry\BoundingVolume.h" />
+    <ClInclude Include="illUtil-draft-singleThreaded\Geometry\Box.h" />
+    <ClInclude Include="illUtil-draft-singleThreaded\Geometry\BoxIterator.h" />
+    <ClInclude Include="illUtil-draft-singleThreaded\Geometry\Frustum.h" />
+    <ClInclude Include="illUtil-draft-singleThreaded\Geometry\FrustumIterator-old.h" />
+    <ClInclude Include="illUtil-draft-singleThreaded\Geometry\FrustumIterator.h" />
+    <ClInclude Include="illUtil-draft-singleThreaded\Geometry\geomUtil.h" />
+    <ClInclude Include="illUtil-draft-singleThreaded\Geometry\GridVolume3D.h" />
+    <ClInclude Include="illUtil-draft-singleThreaded\Geometry\LineIterator.h" />
+    <ClInclude Include="illUtil-draft-singleThreaded\Geometry\MeshData.h" />
+    <ClInclude Include="illUtil-draft-singleThreaded\Geometry\MeshEdgeList.h" />
+    <ClInclude Include="illUtil-draft-singleThreaded\Geometry\Plane.h" />
+    <ClInclude Include="illUtil-draft-singleThreaded\Geometry\Sphere.h" />
+    <ClInclude Include="illUtil-draft-singleThreaded\Logging\LogDestination.h" />
+    <ClInclude Include="illUtil-draft-singleThreaded\Logging\Logger.h" />
+    <ClInclude Include="illUtil-draft-singleThreaded\Logging\logging.h" />
+    <ClInclude Include="illUtil-draft-singleThreaded\LruCache.h" />
+    <ClInclude Include="illUtil-draft-singleThreaded\ObjLoader.h" />
+    <ClInclude Include="illUtil-draft-singleThreaded\physFsUtil.h" />
+    <ClInclude Include="illUtil-draft-singleThreaded\RefCountPtr.h" />
+    <ClInclude Include="illUtil-draft-singleThreaded\ResourceBase.h" />
+    <ClInclude Include="illUtil-draft-singleThreaded\ResourceManager.h" />
+    <ClInclude Include="illUtil-draft-singleThreaded\UidGenerator.h" />
+    <ClInclude Include="illUtil-draft-singleThreaded\util.h" />
+    <ClInclude Include="illUtil-draft-singleThreaded\VectorManager.h" />
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
+</Project>

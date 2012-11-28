@@ -1,0 +1,22 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ImportGroup Label="PropertySheets" />
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup>
+    <_PropertySheetDisplayName>Game_CopyDll_x64</_PropertySheetDisplayName>
+  </PropertyGroup>
+  <ItemDefinitionGroup>
+    <PostBuildEvent>
+      <Command>COPY "$(SdlPath)\lib\x64\SDL.dll" "$(TargetDir)"
+COPY "$(GlewPath)\bin\x64\glew32.dll" "$(TargetDir)"
+COPY "$(PhysXPath)\bin\win64\PhysX3_x64.dll" "$(TargetDir)"
+COPY "$(PhysXPath)\bin\win64\PhysX3Cooking_x64.dll" "$(TargetDir)"
+COPY "$(PhysXPath)\bin\win64\PhysX3Gpu_x64.dll" "$(TargetDir)"
+COPY "$(PhysFsPath)\x64\physfs.dll" "$(TargetDir)"
+COPY "$(DevilPath)\lib\x64\DevIL.dll" "$(TargetDir)"
+</Command>
+      <Message>Copy Dlls to output directory</Message>
+    </PostBuildEvent>
+  </ItemDefinitionGroup>
+  <ItemGroup />
+</Project>
