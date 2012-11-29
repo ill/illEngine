@@ -84,8 +84,11 @@ struct ObjLoader {
         }
 
         //TODO: LOL this is horrible, inefficient, and temporary
-        readFile(fileName, &m_objText);
-        m_openFile = new std::stringstream(std::string(m_objText), std::ios_base::in);
+        char * objText;
+
+        readFile(fileName, &objText);
+        m_openFile = new std::stringstream(std::string(objText), std::ios_base::in);        
+        delete[] objText;
     }
 
     ~ObjLoader() {
@@ -94,7 +97,6 @@ struct ObjLoader {
         delete m_vertTexCoord;
 
         delete m_openFile;
-        delete m_objText;
     }
 
     /**
@@ -233,7 +235,6 @@ struct ObjLoader {
 
     FeaturesMask m_features;
     std::stringstream * m_openFile;
-    char * m_objText;
 
     glm::detail::tvec3<T> m_scaleFactor;
 

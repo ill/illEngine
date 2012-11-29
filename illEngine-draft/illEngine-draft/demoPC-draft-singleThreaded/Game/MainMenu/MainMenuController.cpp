@@ -55,6 +55,9 @@ MainMenuController::MainMenuController(Engine * engine)
     m_engine->m_inputManager->bindDevice(SdlPc::PC_MOUSE_WHEEL, 0);
 
     m_engine->m_inputManager->getInputContextStack(0)->pushInputContext(&m_cameraController.m_inputContext);
+
+    m_cameraController.m_speed = 1.0f;
+    m_cameraController.m_rollSpeed = 50.0f;
 }
 
 MainMenuController::~MainMenuController() {
@@ -84,7 +87,7 @@ void MainMenuController::render() {
     if(loc == -1) {
         LOG_FATAL_ERROR("Unknown uniform");
     }
-    glUniformMatrix4fv(loc, 1, false, glm::value_ptr(m_camera.getModelView()));
+    glUniformMatrix4fv(loc, 1, false, glm::value_ptr(m_camera.getCanonical()));
 
     loc = glGetUniformLocation(prog, "normalMatrix");
     if(loc == -1) {

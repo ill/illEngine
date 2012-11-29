@@ -12,26 +12,26 @@ You can provide a call back that acts on only the onPress or onRelease to act li
 */
 struct InputListenerState : public InputListenerBase {
     struct InputCallback {
+        InputCallback() {}
+
+        virtual ~InputCallback() {}
+
         virtual void onChange(bool value) {}
         virtual void onPress() {}
         virtual void onRelease() {}
     };
-
-    inline InputListenerState() {}
-
+    
     /**
     Constructs a state.
     @param analogThreshold TODO: figure out doxygen see tag to refer to BinaryAction::m_analogThreshold
     */
-    inline InputListenerState(InputCallback * inputCallback, float analogThreshold = 0.1f) 
+    inline InputListenerState(InputCallback * inputCallback = NULL, float analogThreshold = 0.1f) 
         : m_inputCallback(inputCallback),
         m_analogThreshold(analogThreshold),
         m_isPressed(false)
     {}
 
-    ~InputListenerState() {
-        delete m_inputCallback;
-    }
+    virtual ~InputListenerState() {}
 
     inline void analogInput(float value) {
         if(value >= m_analogThreshold) {

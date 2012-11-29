@@ -369,6 +369,17 @@ inline glm::detail::tvec3<T> getTransformPosition(const glm::detail::tmat4x4<T>&
 }
 
 template <typename T>
+inline glm::detail::tmat4x4<T> setTransformPosition(const glm::detail::tmat4x4<T>& transform, const glm::detail::tvec3<T>& position) {
+    glm::detail::tmat4x4<T> res = transform;
+
+    res[3][0] = position.x;
+    res[3][1] = position.y;
+    res[3][2] = position.z;
+
+    return res;
+}
+
+template <typename T>
 inline glm::detail::tvec3<T> getTransformScale(const glm::detail::tmat4x4<T>& transform) {
     return glm::detail::tvec3<T>(transform[0][0], transform[1][1], transform[2][2]);
 }

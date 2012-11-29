@@ -13,7 +13,8 @@ Contains some mesh and its associated vertex buffer objects and index buffer obj
 struct Mesh {
     Mesh(MeshData<> * mesh = NULL)
         : m_meshFrontendData(mesh),
-        m_backend(NULL)
+        m_backend(NULL),
+        m_meshBackendData(NULL)
     {}
 
     ~Mesh() {

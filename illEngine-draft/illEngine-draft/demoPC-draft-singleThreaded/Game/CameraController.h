@@ -4,6 +4,9 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/quaternion.hpp>
 #include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtx/euler_angles.hpp>
+
+#include "../../illUtil-draft-singleThreaded/Geometry/geomUtil.h"
 
 #include "../../illInput-draft-singleThreaded/InputContext.h"
 #include "../../illInput-draft-singleThreaded/InputListenerState.h"
@@ -26,31 +29,58 @@ struct CameraController {
         m_down(false),
         m_rollLeft(false),
         m_rollRight(false),
-        m_sprint(false)
+        m_sprint(false),
+
+        m_lookMode(true),
+
+        m_zoom(1.0f)
     {
-        //TODO: the listeners are leaked right now
-        //m_horzLookInput = Input::InputListenerRange(new HorzLook(*this));
-        //m_vertLookInput = Input::InputListenerRange(new VertLook(*this));
+        //init listeners
+        m_horzLookListener.m_controller = this;
+        m_vertLookListener.m_controller = this;
 
-        m_forwardInput = Input::InputListenerState(new Move(m_forward));
-        /*m_backInput = Input::InputListenerState(new Move(m_back));
-        m_leftInput = Input::InputListenerState(new Move(m_left));
-        m_rightInput = Input::InputListenerState(new Move(m_right));
-        m_upInput = Input::InputListenerState(new Move(m_up));
-        m_downInput = Input::InputListenerState(new Move(m_down));
-        m_rollLeftInput = Input::InputListenerState(new Move(m_rollLeft));
-        m_rollRightInput = Input::InputListenerState(new Move(m_rollRight));
-        m_sprintInput = Input::InputListenerState(new Move(m_sprint));
+        m_forwardListener.m_state = &m_forward;
+        m_backListener.m_state = &m_back;
+        m_leftListener.m_state = &m_left;
+        m_rightListener.m_state = &m_right;
+        m_upListener.m_state = &m_up;
+        m_downListener.m_state = &m_down;
+        m_rollLeftListener.m_state = &m_rollLeft;
+        m_rollRightListener.m_state = &m_rollRight;
+        m_sprintListener.m_state = &m_sprint;
 
-        m_zoomInInput = Input::InputListenerState(new ZoomIn(*this));
-        m_zoomOutInput = Input::InputListenerState(new ZoomOut(*this));
-        m_zoomDefaultInput = Input::InputListenerState(new ZoomDefault(*this));*/
+        m_lookModeListener.m_controller = this;
+
+        m_zoomInListener.m_zoom = &m_zoom;
+        m_zoomOutListener.m_zoom = &m_zoom;
+        m_zoomDefaultListener.m_zoom = &m_zoom;
+
+        //init inputs
+        m_horzLookInput.m_inputCallback = &m_horzLookListener;
+        m_vertLookInput.m_inputCallback = &m_vertLookListener;
+
+        m_forwardInput.m_inputCallback = &m_forwardListener;
+        m_backInput.m_inputCallback = &m_backListener;
+        m_leftInput.m_inputCallback = &m_leftListener;
+        m_rightInput.m_inputCallback = &m_rightListener;
+        m_upInput.m_inputCallback = &m_upListener;
+        m_downInput.m_inputCallback = &m_downListener;
+        m_rollLeftInput.m_inputCallback = &m_rollLeftListener;
+        m_rollRightInput.m_inputCallback = &m_rollRightListener;
+        m_sprintInput.m_inputCallback = &m_sprintListener;
+
+        m_lookModeInput.m_inputCallback = &m_lookModeListener;
+
+        m_zoomInInput.m_inputCallback = &m_zoomInListener;
+        m_zoomOutInput.m_inputCallback = &m_zoomOutListener;
+        m_zoomDefaultInput.m_inputCallback = &m_zoomDefaultListener;
 
         //TODO: this should normally be configured externally
-        //m_inputContext.bindInput(Input::InputBinding(SdlPc::PC_MOUSE, Input::AX_X), &m_horzLookInput);
-        //m_inputContext.bindInput(Input::InputBinding(SdlPc::PC_MOUSE, Input::AX_Y), &m_vertLookInput);        
+        m_inputContext.bindInput(Input::InputBinding(SdlPc::PC_MOUSE, Input::AX_X), &m_horzLookInput);
+        m_inputContext.bindInput(Input::InputBinding(SdlPc::PC_MOUSE, Input::AX_Y), &m_vertLookInput);   
+
         m_inputContext.bindInput(Input::InputBinding(SdlPc::PC_KEYBOARD, SDLK_w), &m_forwardInput);
-        /*m_inputContext.bindInput(Input::InputBinding(SdlPc::PC_KEYBOARD, SDLK_s), &m_backInput);
+        m_inputContext.bindInput(Input::InputBinding(SdlPc::PC_KEYBOARD, SDLK_s), &m_backInput);
         m_inputContext.bindInput(Input::InputBinding(SdlPc::PC_KEYBOARD, SDLK_a), &m_leftInput);
         m_inputContext.bindInput(Input::InputBinding(SdlPc::PC_KEYBOARD, SDLK_d), &m_rightInput);
         m_inputContext.bindInput(Input::InputBinding(SdlPc::PC_KEYBOARD, SDLK_SPACE), &m_upInput);
@@ -59,9 +89,11 @@ struct CameraController {
         m_inputContext.bindInput(Input::InputBinding(SdlPc::PC_KEYBOARD, SDLK_e), &m_rollRightInput);
         m_inputContext.bindInput(Input::InputBinding(SdlPc::PC_KEYBOARD, SDLK_LSHIFT), &m_sprintInput);
 
+        m_inputContext.bindInput(Input::InputBinding(SdlPc::PC_KEYBOARD, SDLK_r), &m_lookModeInput);
+
         m_inputContext.bindInput(Input::InputBinding(SdlPc::PC_MOUSE_WHEEL, Input::AX_Y_POS), &m_zoomInInput);
         m_inputContext.bindInput(Input::InputBinding(SdlPc::PC_MOUSE_WHEEL, Input::AX_Y_NEG), &m_zoomOutInput);
-        m_inputContext.bindInput(Input::InputBinding(SdlPc::PC_MOUSE_BUTTON, 1), &m_zoomDefaultInput);*/
+        m_inputContext.bindInput(Input::InputBinding(SdlPc::PC_MOUSE_BUTTON, 2), &m_zoomDefaultInput);
     }
 
     ~CameraController() {
@@ -95,16 +127,36 @@ struct CameraController {
 
         velocity *= seconds * speedMultiplier;
 
-        if(m_rollLeft) {
-            m_transform = glm::rotate(m_transform, (float) seconds * m_rollSpeed * speedMultiplier, glm::vec3(0.0f, 0.0f, 1.0f));
-        }
-        else if(m_rollRight) {
-            m_transform = glm::rotate(m_transform, (float) seconds * -m_rollSpeed * speedMultiplier, glm::vec3(0.0f, 0.0f, 1.0f));
-        }
+        if(m_lookMode) {        //quaternion mode
+            if(m_rollLeft) {
+                m_transform = glm::rotate(m_transform, (float) seconds * m_rollSpeed * speedMultiplier, glm::vec3(0.0f, 0.0f, 1.0f));
+            }
+            else if(m_rollRight) {
+                m_transform = glm::rotate(m_transform, (float) seconds * -m_rollSpeed * speedMultiplier, glm::vec3(0.0f, 0.0f, 1.0f));
+            }
 
-        m_transform = glm::translate(m_transform, velocity);
+            m_transform = glm::translate(m_transform, velocity);
+        }
+        else {                  //eueler mode
+            if(m_rollLeft) {
+                m_eulerAngles.z += (float) seconds * m_rollSpeed * speedMultiplier * 0.1f;
+            }
+            else if(m_rollRight) {
+                m_eulerAngles.z -= (float) seconds * m_rollSpeed * speedMultiplier * 0.1f;
+            }
+
+            //m_position.y += velocity.y;
+
+            //m_position.x 
+
+            //Who the hell decided to make this function take them in this order!
+            m_transform = glm::yawPitchRoll(m_eulerAngles.y, m_eulerAngles.x, m_eulerAngles.z);
+            m_transform = setTransformPosition(m_transform, m_position);
+        }
     }
 
+    glm::vec3 m_position;
+    glm::vec3 m_eulerAngles;
     glm::mat4 m_transform;
     glm::mediump_float m_zoom;
 
@@ -123,6 +175,8 @@ struct CameraController {
     bool m_rollRight;
     bool m_sprint;
 
+    bool m_lookMode;
+
     Input::InputListenerRange m_horzLookInput;
     Input::InputListenerRange m_vertLookInput;
 
@@ -136,92 +190,157 @@ struct CameraController {
     Input::InputListenerState m_rollRightInput;
     Input::InputListenerState m_sprintInput;
 
+    Input::InputListenerState m_lookModeInput;
+
     Input::InputListenerState m_zoomInInput;
     Input::InputListenerState m_zoomOutInput;
     Input::InputListenerState m_zoomDefaultInput;
-
+    
 private:
     struct HorzLook : public Input::InputListenerRange::InputCallback {
-        HorzLook(CameraController& controller)
-            : Input::InputListenerRange::InputCallback(),
-            m_controller(controller)
+        HorzLook() 
+            : Input::InputListenerRange::InputCallback()
         {}
+
+        virtual ~HorzLook() {}
 
         void onChange(float value) {
-            m_controller.m_transform = glm::rotate(m_controller.m_transform, value, glm::vec3(0.0f, -1.0f, 0.0f));
-        }
-
-        CameraController& m_controller;
-    };
-
-    struct VertLook : public Input::InputListenerRange::InputCallback {
-        VertLook(CameraController& controller)
-            : Input::InputListenerRange::InputCallback(),
-            m_controller(controller)
-        {}
-
-        void onChange(float value) {
-            m_controller.m_transform = glm::rotate(m_controller.m_transform, value, glm::vec3(-1.0f, 0.0f, 0.0f));
-        }
-
-        CameraController& m_controller;
-    };
-
-    struct Move : public Input::InputListenerState::InputCallback {
-        Move(bool& state)
-            : Input::InputListenerState::InputCallback(),
-            m_state(state)
-        {}
-
-        void onChange(bool value) {
-            m_state = value;
-        }
-
-        bool& m_state;
-    };
-
-    struct ZoomIn : public Input::InputListenerState::InputCallback {
-        ZoomIn(CameraController& controller)
-            : Input::InputListenerState::InputCallback(),
-            m_controller(controller)
-        {}
-
-        void onRelease() {
-            m_controller.m_zoom -= 0.01f;
-
-            if(m_controller.m_zoom <= 0.0f) {
-                m_controller.m_zoom = 0.01f;
+            if(m_controller->m_lookMode) {
+                m_controller->m_transform = glm::rotate(m_controller->m_transform, value, glm::vec3(0.0f, -1.0f, 0.0f));
+            }
+            else {                  //eueler mode
+                m_controller->m_eulerAngles.y -= value * 0.1f;
             }
         }
 
-        CameraController& m_controller;
+        CameraController * m_controller;
+    };
+
+    struct VertLook : public Input::InputListenerRange::InputCallback {
+        VertLook()
+            : Input::InputListenerRange::InputCallback()
+        {}
+
+        virtual ~VertLook() {}
+
+        void onChange(float value) {
+            if(m_controller->m_lookMode) {
+                m_controller->m_transform = glm::rotate(m_controller->m_transform, value, glm::vec3(-1.0f, 0.0f, 0.0f));
+            }
+            else {                  //eueler mode
+                m_controller->m_eulerAngles.x += value * 0.1f;
+            }
+        }
+
+        CameraController * m_controller;
+    };
+
+    //TODO: the state and toggle listeners look like they'd be useful everywhere, move them to the Input project?
+    struct State : public Input::InputListenerState::InputCallback {
+        State()
+            : Input::InputListenerState::InputCallback()
+        {}
+
+        virtual ~State() {}
+
+        void onChange(bool value) {
+            *m_state = value;
+        }
+
+        bool* m_state;
+    };
+
+    struct LookMode : public Input::InputListenerState::InputCallback {
+        LookMode()
+            : Input::InputListenerState::InputCallback()
+        {}
+
+        virtual ~LookMode() {}
+
+        void onRelease() {
+            if(m_controller->m_lookMode) {      //switch from quaternion mode to eueler mode
+                m_controller->m_lookMode = false;
+                
+                m_controller->m_position = getTransformPosition(m_controller->m_transform);
+                m_controller->m_eulerAngles = glm::eulerAngles(glm::toQuat(m_controller->m_transform));
+            }
+            else {                              //switch from eueler mode to quaternion mode
+                m_controller->m_lookMode = true;
+                
+                //Who the hell decided to make this function take them in this order!
+                m_controller->m_transform = glm::yawPitchRoll(m_controller->m_eulerAngles.y, m_controller->m_eulerAngles.x, m_controller->m_eulerAngles.z);
+
+                m_controller->m_transform = setTransformPosition(m_controller->m_transform, m_controller->m_position);
+            }
+        }
+
+        CameraController * m_controller;
+    };
+
+    struct ZoomIn : public Input::InputListenerState::InputCallback {
+        ZoomIn()
+            : Input::InputListenerState::InputCallback()
+        {}
+
+        virtual ~ZoomIn() {}
+
+        void onRelease() {
+            *m_zoom -= 0.05f;
+
+            if(*m_zoom <= 0.0f) {
+                *m_zoom = 0.05f;
+            }
+        }
+
+        glm::mediump_float * m_zoom;
     };
 
     struct ZoomOut : public Input::InputListenerState::InputCallback {
-        ZoomOut(CameraController& controller)
-            : Input::InputListenerState::InputCallback(),
-            m_controller(controller)
+        ZoomOut()
+            : Input::InputListenerState::InputCallback()
         {}
 
+        virtual ~ZoomOut() {}
+
         void onRelease() {
-            m_controller.m_zoom += 0.01f;
+            *m_zoom += 0.05f;
         }
 
-        CameraController& m_controller;
+        glm::mediump_float * m_zoom;
     };
 
     struct ZoomDefault : public Input::InputListenerState::InputCallback {
-        ZoomDefault(CameraController& controller)
-            : Input::InputListenerState::InputCallback(),
-            m_controller(controller)
+        ZoomDefault()
+            : Input::InputListenerState::InputCallback()
         {}
 
+        virtual ~ZoomDefault() {}
+
         void onRelease() {
-            m_controller.m_zoom = 1.0f;
+            *m_zoom = 1.0f;
         }
 
-        CameraController& m_controller;
+        glm::mediump_float * m_zoom;
     };
+    
+    HorzLook m_horzLookListener;
+    VertLook m_vertLookListener;
+
+    State m_forwardListener;
+    State m_backListener;
+    State m_leftListener;
+    State m_rightListener;
+    State m_upListener;
+    State m_downListener;
+    State m_rollLeftListener;
+    State m_rollRightListener;
+    State m_sprintListener;
+
+    LookMode m_lookModeListener;
+
+    ZoomIn m_zoomInListener;
+    ZoomOut m_zoomOutListener;
+    ZoomDefault m_zoomDefaultListener;
 };
 
 }

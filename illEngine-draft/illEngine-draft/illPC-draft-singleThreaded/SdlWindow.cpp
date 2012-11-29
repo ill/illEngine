@@ -150,7 +150,7 @@ void SdlWindow::pollEvents () {
         break;
 
         case SDL_MOUSEBUTTONDOWN: {
-            inputBinding.m_deviceType = PC_MOUSE;
+            inputBinding.m_deviceType = PC_MOUSE_BUTTON;
             inputBinding.m_input = event.button.button;
 
             //TODO: I could really use some nice functional programming right about now to avoid this code duplication
@@ -176,7 +176,7 @@ void SdlWindow::pollEvents () {
         break;
 
         case SDL_MOUSEBUTTONUP: {
-            inputBinding.m_deviceType = PC_MOUSE;
+            inputBinding.m_deviceType = PC_MOUSE_BUTTON;
             inputBinding.m_input = event.button.button;
 
             //TODO: I could really use some nice functional programming right about now to avoid this code duplication
@@ -325,6 +325,14 @@ void SdlWindow::pollEvents () {
 
                         if(inputListener != NULL) {
                             inputListener->analogInput((float) event.motion.xrel);
+                        }
+
+                        //mouse y axis
+                        inputBinding.m_input = Input::AX_Y;
+                        inputListener = inputs->lookupBinding(inputBinding);
+
+                        if(inputListener != NULL) {
+                            inputListener->analogInput((float) event.motion.yrel);
                         }
 
                         //mouse x positive axis

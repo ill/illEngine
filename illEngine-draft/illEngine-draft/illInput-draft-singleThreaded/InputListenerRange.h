@@ -19,20 +19,21 @@ If you only ever allow analog inputs and would never allow keys to map to a rang
 */
 struct InputListenerRange : public InputListenerBase {
     struct InputCallback {
+        InputCallback() {}
+
+        virtual ~InputCallback() {}
+
         virtual void onChange(float value) {}
     };
-
-    inline InputListenerRange() {}
-
+    
     /**
     Constructs a range input.
     */
-    inline InputListenerRange(InputCallback* inputCallback) 
+    inline InputListenerRange(InputCallback* inputCallback = NULL) 
         : m_inputCallback(inputCallback)
     {}
 
-    ~InputListenerRange() {
-    }
+    virtual ~InputListenerRange() {}
 
     inline void analogInput(float value) {
         m_inputCallback->onChange(value);

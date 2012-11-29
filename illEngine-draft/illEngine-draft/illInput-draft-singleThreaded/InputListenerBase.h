@@ -7,6 +7,8 @@ namespace Input {
 Base class for an input action
 */
 struct InputListenerBase {
+    virtual ~InputListenerBase() {}
+
     /**
     Happens when a button of some sort is pressed
     */
