@@ -78,6 +78,9 @@
     <ClCompile Include="illGraphics-draft-singleThreaded\Model\Mesh.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="demoPC-draft-singleThreaded\Game\CameraController.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="illPC-draft-singleThreaded\SdlWindow.h">

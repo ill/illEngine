@@ -215,6 +215,19 @@ inline T distance2(const glm::detail::tvec3<T>& v1, const glm::detail::tvec3<T>&
 }
 
 /**
+Safely normalizes a vector so if the magnitude is zero it stays as a zero vector and doesn't create NaN values
+*/
+template <typename T>
+inline glm::detail::tvec3<T> safeNormalize(const glm::detail::tvec3<T>& vec) {
+    if(vec.x == (T)0 && vec.y == (T)0 && vec.z == (T)0) {
+        return vec;
+    }
+    else {
+        return glm::normalize(vec);
+    }
+}
+
+/**
 Computes a chess metric distance instead of the normal euclidian metric distance.  This makes sense when working with grids.
 */
 template <typename T>

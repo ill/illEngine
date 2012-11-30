@@ -136,6 +136,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="demoPC-draft-singleThreaded\FixedStepController.cpp" />
+    <ClCompile Include="demoPC-draft-singleThreaded\Game\CameraController.cpp" />
     <ClCompile Include="demoPC-draft-singleThreaded\Game\MainController.cpp" />
     <ClCompile Include="demoPC-draft-singleThreaded\Game\MainMenu\MainMenuController.cpp" />
     <ClCompile Include="demoPC-draft-singleThreaded\main.cpp" />
