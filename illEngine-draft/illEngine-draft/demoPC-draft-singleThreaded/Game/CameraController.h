@@ -4,6 +4,7 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/quaternion.hpp>
 #include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtx/transform.hpp>
 #include <glm/gtx/euler_angles.hpp>
 
 #include "../../illUtil-draft-singleThreaded/Geometry/geomUtil.h"
@@ -143,45 +144,36 @@ struct CameraController {
         }
         else {                  //eueler mode
             if(m_rollLeft) {
-                m_eulerAngles.z += (float) seconds * m_rollSpeed * speedMultiplier * 0.1f;
-
-                LOG_DEBUG("\nZ: deg: %f rad: %f", 
-                    m_eulerAngles.z, glm::radians(m_eulerAngles.z));
+                m_eulerAngles.z += (float) seconds * m_rollSpeed * speedMultiplier;
             }
             else if(m_rollRight) {
-                m_eulerAngles.z -= (float) seconds * m_rollSpeed * speedMultiplier * 0.1f;
-
-                LOG_DEBUG("\nZ: deg: %f rad: %f",
-                    m_eulerAngles.z, glm::radians(m_eulerAngles.z));
+                m_eulerAngles.z -= (float) seconds * m_rollSpeed * speedMultiplier;
             }
             
             //Who the hell decided to make this function take them in this order!
             glm::vec3 position = getTransformPosition(m_transform);
-            m_transform = glm::yawPitchRoll(m_eulerAngles.y, m_eulerAngles.x, m_eulerAngles.z);
-
-            /*glm::vec3 direction = mat3ToDirection(glm::mat3(m_transform));
-            direction.y = 0.0f;
-            direction = glm::normalize(direction);
-
-            m_position.y += velocity.y;
-            m_position += velocity * direction;*/
-
+            glm::mat4 rotation = glm::yawPitchRoll(glm::radians(m_eulerAngles.y), glm::radians(m_eulerAngles.x), glm::radians(m_eulerAngles.z));
+            
             //TODO: make this not suck
 
             //vertical
             position.y += velocity.y;
 
             //forward
-            glm::mediump_float rad = glm::radians(m_eulerAngles.z);
+            
+            glm::mediump_float rad = glm::radians(m_eulerAngles.y - 90);
             
             position.x += velocity.z * glm::cos(rad);
-            position.z += velocity.z * glm::sin(rad);
-
+            position.z -= velocity.z * glm::sin(rad);
+            
             //strafe
-            /*position.x += velocity.x * glm::cos(glm::radians(m_eulerAngles.y + 90.0f));
-            position.z += velocity.x * glm::sin(glm::radians(m_eulerAngles.y + 90.0f));*/
+            rad = glm::radians(m_eulerAngles.y);
+            
+            position.x += velocity.x * glm::cos(rad);
+            position.z -= velocity.x * glm::sin(rad);
 
-            m_transform = setTransformPosition(m_transform, position);
+            m_transform = glm::translate(position);
+            m_transform = m_transform * rotation;
         }
     }
 
@@ -238,10 +230,7 @@ private:
                 m_controller->m_transform = glm::rotate(m_controller->m_transform, value, glm::vec3(0.0f, -1.0f, 0.0f));
             }
             else {                  //eueler mode
-                m_controller->m_eulerAngles.y -= value * 0.1f;
-
-                LOG_DEBUG("\nY: deg: %f rad: %f", 
-                    m_controller->m_eulerAngles.y, glm::radians(m_controller->m_eulerAngles.y));
+                m_controller->m_eulerAngles.y -= value;
             }
         }
 
@@ -259,11 +248,16 @@ private:
             if(m_controller->m_lookMode) {
                 m_controller->m_transform = glm::rotate(m_controller->m_transform, value, glm::vec3(-1.0f, 0.0f, 0.0f));
             }
-            else {                  //eueler mode
-                m_controller->m_eulerAngles.x += value * 0.1f;
+            else {                  //eueler mode                
+                m_controller->m_eulerAngles.x -= value;
 
-                LOG_DEBUG("\nX: deg: %f rad: %f", 
-                    m_controller->m_eulerAngles.x, glm::radians(m_controller->m_eulerAngles.x));
+                if(m_controller->m_eulerAngles.x > 90) {
+                    m_controller->m_eulerAngles.x = 90;
+                }
+
+                if(m_controller->m_eulerAngles.x < -90) {
+                    m_controller->m_eulerAngles.x = -90;
+                }
             }
         }
 
@@ -304,7 +298,7 @@ private:
                 glm::vec3 position = getTransformPosition(m_controller->m_transform);
 
                 //Who the hell decided to make this function take them in this order!
-                m_controller->m_transform = glm::yawPitchRoll(m_controller->m_eulerAngles.y, m_controller->m_eulerAngles.x, m_controller->m_eulerAngles.z);
+                m_controller->m_transform = glm::yawPitchRoll(glm::radians(m_controller->m_eulerAngles.y), glm::radians(m_controller->m_eulerAngles.x), glm::radians(m_controller->m_eulerAngles.z));
                 m_controller->m_transform = setTransformPosition(m_controller->m_transform, position);
             }
         }
