@@ -7,7 +7,7 @@
 
 namespace Console {
 
-const std::string DEFAULT_OUTPUT_FILE("consoleOut.txt");   //TODO: This should normally be a blank string to disable output
+static const char * DEFAULT_OUTPUT_FILE = "consoleOut.txt";   //TODO: This should normally be a blank string to disable output
 
 /**
 The developer console allows developers and advanced users to have a
@@ -51,6 +51,7 @@ private:
    inline void fileOutput(const std::string& message) {
       if(m_outputFile.is_open()) {
          m_outputFile << message << std::endl;
+         m_outputFile.flush();
       }
    }
 

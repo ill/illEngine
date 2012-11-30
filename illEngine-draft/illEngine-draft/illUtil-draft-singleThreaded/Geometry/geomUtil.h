@@ -170,15 +170,19 @@ struct LerpTransform {
     }
 };
 
-//TODO: z axis seems to be flipped
-
 /**
 Converts a quaternion to a direction vector.
 This is super simple BTW, it's just a convenience function for rotating an unrotated vector by the quaternion
 */
 template <typename T>
 inline glm::detail::tvec3<T> quatToDirection(const glm::detail::tquat<T>& value) {
-    glm::detail::tvec3<T> val = glm::rotate(value, glm::detail::tvec3<T>((T)0, (T)0, (T)-1));    //TODO: flipped z axis
+    glm::detail::tvec3<T> val = glm::rotate(value, glm::detail::tvec3<T>((T)0, (T)0, (T)-1));
+    return val;
+}
+
+template <typename T>
+inline glm::detail::tvec3<T> mat3ToDirection(const glm::detail::tmat3x3<T>& value) {
+    glm::detail::tvec3<T> val = value * glm::detail::tvec3<T>((T)0, (T)0, (T)-1);
     return val;
 }
 

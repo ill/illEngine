@@ -14,6 +14,8 @@
 #include "../../illInput-draft-singleThreaded/InputBinding.h"
 #include "../../illPC-draft-singleThreaded/sdlInputEnum.h"
 
+#include "../../illUtil-draft-singleThreaded/Logging/logging.h"
+
 namespace Demo {
 
 struct CameraController {
@@ -125,6 +127,8 @@ struct CameraController {
 
         float speedMultiplier = m_sprint ? 5.0f : 1.0f;
 
+        //velocity = glm::normalize(velocity);
+
         velocity *= seconds * speedMultiplier;
 
         if(m_lookMode) {        //quaternion mode
@@ -140,22 +144,47 @@ struct CameraController {
         else {                  //eueler mode
             if(m_rollLeft) {
                 m_eulerAngles.z += (float) seconds * m_rollSpeed * speedMultiplier * 0.1f;
+
+                LOG_DEBUG("\nZ: deg: %f rad: %f", 
+                    m_eulerAngles.z, glm::radians(m_eulerAngles.z));
             }
             else if(m_rollRight) {
                 m_eulerAngles.z -= (float) seconds * m_rollSpeed * speedMultiplier * 0.1f;
+
+                LOG_DEBUG("\nZ: deg: %f rad: %f",
+                    m_eulerAngles.z, glm::radians(m_eulerAngles.z));
             }
-
-            //m_position.y += velocity.y;
-
-            //m_position.x 
-
+            
             //Who the hell decided to make this function take them in this order!
+            glm::vec3 position = getTransformPosition(m_transform);
             m_transform = glm::yawPitchRoll(m_eulerAngles.y, m_eulerAngles.x, m_eulerAngles.z);
-            m_transform = setTransformPosition(m_transform, m_position);
+
+            /*glm::vec3 direction = mat3ToDirection(glm::mat3(m_transform));
+            direction.y = 0.0f;
+            direction = glm::normalize(direction);
+
+            m_position.y += velocity.y;
+            m_position += velocity * direction;*/
+
+            //TODO: make this not suck
+
+            //vertical
+            position.y += velocity.y;
+
+            //forward
+            glm::mediump_float rad = glm::radians(m_eulerAngles.z);
+            
+            position.x += velocity.z * glm::cos(rad);
+            position.z += velocity.z * glm::sin(rad);
+
+            //strafe
+            /*position.x += velocity.x * glm::cos(glm::radians(m_eulerAngles.y + 90.0f));
+            position.z += velocity.x * glm::sin(glm::radians(m_eulerAngles.y + 90.0f));*/
+
+            m_transform = setTransformPosition(m_transform, position);
         }
     }
 
-    glm::vec3 m_position;
     glm::vec3 m_eulerAngles;
     glm::mat4 m_transform;
     glm::mediump_float m_zoom;
@@ -210,6 +239,9 @@ private:
             }
             else {                  //eueler mode
                 m_controller->m_eulerAngles.y -= value * 0.1f;
+
+                LOG_DEBUG("\nY: deg: %f rad: %f", 
+                    m_controller->m_eulerAngles.y, glm::radians(m_controller->m_eulerAngles.y));
             }
         }
 
@@ -229,6 +261,9 @@ private:
             }
             else {                  //eueler mode
                 m_controller->m_eulerAngles.x += value * 0.1f;
+
+                LOG_DEBUG("\nX: deg: %f rad: %f", 
+                    m_controller->m_eulerAngles.x, glm::radians(m_controller->m_eulerAngles.x));
             }
         }
 
@@ -261,16 +296,16 @@ private:
             if(m_controller->m_lookMode) {      //switch from quaternion mode to eueler mode
                 m_controller->m_lookMode = false;
                 
-                m_controller->m_position = getTransformPosition(m_controller->m_transform);
                 m_controller->m_eulerAngles = glm::eulerAngles(glm::toQuat(m_controller->m_transform));
             }
             else {                              //switch from eueler mode to quaternion mode
                 m_controller->m_lookMode = true;
                 
+                glm::vec3 position = getTransformPosition(m_controller->m_transform);
+
                 //Who the hell decided to make this function take them in this order!
                 m_controller->m_transform = glm::yawPitchRoll(m_controller->m_eulerAngles.y, m_controller->m_eulerAngles.x, m_controller->m_eulerAngles.z);
-
-                m_controller->m_transform = setTransformPosition(m_controller->m_transform, m_controller->m_position);
+                m_controller->m_transform = setTransformPosition(m_controller->m_transform, position);
             }
         }
 
