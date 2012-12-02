@@ -17,8 +17,8 @@ enum MeshFeatures {
     MF_POSITION = 1 << 0,
     MF_NORMAL = 1 << 1,
     MF_TANGENT = 1 << 2,
-    MF_BLEND_DATA = 1 << 3,
-    MF_TEX_COORD = 1 << 4,
+    MF_TEX_COORD = 1 << 3,
+    MF_BLEND_DATA = 1 << 4,    
     MF_COLOR = 1 << 5
 };
 
@@ -44,17 +44,17 @@ inline bool featureMaskHasTangents(FeaturesMask features) {
 }
 
 /**
-Whether or not this features mask has tangents.
-*/
-inline bool featureMaskHasBlendData(FeaturesMask features) {
-    return (features & MF_BLEND_DATA) != 0;
-}
-
-/**
 Whether or not this features mask has texture coordinates.
 */
 inline bool featureMaskHasTexCoords(FeaturesMask features) {
     return (features & MF_TEX_COORD) != 0;
+}
+
+/**
+Whether or not this features mask has tangents.
+*/
+inline bool featureMaskHasBlendData(FeaturesMask features) {
+    return (features & MF_BLEND_DATA) != 0;
 }
 
 /**
@@ -92,16 +92,10 @@ public:
 
     /**
     Vertex tangents useful for normal mapping.
-    The w component is the handedness for deriving the bitangent.
     */
-    typedef glm::detail::tvec4<T> Tangent;
-
-    /**
-    The skeletal animation blend data.
-    */
-    struct BlendData {
-        glm::detail::tvec4<T> m_blendIndex;
-        glm::detail::tvec4<T> m_blendWeight;
+    struct TangentData {
+        glm::detail::tvec3<T> m_tangent;
+        glm::detail::tvec3<T> m_bitangent;
     };
 
     /**
@@ -110,6 +104,14 @@ public:
     typedef glm::detail::tvec2<T> TexCoord;
 
     /**
+    The skeletal animation blend data.
+    */
+    struct BlendData {
+        glm::detail::tvec4<T> m_blendIndex;
+        glm::detail::tvec4<T> m_blendWeight;
+    };
+    
+    /**
     The rgba vertex color.
     */
     typedef glm::detail::tvec4<T> Color;
@@ -117,19 +119,19 @@ public:
     /**
     A mesh may need multiple triangle groups, for example if it's a multimaterial mesh and needs separate draw calls per material
     */
-    struct TriangleGroup {
-        /**
-        Offset into the vertex index buffer object that starts this triangle group.
-        This should be the starting triangle multiplied by 3 since triangles are defined in groups of 3 vertices.
-        */
-        unsigned int m_indexOffset;
+    //struct TriangleGroup {
+    //    /**
+    //    Offset into the vertex index buffer object that starts this triangle group.
+    //    This should be the starting triangle multiplied by 3 since triangles are defined in groups of 3 vertices.
+    //    */
+    //    unsigned int m_indexOffset;
 
-        /**
-        How many vertex indeces this triangle group consists of.
-        This should be the number of triangles multiplied by 3 since triangles are defined in groups of 3 vertices.
-        */
-        unsigned int m_elementCount;
-    };
+    //    /**
+    //    How many vertex indeces this triangle group consists of.
+    //    This should be the number of triangles multiplied by 3 since triangles are defined in groups of 3 vertices.
+    //    */
+    //    unsigned int m_elementCount;
+    //};
 
     /**
     Creates the mesh.
@@ -140,10 +142,10 @@ public:
     By default it creates a mesh that stores positions, normals, tangents, and texture coordinates.
     @param allocate Whether or not the data for the mesh should be allocated on the CPU side.
     */
-    MeshData(uint32_t numTri, uint32_t numVert, uint8_t numGroups, FeaturesMask features = MF_POSITION | MF_NORMAL | MF_TANGENT | MF_TEX_COORD, bool allocate = true)
+    MeshData(uint32_t numTri, uint32_t numVert, /*uint8_t numGroups,*/ FeaturesMask features = MF_POSITION | MF_NORMAL | MF_TANGENT | MF_TEX_COORD, bool allocate = true)
         : m_numTri(numTri),
         m_numVert(numVert),
-        m_numGroups(numGroups),
+        //m_numGroups(numGroups),
         m_features(features),
         m_data(NULL),
         m_indeces(NULL)
@@ -164,17 +166,17 @@ public:
 
         m_blendDataOffset = m_tangentOffset;
         if(hasTangents()) {
-            m_blendDataOffset += sizeof(Tangent);
+            m_blendDataOffset += sizeof(TangentData);
         }
 
         m_texCoordOffset = m_blendDataOffset;
-        if(hasBlendData()) {
-            m_texCoordOffset += sizeof(BlendData);
+        if(hasTexCoords()) {
+            m_texCoordOffset += sizeof(TexCoord);
         }
 
         m_colorOffset = m_texCoordOffset;
-        if(hasTexCoords()) {
-            m_colorOffset += sizeof(TexCoord);
+        if(hasBlendData()) {
+            m_colorOffset += sizeof(BlendData);
         }
 
         m_vertexSize = m_colorOffset;
@@ -182,7 +184,7 @@ public:
             m_vertexSize += sizeof(Color);
         }
 
-        m_triangleGroups = new TriangleGroup[m_numGroups];
+        //m_triangleGroups = new TriangleGroup[m_numGroups];
 
         if(allocate) {
             this->allocate();
@@ -192,7 +194,7 @@ public:
     ~MeshData() {
         free();
 
-        delete[] m_triangleGroups;
+        //delete[] m_triangleGroups;
     }
 
     /**
@@ -408,7 +410,7 @@ public:
     @param faceInd The triangle face index.
     @param vertInd The face vertex index, a value from 0 to 2.
     */
-    inline Tangent& getTangent(uint32_t faceInd, uint32_t vertInd) {
+    inline TangentData& getTangent(uint32_t faceInd, uint32_t vertInd) {
         assert(hasTangents());
         assert(faceInd < m_numTri);
         assert(vertInd < 3);
@@ -424,7 +426,7 @@ public:
 
     @param vertInd The face vertex index in the vertex array.
     */
-    inline Tangent& getTangent(uint32_t vertInd) {
+    inline TangentData& getTangent(uint32_t vertInd) {
         assert(hasTangents());
         assert(vertInd < m_numVert);
         assert(m_data);
@@ -538,7 +540,9 @@ public:
         assert(hasTexCoords());
         assert(m_data);
 
-        for(unsigned int triangleIndex = 0; triangleIndex < m_numTri; triangleIndex++) {
+        //TODO: rewrite this to not use handedness and instead compute the bitangent, this isn't as useful now that I have Assimp (HAHAHHAHAHAHA Assimp)
+
+        /*for(unsigned int triangleIndex = 0; triangleIndex < m_numTri; triangleIndex++) {
             // Gram-Schmidt orthogonalize tangents and handedness
             glm::detail::tvec3<T> posVec01 = getPosition(triangleIndex, 1) - getPosition(triangleIndex, 0);
             glm::detail::tvec3<T> posVec02 = getPosition(triangleIndex, 2) - getPosition(triangleIndex, 0);
@@ -566,7 +570,7 @@ public:
                 //handedness
                 tangent.w = glm::dot(tDir, glm::cross(norm, sDir)) < (T)0 ? (T)-1 : (T)1;
             }
-        }
+        }*/
     }
 
     //TODO: add a build normals function later if useful...
@@ -593,9 +597,9 @@ public:
 
     @param group The group index.
     */
-    inline TriangleGroup& getTriangleGroup(uint8_t groupInd) const {
+    /*inline TriangleGroup& getTriangleGroup(uint8_t groupInd) const {
         return m_triangleGroups[groupInd];
-    }
+    }*/
 
     /**
     Returns how many verteces are stored in the mesh.
@@ -614,9 +618,9 @@ public:
     /**
     Returns how many triangle groups are stored in the mesh.
     */
-    inline uint8_t getNumGroups() const {
+    /*inline uint8_t getNumGroups() const {
         return m_numGroups;
-    }
+    }*/
 
 private:
     uint32_t m_numVert;
@@ -625,14 +629,14 @@ private:
     uint32_t m_numTri;
     uint32_t * m_indeces;
 
-    uint8_t m_numGroups;
-    TriangleGroup * m_triangleGroups;
+    //uint8_t m_numGroups;
+    //TriangleGroup * m_triangleGroups;
 
     uint32_t m_positionOffset;
     uint32_t m_normalOffset;
     uint32_t m_tangentOffset;
-    uint32_t m_blendDataOffset;
     uint32_t m_texCoordOffset;
+    uint32_t m_blendDataOffset;    
     uint32_t m_colorOffset;
 
     uint8_t m_vertexSize;

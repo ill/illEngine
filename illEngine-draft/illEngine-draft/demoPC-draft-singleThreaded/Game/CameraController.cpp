@@ -85,31 +85,31 @@ void CameraController::update(double seconds) {
     glm::vec3 velocity(0.0f);
 
     if(m_forward) {
-        velocity.z = -m_speed;
+        velocity.z = -1.0f;
     }
     else if(m_back) {
-        velocity.z = m_speed;
+        velocity.z = 1.0f;
     }
 
     if(m_left) {
-        velocity.x = -m_speed;
+        velocity.x = -1.0f;
     }
     else if(m_right) {
-        velocity.x = m_speed;
+        velocity.x = 1.0f;
     }
 
     if(m_up) {
-        velocity.y = m_speed;
+        velocity.y = 1.0f;
     }
     else if(m_down) {
-        velocity.y = -m_speed;
+        velocity.y = -1.0f;
     }      
 
     float speedMultiplier = m_sprint ? 5.0f : 1.0f;
 
     velocity = safeNormalize(velocity);
 
-    velocity *= seconds * speedMultiplier;
+    velocity *= seconds * m_speed * speedMultiplier;
 
     if(m_lookMode) {        //quaternion mode
         if(m_rollLeft) {

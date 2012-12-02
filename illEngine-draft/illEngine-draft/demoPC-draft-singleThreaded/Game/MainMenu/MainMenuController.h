@@ -7,6 +7,7 @@
 #include "../../../illGraphics-draft-singleThreaded/Camera/Camera.h"
 #include "../../../illGraphics-draft-singleThreaded/Camera/CameraTransform.h"
 #include "../../../illGraphics-draft-singleThreaded/Model/Mesh.h"
+#include "../../../illGraphics-draft-singleThreaded/Model/Skeleton.h"
 #include "../../../illGraphics-draft-singleThreaded/Material/ShaderProgram.h"
 
 namespace Demo {
@@ -31,6 +32,7 @@ private:
     Graphics::Mesh m_mesh;
     Graphics::ShaderProgram m_debugShader;
     Graphics::ShaderProgramLoader * m_debugShaderLoader;
+    Graphics::Skeleton m_skeleton;
 };
 }
 

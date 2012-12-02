@@ -81,6 +81,9 @@
     <ClCompile Include="demoPC-draft-singleThreaded\Game\CameraController.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="illGraphics-draft-singleThreaded\Model\Skeleton.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="illPC-draft-singleThreaded\SdlWindow.h">
@@ -282,6 +285,12 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="demoPC-draft-singleThreaded\Game\CameraController.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="illUtil-draft-singleThreaded\Illmesh\IllmeshLoader.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="illUtil-draft-singleThreaded\Illmesh\IllskelLoader.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

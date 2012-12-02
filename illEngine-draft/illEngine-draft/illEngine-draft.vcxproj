@@ -151,6 +151,7 @@
     <ClCompile Include="illGraphics-draft-singleThreaded\Material\Shader.cpp" />
     <ClCompile Include="illGraphics-draft-singleThreaded\Material\Texture.cpp" />
     <ClCompile Include="illGraphics-draft-singleThreaded\Model\Mesh.cpp" />
+    <ClCompile Include="illGraphics-draft-singleThreaded\Model\Skeleton.cpp" />
     <ClCompile Include="illInput-draft-singleThreaded\InputContext.cpp" />
     <ClCompile Include="illInput-draft-singleThreaded\InputContextStack.cpp" />
     <ClCompile Include="illInput-draft-singleThreaded\InputManager.cpp" />
@@ -213,6 +214,8 @@
     <ClInclude Include="illUtil-draft-singleThreaded\Geometry\MeshEdgeList.h" />
     <ClInclude Include="illUtil-draft-singleThreaded\Geometry\Plane.h" />
     <ClInclude Include="illUtil-draft-singleThreaded\Geometry\Sphere.h" />
+    <ClInclude Include="illUtil-draft-singleThreaded\Illmesh\IllmeshLoader.h" />
+    <ClInclude Include="illUtil-draft-singleThreaded\Illmesh\IllskelLoader.h" />
     <ClInclude Include="illUtil-draft-singleThreaded\Logging\LogDestination.h" />
     <ClInclude Include="illUtil-draft-singleThreaded\Logging\Logger.h" />
     <ClInclude Include="illUtil-draft-singleThreaded\Logging\logging.h" />
