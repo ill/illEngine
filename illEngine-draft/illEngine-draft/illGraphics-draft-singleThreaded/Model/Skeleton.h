@@ -76,7 +76,7 @@ public:
     inline const BoneHeirarchy* getRootBoneNode() const {
         return m_heirarchy;
     }
-
+    
 private:
     unsigned int m_numBones;
     Bone * m_bones;

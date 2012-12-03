@@ -84,6 +84,9 @@
     <ClCompile Include="illGraphics-draft-singleThreaded\Model\Skeleton.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="illGraphics-draft-singleThreaded\Model\SkeletonAnimation.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="illPC-draft-singleThreaded\SdlWindow.h">

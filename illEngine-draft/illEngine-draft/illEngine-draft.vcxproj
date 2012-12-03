@@ -152,6 +152,7 @@
     <ClCompile Include="illGraphics-draft-singleThreaded\Material\Texture.cpp" />
     <ClCompile Include="illGraphics-draft-singleThreaded\Model\Mesh.cpp" />
     <ClCompile Include="illGraphics-draft-singleThreaded\Model\Skeleton.cpp" />
+    <ClCompile Include="illGraphics-draft-singleThreaded\Model\SkeletonAnimation.cpp" />
     <ClCompile Include="illInput-draft-singleThreaded\InputContext.cpp" />
     <ClCompile Include="illInput-draft-singleThreaded\InputContextStack.cpp" />
     <ClCompile Include="illInput-draft-singleThreaded\InputManager.cpp" />

@@ -81,7 +81,7 @@ void Skeleton::reload(RendererBackend * rendererBackend) {
             //look up the parent node
             BoneHeirarchy * parentNode;
             
-            if(parentInd > 0) {
+            if(parentInd >= 0 && parentInd != bone) {
                 std::map<unsigned int, BoneHeirarchy *>::iterator iter = boneToNode.find(parentInd);
 
                 //if not found, create the new node
@@ -132,14 +132,19 @@ void Skeleton::reload(RendererBackend * rendererBackend) {
         }
     }
 
-    //read bone names, I don't need these right now though
+    //read bone names
     {
         for(unsigned int bone = 0; bone < m_numBones; bone++) {
             std::string name;
 
             (*openFile) >> name;
-            
-            m_boneNameMap[name] = &m_bones[bone];
+
+            if(m_boneNameMap.find(name) != m_boneNameMap.end()) {
+                LOG_ERROR("Skeleton %s has duplicate bone name %s.  This will cause problems when animating.", m_loadArgs.m_path.c_str(), name);
+            }
+            else {
+                m_boneNameMap[name] = &m_bones[bone];
+            }
         }
     }
 

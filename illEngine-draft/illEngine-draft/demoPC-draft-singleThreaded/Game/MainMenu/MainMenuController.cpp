@@ -33,34 +33,48 @@ MainMenuController::MainMenuController(Engine * engine)
     objLoader.buildMesh(*m_mesh.m_meshFrontendData);
     m_mesh.frontendBackendTransfer(m_engine->m_rendererBackend);*/
 
-    IllmeshLoader<> meshLoader("Meshes/doomguy.illmesh");
+    {
+        IllmeshLoader<> meshLoader("Meshes/boblamp.illmesh");
 
-    m_mesh.m_meshFrontendData = new MeshData<>(meshLoader.m_numInd / 3, meshLoader.m_numVert, meshLoader.m_features);
+        m_mesh.m_meshFrontendData = new MeshData<>(meshLoader.m_numInd / 3, meshLoader.m_numVert, meshLoader.m_features);
     
-    meshLoader.buildMesh(*m_mesh.m_meshFrontendData);
-    m_mesh.frontendBackendTransfer(m_engine->m_rendererBackend);
+        meshLoader.buildMesh(*m_mesh.m_meshFrontendData);
+        m_mesh.frontendBackendTransfer(m_engine->m_rendererBackend);
+    }
 
     //load the skeleton
-    Graphics::SkeletonLoadArgs loadArgs;
-    loadArgs.m_path = "Meshes/doomguy.illskel";
-    m_skeleton.load(loadArgs, NULL);
+    {
+        Graphics::SkeletonLoadArgs loadArgs;
+        loadArgs.m_path = "Meshes/boblamp.illskel";
+        m_skeleton.load(loadArgs, NULL);
+    }
+
+    //load the animation
+    {
+        Graphics::SkeletonAnimationLoadArgs loadArgs;
+        loadArgs.m_path = "Meshes/boblamp.illanim";
+        m_animation.load(loadArgs, NULL);
+    }
 
     //load the test shader
-    std::vector<RefCountPtr<Graphics::Shader> > shaders;
+    {
+        std::vector<RefCountPtr<Graphics::Shader> > shaders;
 
-    Graphics::Shader * shader = new Graphics::Shader();
-    shader->loadInternal(m_engine->m_rendererBackend, "shaders/debugShader.vert", GL_VERTEX_SHADER, "");
+        Graphics::Shader * shader = new Graphics::Shader();
+        shader->loadInternal(m_engine->m_rendererBackend, "shaders/debugShader.vert", GL_VERTEX_SHADER, "");
 
-    shaders.push_back(RefCountPtr<Graphics::Shader>(shader));
+        shaders.push_back(RefCountPtr<Graphics::Shader>(shader));
 
-    shader = new Graphics::Shader();
-    shader->loadInternal(m_engine->m_rendererBackend, "shaders/debugShader.frag", GL_FRAGMENT_SHADER, "");
+        shader = new Graphics::Shader();
+        shader->loadInternal(m_engine->m_rendererBackend, "shaders/debugShader.frag", GL_FRAGMENT_SHADER, "");
 
-    shaders.push_back(RefCountPtr<Graphics::Shader>(shader));
+        shaders.push_back(RefCountPtr<Graphics::Shader>(shader));
 
-    m_debugShaderLoader = new Graphics::ShaderProgramLoader(m_engine->m_rendererBackend, NULL);
-    m_debugShader.loadInternal(m_debugShaderLoader, shaders);
+        m_debugShaderLoader = new Graphics::ShaderProgramLoader(m_engine->m_rendererBackend, NULL);
+        m_debugShader.loadInternal(m_debugShaderLoader, shaders);
+    }
 
+    //initialize the input (this would normally initialize using console variables)
     m_engine->m_inputManager->addPlayer(0);
     m_engine->m_inputManager->bindDevice(SdlPc::PC_KEYBOARD, 0);
     m_engine->m_inputManager->bindDevice(SdlPc::PC_MOUSE, 0);
@@ -79,17 +93,84 @@ MainMenuController::~MainMenuController() {
 
 void MainMenuController::update(float seconds) {
     m_cameraController.update(seconds);
+
+    static float animTime = 0.0f;
+
+    animTime += seconds;
+
+    const std::map<std::string, Graphics::SkeletonAnimation::Transform*>& animations = m_animation.getAnimations();
+
+    Graphics::SkeletonAnimation::InterpInfo interpInfo = m_animation.getFrames(animTime);
+
+    //get transforms for all the bones
+    for(std::map<std::string, Graphics::SkeletonAnimation::Transform*>::const_iterator iter = animations.begin(); iter != animations.end(); iter++) {
+        Graphics::SkeletonAnimation::Transform* transforms = iter->second;
+
+        Graphics::SkeletonAnimation::Transform currentTransform;
+
+        currentTransform.m_position = glm::mix(transforms[interpInfo.m_frame1].m_position, transforms[interpInfo.m_frame2].m_position, interpInfo.m_delta);
+        currentTransform.m_rotation = glm::fastMix(transforms[interpInfo.m_frame1].m_rotation, transforms[interpInfo.m_frame2].m_rotation, interpInfo.m_delta);
+        currentTransform.m_scale = glm::mix(transforms[interpInfo.m_frame1].m_scale, transforms[interpInfo.m_frame2].m_scale, interpInfo.m_delta);
+
+        //compute the matrix
+        glm::mat4 transform = glm::translate(currentTransform.m_position);
+        transform = glm::mat4_cast(currentTransform.m_rotation) * transform;
+        transform = glm::scale(transform, currentTransform.m_scale);
+        /*glm::mat4 transform = glm::scale(currentTransform.m_scale);
+        transform = glm::mat4_cast(currentTransform.m_rotation) * transform;
+        transform = glm::translate(transform, currentTransform.m_position);*/
+
+        //glm::mat4 transform = glm::scale(currentTransform.m_scale) * glm::mat4_cast(currentTransform.m_rotation) * glm::translate(currentTransform.m_position);
+
+        /*glm::mat4 transform = glm::mat4_cast(currentTransform.m_rotation);
+        transform[0][0] *= currentTransform.m_scale.x;
+        transform[0][1] *= currentTransform.m_scale.x;
+        transform[0][2] *= currentTransform.m_scale.x;
+
+        transform[1][0] *= currentTransform.m_scale.y;
+        transform[1][1] *= currentTransform.m_scale.y;
+        transform[1][2] *= currentTransform.m_scale.y;
+
+        transform[2][0] *= currentTransform.m_scale.z;
+        transform[2][1] *= currentTransform.m_scale.z;
+        transform[2][2] *= currentTransform.m_scale.z;
+
+        transform[3][0] = currentTransform.m_position.x;
+        transform[3][1] = currentTransform.m_position.y;
+        transform[3][2] = currentTransform.m_position.z;*/
+        
+        //place the transform into the thing
+        m_animationTest[m_skeleton.getBone(iter->first)] = transform;
+    }
 }
 
 void MainMenuController::updateSound(float seconds) {
 
 }
 
-void debugDrawSkeleton(const Graphics::Skeleton::BoneHeirarchy * currNode, glm::mat4 currXform) {
-    currXform = currXform * currNode->m_bone->m_transform;
+void debugDrawSkeleton(const Graphics::Skeleton::BoneHeirarchy * currNode, glm::mat4 currXform, const glm::vec3& lastPos, const std::map<const Graphics::Skeleton::Bone *, glm::mat4> animTransforms) {
+    //if the bone is in the animTransform list, use that instead
+    const std::map<const Graphics::Skeleton::Bone *, glm::mat4>::const_iterator iter = animTransforms.find(currNode->m_bone);
+    
+    if(iter != animTransforms.end()) {
+        currXform = currXform * iter->second;
+    }
+    else {
+        currXform = currXform * currNode->m_bone->m_transform;
+    }
 
     glm::vec4 currPoint(0.0f, 0.0f, 0.0f, 1.0f);
     currPoint = currXform * currPoint;
+
+    //draw line from this bone to the last bone
+    if(currNode->m_parent) {
+        glColor3f(0.0f, 0.0f, 1.0f);
+
+        glBegin(GL_LINES);
+            glVertex3fv(glm::value_ptr(lastPos));
+            glVertex3fv(glm::value_ptr(currPoint));
+        glEnd();
+    }
 
     glPointSize(5.0f);
     glColor3f(1.0f, 0.0f, 0.0f);
@@ -102,6 +183,8 @@ void debugDrawSkeleton(const Graphics::Skeleton::BoneHeirarchy * currNode, glm::
     //draw the bone line
     glColor3f(0.0f, 1.0f, 0.0f);
 
+    glm::vec3 thisPoint = glm::vec3(currPoint);
+
     glBegin(GL_LINES);
     glVertex3fv(glm::value_ptr(currPoint));
 
@@ -112,7 +195,7 @@ void debugDrawSkeleton(const Graphics::Skeleton::BoneHeirarchy * currNode, glm::
     glEnd();
 
     for(std::vector<Graphics::Skeleton::BoneHeirarchy *>::const_iterator iter = currNode->m_children.begin(); iter != currNode->m_children.end(); iter++) {
-        debugDrawSkeleton(*iter, currXform);
+        debugDrawSkeleton(*iter, currXform, thisPoint, animTransforms);
     }    
 }
 
@@ -192,7 +275,7 @@ void MainMenuController::render() {
     glEnd();
 
     //debug draw the skeleton
-    debugDrawSkeleton(m_skeleton.getRootBoneNode(), glm::mat4());
+    debugDrawSkeleton(m_skeleton.getRootBoneNode(), glm::mat4(), glm::vec3(0.0f), m_animationTest);
 
     ERROR_CHECK_OPENGL;
 }
