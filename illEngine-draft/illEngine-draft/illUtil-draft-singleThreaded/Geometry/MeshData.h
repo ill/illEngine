@@ -160,23 +160,27 @@ public:
         }
 
         m_tangentOffset = m_normalOffset;
+        m_bitangentOffset = m_tangentOffset + sizeof(glm::detail::tvec3<T>);
         if(hasNormals()) {
             m_tangentOffset += sizeof(Normal);
+            m_bitangentOffset += sizeof(Normal);
         }
 
-        m_blendDataOffset = m_tangentOffset;
+        m_blendIndexOffset = m_tangentOffset;
+        m_blendWeightOffset = m_blendIndexOffset + sizeof(glm::detail::tvec4<T>);
         if(hasTangents()) {
-            m_blendDataOffset += sizeof(TangentData);
+            m_blendIndexOffset += sizeof(TangentData);
+            m_blendWeightOffset += sizeof(TangentData);
         }
 
-        m_texCoordOffset = m_blendDataOffset;
-        if(hasTexCoords()) {
-            m_texCoordOffset += sizeof(TexCoord);
+        m_texCoordOffset = m_blendIndexOffset;
+        if(hasBlendData()) {
+            m_texCoordOffset += sizeof(BlendData);
         }
 
         m_colorOffset = m_texCoordOffset;
-        if(hasBlendData()) {
-            m_colorOffset += sizeof(BlendData);
+        if(hasTexCoords()) {
+            m_colorOffset += sizeof(TexCoord);
         }
 
         m_vertexSize = m_colorOffset;
@@ -290,15 +294,34 @@ public:
     }
 
     /**
-    Gets an offset into the data where blend indices start.
-    Invalid if blend indices aren't stored.
+    Gets an offset into the data where bitangents start.
+    Invalid if tangents aren't stored.
     */
-    inline size_t getBlendDataOffset() const {
-        assert(hasBlendData());
+    inline size_t getBitangentOffset() const {
+        assert(hasTangents());
 
-        return m_blendDataOffset;
+        return m_bitangentOffset;
     }
 
+    /**
+    Gets an offset into the data where blend indices start.
+    Invalid if blend data isn't stored.
+    */
+    inline size_t getBlendIndexOffset() const {
+        assert(hasBlendData());
+
+        return m_blendIndexOffset;
+    }
+
+    /**
+    Gets an offset into the data where blend weights start.
+    Invalid if blend data isn't stored.
+    */
+    inline size_t getBlendWeightOffset() const {
+        assert(hasBlendData());
+
+        return m_blendWeightOffset;
+    }
 
     /**
     Gets an offset into the data where texture coordinates start.
@@ -448,7 +471,7 @@ public:
         assert(vertInd < 3);
         assert(m_data);
 
-        return reinterpret_cast<BlendData&>(*(m_data + m_blendDataOffset + *(m_indeces + faceInd * 3 + vertInd) * m_vertexSize));
+        return reinterpret_cast<BlendData&>(*(m_data + m_blendIndexOffset + *(m_indeces + faceInd * 3 + vertInd) * m_vertexSize));
     }
 
     /**
@@ -463,7 +486,7 @@ public:
         assert(vertInd < m_numVert);
         assert(m_data);
 
-        return reinterpret_cast<BlendData&>(*(m_data + m_blendDataOffset + vertInd * m_vertexSize));
+        return reinterpret_cast<BlendData&>(*(m_data + m_blendIndexOffset + vertInd * m_vertexSize));
     }
 
     /**
@@ -635,8 +658,10 @@ private:
     uint32_t m_positionOffset;
     uint32_t m_normalOffset;
     uint32_t m_tangentOffset;
+    uint32_t m_bitangentOffset;
     uint32_t m_texCoordOffset;
-    uint32_t m_blendDataOffset;    
+    uint32_t m_blendIndexOffset;
+    uint32_t m_blendWeightOffset;
     uint32_t m_colorOffset;
 
     uint8_t m_vertexSize;
