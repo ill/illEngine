@@ -21,16 +21,24 @@ void debugDrawSkeleton(const Graphics::Skeleton * skeleton, const Graphics::Skel
 
     std::map<unsigned int, glm::mat4>::iterator iter = animTransforms.find(currNode->m_boneIndex);
 
+    glm::mat4 relXform; //TODO: This should go into the animation file instead of absolute transforms from the bind pose, there's currently a limitaiton though so it's computed here
+
     if(iter != animTransforms.end()) {
+        relXform = glm::inverse(skeleton->getBone(currNode->m_boneIndex)->m_transform) * animTransforms[currNode->m_boneIndex];
+    }
+
+    currXform = currXform * skeleton->getBone(currNode->m_boneIndex)->m_transform * relXform;
+
+    /*if(iter != animTransforms.end()) {
         currXform = currXform * animTransforms[currNode->m_boneIndex];
+        relXform = glm::inverse(animTransforms[currNode->m_boneIndex]) * skeleton->getBone(currNode->m_boneIndex)->m_transform;
     }
     else {
         currXform = currXform * skeleton->getBone(currNode->m_boneIndex)->m_transform;
-    }
-
+    }*/
+    
     currBindXform = currBindXform * skeleton->getBone(currNode->m_boneIndex)->m_transform;
-
-    currAnimXform = currAnimXform * glm::inverse(currBindXform) * currXform;
+    currAnimXform = currAnimXform * relXform;
 
     animationTestSkelMats[currNode->m_boneIndex] = currAnimXform;
 
