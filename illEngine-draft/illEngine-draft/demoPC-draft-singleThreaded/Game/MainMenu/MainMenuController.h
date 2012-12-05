@@ -10,6 +10,7 @@
 #include "../../../illGraphics-draft-singleThreaded/Camera/Camera.h"
 #include "../../../illGraphics-draft-singleThreaded/Camera/CameraTransform.h"
 #include "../../../illGraphics-draft-singleThreaded/Model/Mesh.h"
+#include "../../../illGraphics-draft-singleThreaded/Material/Texture.h"
 #include "../../../illGraphics-draft-singleThreaded/Model/Skeleton.h"
 #include "../../../illGraphics-draft-singleThreaded/Model/SkeletonAnimation.h"
 #include "../../../illGraphics-draft-singleThreaded/Material/ShaderProgram.h"
@@ -35,6 +36,8 @@ private:
     Graphics::CameraTransform m_cameraTransform;
     Graphics::Mesh m_mesh;
     Graphics::Mesh m_mesh2;
+    Graphics::Texture m_marineDiffuse;
+    Graphics::Texture m_helmetDiffuse;
     Graphics::ShaderProgram m_debugShader;
     Graphics::ShaderProgramLoader * m_debugShaderLoader;
     Graphics::Skeleton m_skeleton;

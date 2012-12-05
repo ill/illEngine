@@ -94,6 +94,9 @@ void GlRenderer::loadTexture(void ** textureData, const Graphics::TextureLoadArg
     ///////////////////////////////////
     //clean up
     delete[] textureMemBuffer;
+
+    *textureData = new GLuint;
+    memcpy(*textureData, &texture, sizeof(GLuint));
 }
 
 void GlRenderer::unloadTexture(void ** textureData) {

@@ -101,10 +101,10 @@ void debugDrawSkeleton(const Graphics::Skeleton * skeleton, const Graphics::Skel
     currBindXform = currBindXform * skeleton->getBone(currNode->m_boneIndex)->m_transform;
 
     animationTestSkelMats[currNode->m_boneIndex] = 
-        glm::inverse(currBindXform) * currXform;
+        //glm::inverse(currBindXform) * currXform;
         //currXform * glm::inverse(currBindXform);
         //currAnimXform;
-        //glm::mat4();
+        glm::mat4();
 
     debugDrawBone(currXform, prevXform, currNode->m_parent != NULL);
     debugDrawBone(currBindXform, prevBindXform, currNode->m_parent != NULL);
@@ -124,6 +124,13 @@ void renderMesh(Graphics::Mesh& mesh, GLuint prog) {
         LOG_FATAL_ERROR("Unknown attrib position");
     }
     glVertexAttribPointer(loc, 3, GL_FLOAT, GL_FALSE, mesh.m_meshFrontendData->getVertexSize(), (char *)NULL + mesh.m_meshFrontendData->getPositionOffset());
+    glEnableVertexAttribArray(loc);
+
+    loc = glGetAttribLocation(prog, "texCoords");
+    if(loc == -1) {
+        LOG_FATAL_ERROR("Unknown attrib texCoords");
+    }
+    glVertexAttribPointer(loc, 2, GL_FLOAT, GL_FALSE, mesh.m_meshFrontendData->getVertexSize(), (char *)NULL + mesh.m_meshFrontendData->getTexCoordOffset());
     glEnableVertexAttribArray(loc);
 
     loc = glGetAttribLocation(prog, "normal");
@@ -176,7 +183,7 @@ MainMenuController::MainMenuController(Engine * engine)
     m_mesh.frontendBackendTransfer(m_engine->m_rendererBackend);*/
 
     {
-        IllmeshLoader<> meshLoader("Meshes/simple.illmesh");
+        IllmeshLoader<> meshLoader("Meshes/doomguy8.illmesh");
 
         m_mesh.m_meshFrontendData = new MeshData<>(meshLoader.m_numInd / 3, meshLoader.m_numVert, meshLoader.m_features);
     
@@ -185,7 +192,7 @@ MainMenuController::MainMenuController(Engine * engine)
     }
 
     {
-        IllmeshLoader<> meshLoader("Meshes/simple.illmesh");
+        IllmeshLoader<> meshLoader("Meshes/doomguy.illmesh");
 
         m_mesh2.m_meshFrontendData = new MeshData<>(meshLoader.m_numInd / 3, meshLoader.m_numVert, meshLoader.m_features);
     
@@ -193,10 +200,30 @@ MainMenuController::MainMenuController(Engine * engine)
         m_mesh2.frontendBackendTransfer(m_engine->m_rendererBackend, false);
     }
 
+    //load the diffuse texture
+    {
+        Graphics::TextureLoadArgs loadArgs;
+        loadArgs.m_path = "Materials/marine.tga";
+        loadArgs.m_wrapS = GL_CLAMP;
+        loadArgs.m_wrapT = GL_CLAMP;
+
+        m_marineDiffuse.load(loadArgs, m_engine->m_rendererBackend);
+    }
+
+    //diffuse helmet texture
+    {
+        Graphics::TextureLoadArgs loadArgs;
+        loadArgs.m_path = "Materials/helmet.tga";
+        loadArgs.m_wrapS = GL_CLAMP;
+        loadArgs.m_wrapT = GL_CLAMP;
+
+        m_helmetDiffuse.load(loadArgs, m_engine->m_rendererBackend);
+    }
+
     //load the skeleton
     {
         Graphics::SkeletonLoadArgs loadArgs;
-        loadArgs.m_path = "Meshes/simple.illskel";
+        loadArgs.m_path = "Meshes/doomguy.illskel";
         m_skeleton.load(loadArgs, NULL);
 
         m_animationTestSkelMats = new glm::mat4[m_skeleton.getNumBones()];
@@ -205,7 +232,7 @@ MainMenuController::MainMenuController(Engine * engine)
     //load the animation
     {
         Graphics::SkeletonAnimationLoadArgs loadArgs;
-        loadArgs.m_path = "Meshes/simple.illanim";
+        loadArgs.m_path = "Meshes/doomguy.illanim";
         m_animation.load(loadArgs, NULL);
     }
 
@@ -289,8 +316,9 @@ void MainMenuController::render() {
     
     //debug drawing
     glEnable(GL_BLEND);
+    glDisable(GL_DEPTH_TEST);
     glShadeModel(GL_SMOOTH);
-    glDepthMask(GL_FALSE);
+    //glDepthMask(GL_FALSE);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
     glUseProgram(0);
@@ -413,7 +441,7 @@ void MainMenuController::render() {
     
     //glPolygonMode( GL_FRONT_AND_BACK, GL_LINE );
     glEnable(GL_DEPTH_TEST);
-    glDepthMask(GL_TRUE);
+    //glDepthMask(GL_TRUE);
     glCullFace(GL_BACK);
     glEnable(GL_CULL_FACE);    
     glDisable(GL_BLEND);
@@ -442,9 +470,25 @@ void MainMenuController::render() {
         LOG_FATAL_ERROR("Unknown uniform bones");
     }
     glUniformMatrix4fv(loc, m_skeleton.getNumBones(), false, &m_animationTestSkelMats[0][0][0]);
+
+    loc = glGetUniformLocation(prog, "diffuseMap");
+    if(loc == -1) {
+        LOG_FATAL_ERROR("Unknown uniform diffuseMap");
+    }
+
+    glActiveTexture(GL_TEXTURE0);
+    GLuint texture = *((GLuint *) m_marineDiffuse.getTextureData());
+    glBindTexture(GL_TEXTURE_2D, texture);
+    glUniform1i(loc, 0);
     
     renderMesh(m_mesh, prog);
-    //renderMesh(m_mesh2, prog);
+
+    //glActiveTexture(GL_TEXTURE0);
+    texture = *((GLuint *) m_helmetDiffuse.getTextureData());
+    glBindTexture(GL_TEXTURE_2D, texture);
+    //glUniform1i(loc, 0);
+
+    renderMesh(m_mesh2, prog);
 
     ERROR_CHECK_OPENGL;
 }
