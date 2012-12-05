@@ -38,6 +38,8 @@ private:
     Graphics::Mesh m_mesh2;
     Graphics::Texture m_marineDiffuse;
     Graphics::Texture m_helmetDiffuse;
+    Graphics::Texture m_marineNormal;
+    Graphics::Texture m_helmetNormal;
     Graphics::ShaderProgram m_debugShader;
     Graphics::ShaderProgramLoader * m_debugShaderLoader;
     Graphics::Skeleton m_skeleton;

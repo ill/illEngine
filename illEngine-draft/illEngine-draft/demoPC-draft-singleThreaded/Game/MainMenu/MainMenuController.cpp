@@ -140,6 +140,20 @@ void renderMesh(Graphics::Mesh& mesh, GLuint prog) {
     glVertexAttribPointer(loc, 3, GL_FLOAT, GL_FALSE,  mesh.m_meshFrontendData->getVertexSize(), (char *)NULL + mesh.m_meshFrontendData->getNormalOffset());
     glEnableVertexAttribArray(loc);
 
+    loc = glGetAttribLocation(prog, "tangent");
+    if(loc == -1) {
+        LOG_FATAL_ERROR("Unknown attrib tangent");
+    }
+    glVertexAttribPointer(loc, 3, GL_FLOAT, GL_FALSE,  mesh.m_meshFrontendData->getVertexSize(), (char *)NULL + mesh.m_meshFrontendData->getTangentOffset());
+    glEnableVertexAttribArray(loc);
+
+    loc = glGetAttribLocation(prog, "bitangent");
+    if(loc == -1) {
+        LOG_FATAL_ERROR("Unknown attrib bitangent");
+    }
+    glVertexAttribPointer(loc, 3, GL_FLOAT, GL_FALSE,  mesh.m_meshFrontendData->getVertexSize(), (char *)NULL + mesh.m_meshFrontendData->getBitangentOffset());
+    glEnableVertexAttribArray(loc);
+
     loc = glGetAttribLocation(prog, "boneIndices");
     if(loc == -1) {
         LOG_FATAL_ERROR("Unknown attrib boneIndices");
@@ -210,6 +224,16 @@ MainMenuController::MainMenuController(Engine * engine)
         m_marineDiffuse.load(loadArgs, m_engine->m_rendererBackend);
     }
 
+    //marine normal map
+    {
+        Graphics::TextureLoadArgs loadArgs;
+        loadArgs.m_path = "Materials/marine_local.tga";
+        loadArgs.m_wrapS = GL_CLAMP;
+        loadArgs.m_wrapT = GL_CLAMP;
+
+        m_marineNormal.load(loadArgs, m_engine->m_rendererBackend);
+    }
+
     //diffuse helmet texture
     {
         Graphics::TextureLoadArgs loadArgs;
@@ -218,6 +242,16 @@ MainMenuController::MainMenuController(Engine * engine)
         loadArgs.m_wrapT = GL_CLAMP;
 
         m_helmetDiffuse.load(loadArgs, m_engine->m_rendererBackend);
+    }
+
+    //helmet normal map
+    {
+        Graphics::TextureLoadArgs loadArgs;
+        loadArgs.m_path = "Materials/helmet_local.tga";
+        loadArgs.m_wrapS = GL_CLAMP;
+        loadArgs.m_wrapT = GL_CLAMP;
+
+        m_helmetNormal.load(loadArgs, m_engine->m_rendererBackend);
     }
 
     //load the skeleton
@@ -459,6 +493,12 @@ void MainMenuController::render() {
     }
     glUniformMatrix4fv(loc, 1, false, glm::value_ptr(m_camera.getCanonical()));
 
+    loc = glGetUniformLocation(prog, "modelViewMatrix");
+    if(loc == -1) {
+        LOG_FATAL_ERROR("Unknown uniform modelViewMatrix");
+    }
+    glUniformMatrix4fv(loc, 1, false, glm::value_ptr(m_camera.getModelView()));
+
     loc = glGetUniformLocation(prog, "normalMatrix");
     if(loc == -1) {
         LOG_FATAL_ERROR("Unknown uniform normalMatrix");
@@ -480,13 +520,28 @@ void MainMenuController::render() {
     GLuint texture = *((GLuint *) m_marineDiffuse.getTextureData());
     glBindTexture(GL_TEXTURE_2D, texture);
     glUniform1i(loc, 0);
+
+    loc = glGetUniformLocation(prog, "normalMap");
+    if(loc == -1) {
+        LOG_FATAL_ERROR("Unknown uniform normalMap");
+    }
+
+    glActiveTexture(GL_TEXTURE1);
+    texture = *((GLuint *) m_marineNormal.getTextureData());
+    glBindTexture(GL_TEXTURE_2D, texture);
+    glUniform1i(loc, 1);
     
     renderMesh(m_mesh, prog);
 
-    //glActiveTexture(GL_TEXTURE0);
+    glActiveTexture(GL_TEXTURE0);
     texture = *((GLuint *) m_helmetDiffuse.getTextureData());
     glBindTexture(GL_TEXTURE_2D, texture);
     //glUniform1i(loc, 0);
+
+    glActiveTexture(GL_TEXTURE1);
+    texture = *((GLuint *) m_helmetNormal.getTextureData());
+    glBindTexture(GL_TEXTURE_2D, texture);
+    //glUniform1i(loc, 1);
 
     renderMesh(m_mesh2, prog);
 
