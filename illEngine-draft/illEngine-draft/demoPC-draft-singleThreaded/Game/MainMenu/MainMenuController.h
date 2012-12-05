@@ -34,12 +34,14 @@ private:
     Graphics::Camera m_camera;
     Graphics::CameraTransform m_cameraTransform;
     Graphics::Mesh m_mesh;
+    Graphics::Mesh m_mesh2;
     Graphics::ShaderProgram m_debugShader;
     Graphics::ShaderProgramLoader * m_debugShaderLoader;
     Graphics::Skeleton m_skeleton;
     Graphics::SkeletonAnimation m_animation;
 
-    std::map<const Graphics::Skeleton::Bone *, glm::mat4> m_animationTest;    //temporarily testing animations manually without the animation controller
+    std::map<unsigned int, glm::mat4> m_animationTest;    //temporarily testing animations manually without the animation controller
+    glm::mat4 * m_animationTestSkelMats;
 };
 }
 

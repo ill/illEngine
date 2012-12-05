@@ -87,7 +87,7 @@ void Skeleton::reload(RendererBackend * rendererBackend) {
                 //if not found, create the new node
                 if(iter == boneToNode.end()) {
                     boneToNode[parentInd] = parentNode = new BoneHeirarchy();
-                    parentNode->m_bone = &m_bones[parentInd];
+                    parentNode->m_boneIndex = parentInd;
                 }
                 else {
                     parentNode = iter->second;
@@ -113,7 +113,7 @@ void Skeleton::reload(RendererBackend * rendererBackend) {
                 //if not found, create the new node
                 if(iter == boneToNode.end()) {
                     boneToNode[bone] = currentNode = new BoneHeirarchy();
-                    currentNode->m_bone = &m_bones[bone];
+                    currentNode->m_boneIndex = bone;
                 }
                 else {
                     currentNode = iter->second;
@@ -143,7 +143,7 @@ void Skeleton::reload(RendererBackend * rendererBackend) {
                 LOG_ERROR("Skeleton %s has duplicate bone name %s.  This will cause problems when animating.", m_loadArgs.m_path.c_str(), name);
             }
             else {
-                m_boneNameMap[name] = &m_bones[bone];
+                m_boneNameMap[name] = bone;
             }
         }
     }

@@ -182,7 +182,7 @@ inline glm::detail::tvec3<T> quatToDirection(const glm::detail::tquat<T>& value)
 
 template <typename T>
 inline glm::detail::tvec3<T> mat3ToDirection(const glm::detail::tmat3x3<T>& value) {
-    glm::detail::tvec3<T> val = value * glm::detail::tvec3<T>((T)0, (T)0, (T)-1);
+    glm::detail::tvec3<T> val = value * glm::detail::tvec3<T>((T)0, (T)0, (T)1);
     return val;
 }
 

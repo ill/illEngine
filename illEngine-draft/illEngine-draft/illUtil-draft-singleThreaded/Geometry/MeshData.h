@@ -416,7 +416,7 @@ public:
         assert(vertInd < 3);
         assert(m_data);
 
-        return reinterpret_cast<Tangent&>(*(m_data + m_tangentOffset + *(m_indeces + faceInd * 3 + vertInd) * m_vertexSize));
+        return reinterpret_cast<TangentData&>(*(m_data + m_tangentOffset + *(m_indeces + faceInd * 3 + vertInd) * m_vertexSize));
     }
 
     /**
@@ -431,7 +431,7 @@ public:
         assert(vertInd < m_numVert);
         assert(m_data);
 
-        return reinterpret_cast<Tangent&>(*(m_data + m_tangentOffsetfset + vertInd * m_vertexSize));
+        return reinterpret_cast<TangentData&>(*(m_data + m_tangentOffset + vertInd * m_vertexSize));
     }
 
     /**

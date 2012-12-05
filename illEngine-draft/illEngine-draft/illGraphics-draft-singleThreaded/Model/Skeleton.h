@@ -26,7 +26,7 @@ public:
     };
     
     struct BoneHeirarchy {
-        Bone * m_bone;
+        unsigned int m_boneIndex;
 
         ~BoneHeirarchy() {
             //recursively destroy children
@@ -61,12 +61,12 @@ public:
         return m_bones + boneIndex;
     }
 
-    inline const Bone* getBone(const std::string& boneName) const {
-        std::map<std::string, Bone*>::const_iterator iter = m_boneNameMap.find(boneName);
+    inline unsigned int getBone(const std::string& boneName) const {
+        std::map<std::string, unsigned int>::const_iterator iter = m_boneNameMap.find(boneName);
 
         if(iter == m_boneNameMap.end()) {
             LOG_ERROR("No bone with name %s in skeleton", boneName.c_str());
-            return NULL;
+            return 0;
         }
         else {
             return iter->second;
@@ -76,12 +76,16 @@ public:
     inline const BoneHeirarchy* getRootBoneNode() const {
         return m_heirarchy;
     }
+
+    inline const std::map<std::string, unsigned int>& getBoneNameMap() const {
+        return m_boneNameMap;
+    }
     
 private:
     unsigned int m_numBones;
     Bone * m_bones;
 
-    std::map<std::string, Bone*> m_boneNameMap;
+    std::map<std::string, unsigned int> m_boneNameMap;
 
     BoneHeirarchy * m_heirarchy;
 };
