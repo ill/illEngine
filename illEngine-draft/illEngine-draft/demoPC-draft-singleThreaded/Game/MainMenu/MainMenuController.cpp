@@ -148,12 +148,27 @@
 //    }
 //}
 
-void renderMesh(Graphics::Mesh& mesh, Graphics::ModelAnimationController& controller, GLuint prog) {
+void renderMesh(Graphics::Mesh& mesh, Graphics::ModelAnimationController& controller, const Graphics::Camera& camera, const glm::mat4& xform, GLuint prog) {
+    
+    GLint loc = glGetUniformLocation(prog, "modelViewProjectionMatrix");
+    if(loc == -1) {
+        LOG_FATAL_ERROR("Unknown uniform modelViewProjectionMatrix");
+    }
+    glUniformMatrix4fv(loc, 1, false, glm::value_ptr(camera.getCanonical() * xform));
+
+    loc = glGetUniformLocation(prog, "modelViewMatrix");
+    if(loc == -1) {
+        LOG_FATAL_ERROR("Unknown uniform modelViewMatrix");
+    }
+    glUniformMatrix4fv(loc, 1, false, glm::value_ptr(camera.getModelView()* xform));
+    
+    
+
     GLuint buffer = *((GLuint *) mesh.getMeshBackendData() + 0);
 
     glBindBuffer(GL_ARRAY_BUFFER, buffer);
 
-    GLint loc = glGetUniformLocation(prog, "bones");
+    loc = glGetUniformLocation(prog, "bones");
     if(loc == -1) {
         LOG_FATAL_ERROR("Unknown uniform bones");
     }
@@ -227,17 +242,9 @@ MainMenuController::MainMenuController(Engine * engine)
 {
     //This is all put together to test some stuff, this is in no way how to normally do these things.  Everything should normally be done through the renderer front end when that's done.
 
-    //load the test mesh
-    /*ObjLoader<> objLoader("Meshes/hellKnight.obj", glm::vec3(0.01f), MF_POSITION | MF_NORMAL | MF_TANGENT | MF_BLEND_DATA | MF_TEX_COORD);
-    objLoader.parse();
-
-    m_mesh.m_meshFrontendData = new MeshData<>(objLoader.m_numTri, objLoader.m_numVert, (uint8_t) objLoader.m_triangleGroupIndeces.size(), MF_POSITION | MF_NORMAL | MF_TANGENT | MF_BLEND_DATA | MF_TEX_COORD);
-
-    objLoader.buildMesh(*m_mesh.m_meshFrontendData);
-    m_mesh.frontendBackendTransfer(m_engine->m_rendererBackend);*/
-
+    //marine body
     {
-        IllmeshLoader<> meshLoader("Meshes/doomguy8.illmesh");
+        IllmeshLoader<> meshLoader("Meshes/Marine/marine8.illmesh");
 
         m_marine.m_meshFrontendData = new MeshData<>(meshLoader.m_numInd / 3, meshLoader.m_numVert, meshLoader.m_features);
     
@@ -245,19 +252,10 @@ MainMenuController::MainMenuController(Engine * engine)
         m_marine.frontendBackendTransfer(m_engine->m_rendererBackend, false);
     }
 
-    {
-        IllmeshLoader<> meshLoader("Meshes/doomguy.illmesh");
-
-        m_marineHelmet.m_meshFrontendData = new MeshData<>(meshLoader.m_numInd / 3, meshLoader.m_numVert, meshLoader.m_features);
-    
-        meshLoader.buildMesh(*m_marineHelmet.m_meshFrontendData);
-        m_marineHelmet.frontendBackendTransfer(m_engine->m_rendererBackend, false);
-    }
-
     //load the diffuse texture
     {
         Graphics::TextureLoadArgs loadArgs;
-        loadArgs.m_path = "Materials/marine.tga";
+        loadArgs.m_path = "Meshes/Marine/marine.tga";
         loadArgs.m_wrapS = GL_CLAMP;
         loadArgs.m_wrapT = GL_CLAMP;
 
@@ -267,37 +265,53 @@ MainMenuController::MainMenuController(Engine * engine)
     //marine normal map
     {
         Graphics::TextureLoadArgs loadArgs;
-        loadArgs.m_path = "Materials/marine_local.tga";
+        loadArgs.m_path = "Meshes/Marine/marine_local.tga";
         loadArgs.m_wrapS = GL_CLAMP;
         loadArgs.m_wrapT = GL_CLAMP;
 
         m_marineNormal.load(loadArgs, m_engine->m_rendererBackend);
     }
 
+
+
+
+    //marine helmet
+    {
+        IllmeshLoader<> meshLoader("Meshes/Marine/marine.illmesh");
+
+        m_marineHelmet.m_meshFrontendData = new MeshData<>(meshLoader.m_numInd / 3, meshLoader.m_numVert, meshLoader.m_features);
+    
+        meshLoader.buildMesh(*m_marineHelmet.m_meshFrontendData);
+        m_marineHelmet.frontendBackendTransfer(m_engine->m_rendererBackend, false);
+    }
+
+    //helmet normal map
+    {
+        Graphics::TextureLoadArgs loadArgs;
+        loadArgs.m_path = "Meshes/Marine/helmet_local.tga";
+        loadArgs.m_wrapS = GL_CLAMP;
+        loadArgs.m_wrapT = GL_CLAMP;
+
+        m_helmetNormal.load(loadArgs, m_engine->m_rendererBackend);
+    }
+    
     //diffuse helmet texture
     {
         Graphics::TextureLoadArgs loadArgs;
-        loadArgs.m_path = "Materials/helmet.tga";
+        loadArgs.m_path = "Meshes/Marine/helmet.tga";
         loadArgs.m_wrapS = GL_CLAMP;
         loadArgs.m_wrapT = GL_CLAMP;
 
         m_helmetDiffuse.load(loadArgs, m_engine->m_rendererBackend);
     }
 
-    //helmet normal map
-    {
-        Graphics::TextureLoadArgs loadArgs;
-        loadArgs.m_path = "Materials/helmet_local.tga";
-        loadArgs.m_wrapS = GL_CLAMP;
-        loadArgs.m_wrapT = GL_CLAMP;
 
-        m_helmetNormal.load(loadArgs, m_engine->m_rendererBackend);
-    }
+
 
     //load the skeleton
     {
         Graphics::SkeletonLoadArgs loadArgs;
-        loadArgs.m_path = "Meshes/doomguy.illskel";
+        loadArgs.m_path = "Meshes/Marine/marine.illskel";
         m_marineSkeleton.load(loadArgs, NULL);
 
         //m_animationTestSkelMats = new glm::mat4[m_marineSkeleton.getNumBones()];
@@ -309,11 +323,156 @@ MainMenuController::MainMenuController(Engine * engine)
     //load the animation
     {
         Graphics::SkeletonAnimationLoadArgs loadArgs;
-        loadArgs.m_path = "Meshes/doomguy.illanim";
+        loadArgs.m_path = "Meshes/Marine/marine.illanim";
         m_marineAnimation.load(loadArgs, NULL);
 
         m_marineController.m_animation = &m_marineAnimation;
     }
+
+
+
+
+
+    //hellknight
+    {
+        IllmeshLoader<> meshLoader("Meshes/HellKnight/hellKnight.illmesh");
+
+        m_hellKnight.m_meshFrontendData = new MeshData<>(meshLoader.m_numInd / 3, meshLoader.m_numVert, meshLoader.m_features);
+    
+        meshLoader.buildMesh(*m_hellKnight.m_meshFrontendData);
+        m_hellKnight.frontendBackendTransfer(m_engine->m_rendererBackend, false);
+    }
+
+    //load the diffuse texture
+    {
+        Graphics::TextureLoadArgs loadArgs;
+        loadArgs.m_path = "Meshes/HellKnight/hellknight.tga";
+        loadArgs.m_wrapS = GL_CLAMP;
+        loadArgs.m_wrapT = GL_CLAMP;
+
+        m_hellKnightDiffuse.load(loadArgs, m_engine->m_rendererBackend);
+    }
+
+    //marine normal map
+    {
+        Graphics::TextureLoadArgs loadArgs;
+        loadArgs.m_path = "Meshes/HellKnight/hellknight_local.tga";
+        loadArgs.m_wrapS = GL_CLAMP;
+        loadArgs.m_wrapT = GL_CLAMP;
+
+        m_hellKnightNormal.load(loadArgs, m_engine->m_rendererBackend);
+    }
+
+    //load the skeleton
+    {
+        Graphics::SkeletonLoadArgs loadArgs;
+        loadArgs.m_path = "Meshes/HellKnight/hellknight.illskel";
+        m_hellKnightSkeleton.load(loadArgs, NULL);
+        
+        m_hellKnightController0.alloc(m_hellKnightSkeleton.getNumBones());
+        m_hellKnightController0.m_skeleton = &m_hellKnightSkeleton;
+
+        m_hellKnightController1.alloc(m_hellKnightSkeleton.getNumBones());
+        m_hellKnightController1.m_skeleton = &m_hellKnightSkeleton;
+
+        m_hellKnightController2.alloc(m_hellKnightSkeleton.getNumBones());
+        m_hellKnightController2.m_skeleton = &m_hellKnightSkeleton;
+    }
+
+    //load the animation
+    {
+        Graphics::SkeletonAnimationLoadArgs loadArgs;
+        loadArgs.m_path = "Meshes/HellKnight/hellknight.illanim";
+        m_hellKnightAnimation.load(loadArgs, NULL);
+
+        m_hellKnightController0.m_animation = &m_hellKnightAnimation;
+        m_hellKnightController1.m_animation = &m_hellKnightAnimation;
+        m_hellKnightController2.m_animation = &m_hellKnightAnimation;
+
+        m_hellKnightController1.m_animTime = 1.0f;
+        m_hellKnightController2.m_animTime = 1.5f;
+    }
+
+
+
+
+    //demon
+    {
+        IllmeshLoader<> meshLoader("Meshes/Demon/demon.illmesh");
+
+        m_demon.m_meshFrontendData = new MeshData<>(meshLoader.m_numInd / 3, meshLoader.m_numVert, meshLoader.m_features);
+    
+        meshLoader.buildMesh(*m_demon.m_meshFrontendData);
+        m_demon.frontendBackendTransfer(m_engine->m_rendererBackend, false);
+    }
+
+    //load the diffuse texture
+    {
+        Graphics::TextureLoadArgs loadArgs;
+        loadArgs.m_path = "Meshes/Demon/pinky_d.tga";
+        loadArgs.m_wrapS = GL_CLAMP;
+        loadArgs.m_wrapT = GL_CLAMP;
+
+        m_demonDiffuse.load(loadArgs, m_engine->m_rendererBackend);
+    }
+
+    //marine normal map
+    {
+        Graphics::TextureLoadArgs loadArgs;
+        loadArgs.m_path = "Meshes/Demon/pinky_local.tga";
+        loadArgs.m_wrapS = GL_CLAMP;
+        loadArgs.m_wrapT = GL_CLAMP;
+
+        m_demonNormal.load(loadArgs, m_engine->m_rendererBackend);
+    }
+    
+    //demon front
+    {
+        IllmeshLoader<> meshLoader("Meshes/Demon/demon0.illmesh");
+
+        m_demonFront.m_meshFrontendData = new MeshData<>(meshLoader.m_numInd / 3, meshLoader.m_numVert, meshLoader.m_features);
+    
+        meshLoader.buildMesh(*m_demonFront.m_meshFrontendData);
+        m_demonFront.frontendBackendTransfer(m_engine->m_rendererBackend, false);
+    }
+
+    //load the skeleton
+    {
+        Graphics::SkeletonLoadArgs loadArgs;
+        loadArgs.m_path = "Meshes/Demon/demon.illskel";
+        m_demonSkeleton.load(loadArgs, NULL);
+        
+        m_demonController0.alloc(m_demonSkeleton.getNumBones());
+        m_demonController0.m_skeleton = &m_demonSkeleton;
+
+        m_demonController1.alloc(m_demonSkeleton.getNumBones());
+        m_demonController1.m_skeleton = &m_demonSkeleton;
+
+        m_demonController2.alloc(m_demonSkeleton.getNumBones());
+        m_demonController2.m_skeleton = &m_demonSkeleton;
+
+        m_demonController3.alloc(m_demonSkeleton.getNumBones());
+        m_demonController3.m_skeleton = &m_demonSkeleton;
+    }
+
+    //load the animation
+    {
+        Graphics::SkeletonAnimationLoadArgs loadArgs;
+        loadArgs.m_path = "Meshes/Demon/demon.illanim";
+        m_demonAnimation.load(loadArgs, NULL);
+
+        m_demonController0.m_animation = &m_demonAnimation;
+        m_demonController1.m_animation = &m_demonAnimation;
+        m_demonController2.m_animation = &m_demonAnimation;
+        m_demonController3.m_animation = &m_demonAnimation;
+
+        m_demonController1.m_animTime = 0.5f;
+        m_demonController2.m_animTime = 0.75f;
+        m_demonController3.m_animTime = 1.00f;
+    }
+
+
+
 
     //load the test shader
     {
@@ -342,7 +501,7 @@ MainMenuController::MainMenuController(Engine * engine)
 
     m_engine->m_inputManager->getInputContextStack(0)->pushInputContext(&m_cameraController.m_inputContext);
 
-    m_cameraController.m_speed = 10.0f;
+    m_cameraController.m_speed = 50.0f;
     m_cameraController.m_rollSpeed = 50.0f;
 }
 
@@ -355,6 +514,15 @@ void MainMenuController::update(float seconds) {
     m_cameraController.update(seconds);
 
     m_marineController.update(seconds);
+
+    m_hellKnightController0.update(seconds);
+    m_hellKnightController1.update(seconds * 0.5f);
+    m_hellKnightController2.update(seconds * 0.1f);
+
+    m_demonController0.update(seconds);
+    m_demonController1.update(seconds * 0.5f);
+    m_demonController2.update(seconds * 0.2f);
+    m_demonController3.update(seconds * 0.1f);
 
     /*static float animTime = 0.0f;
 
@@ -393,9 +561,18 @@ void MainMenuController::updateSound(float seconds) {
  
 void MainMenuController::render() {
     m_cameraTransform.m_transform = m_cameraController.m_transform;
-    m_camera.setTransform(m_cameraTransform, m_engine->m_window->getAspectRatio(), Graphics::DEFAULT_FOV * m_cameraController.m_zoom);
+    m_camera.setTransform(m_cameraTransform, m_engine->m_window->getAspectRatio(), Graphics::DEFAULT_FOV * m_cameraController.m_zoom, Graphics::DEFAULT_NEAR, 2000.0f);
     
     m_marineController.computeAnimPose();
+
+    m_hellKnightController0.computeAnimPose();
+    m_hellKnightController1.computeAnimPose();
+    m_hellKnightController2.computeAnimPose();
+
+    m_demonController0.computeAnimPose();
+    m_demonController1.computeAnimPose();
+    m_demonController2.computeAnimPose();
+    m_demonController3.computeAnimPose();
 
     //debug drawing
     glEnable(GL_BLEND);
@@ -536,19 +713,7 @@ void MainMenuController::render() {
 
     glUseProgram(prog);
 
-    GLint loc = glGetUniformLocation(prog, "modelViewProjectionMatrix");
-    if(loc == -1) {
-        LOG_FATAL_ERROR("Unknown uniform modelViewProjectionMatrix");
-    }
-    glUniformMatrix4fv(loc, 1, false, glm::value_ptr(m_camera.getCanonical()));
-
-    loc = glGetUniformLocation(prog, "modelViewMatrix");
-    if(loc == -1) {
-        LOG_FATAL_ERROR("Unknown uniform modelViewMatrix");
-    }
-    glUniformMatrix4fv(loc, 1, false, glm::value_ptr(m_camera.getModelView()));
-
-    loc = glGetUniformLocation(prog, "normalMatrix");
+    GLint loc = glGetUniformLocation(prog, "normalMatrix");
     if(loc == -1) {
         LOG_FATAL_ERROR("Unknown uniform normalMatrix");
     }
@@ -558,6 +723,11 @@ void MainMenuController::render() {
     if(loc == -1) {
         LOG_FATAL_ERROR("Unknown uniform diffuseMap");
     }
+
+    glm::mat4 xform;
+
+    //draw marine body
+    xform = glm::translate(glm::vec3(500.0f, 0.0f, 0.0f));
 
     glActiveTexture(GL_TEXTURE0);
     GLuint texture = *((GLuint *) m_marineDiffuse.getTextureData());
@@ -573,20 +743,63 @@ void MainMenuController::render() {
     texture = *((GLuint *) m_marineNormal.getTextureData());
     glBindTexture(GL_TEXTURE_2D, texture);
     glUniform1i(loc, 1);
-    
-    renderMesh(m_marine, m_marineController, prog);
 
+    renderMesh(m_marine, m_marineController, m_camera, xform, prog);
+
+    //draw marine helmet
     glActiveTexture(GL_TEXTURE0);
     texture = *((GLuint *) m_helmetDiffuse.getTextureData());
     glBindTexture(GL_TEXTURE_2D, texture);
-    //glUniform1i(loc, 0);
 
     glActiveTexture(GL_TEXTURE1);
     texture = *((GLuint *) m_helmetNormal.getTextureData());
     glBindTexture(GL_TEXTURE_2D, texture);
-    //glUniform1i(loc, 1);
 
-    renderMesh(m_marineHelmet, m_marineController, prog);
+    renderMesh(m_marineHelmet, m_marineController, m_camera, xform, prog);
+
+    //draw hellknight
+    glActiveTexture(GL_TEXTURE0);
+    texture = *((GLuint *) m_hellKnightDiffuse.getTextureData());
+    glBindTexture(GL_TEXTURE_2D, texture);
+
+    glActiveTexture(GL_TEXTURE1);
+    texture = *((GLuint *) m_hellKnightNormal.getTextureData());
+    glBindTexture(GL_TEXTURE_2D, texture);
+
+    
+    xform = glm::translate(glm::vec3(0.0f, 100.0f, 0.0f));
+    renderMesh(m_hellKnight, m_hellKnightController0, m_camera, xform, prog);
+
+    xform = glm::translate(glm::vec3(-20.0f, -200.0f, 0.0f)) * glm::scale(glm::vec3(2.0f));
+    renderMesh(m_hellKnight, m_hellKnightController1, m_camera, xform, prog);
+
+    xform = glm::translate(glm::vec3(-500.0f, 0.0f, 0.0f)) * glm::scale(glm::vec3(4.0f));
+    renderMesh(m_hellKnight, m_hellKnightController2, m_camera, xform, prog);
+
+    //draw demon
+    glActiveTexture(GL_TEXTURE0);
+    texture = *((GLuint *) m_demonDiffuse.getTextureData());
+    glBindTexture(GL_TEXTURE_2D, texture);
+
+    glActiveTexture(GL_TEXTURE1);
+    texture = *((GLuint *) m_demonNormal.getTextureData());
+    glBindTexture(GL_TEXTURE_2D, texture);
+    
+    xform = glm::mat4();
+    renderMesh(m_demon, m_demonController0, m_camera, xform, prog);
+    renderMesh(m_demonFront, m_demonController0, m_camera, xform, prog);
+
+    xform = glm::translate(glm::vec3(0.0f, -100.0f, 0.0f));
+    renderMesh(m_demon, m_demonController1, m_camera, xform, prog);
+    renderMesh(m_demonFront, m_demonController1, m_camera, xform, prog);
+
+    xform = glm::translate(glm::vec3(0.0f, 300.0f, 0.0f)) * glm::scale(glm::vec3(2.0f));
+    renderMesh(m_demon, m_demonController2, m_camera, xform, prog);
+    renderMesh(m_demonFront, m_demonController2, m_camera, xform, prog);
+
+    xform = glm::translate(glm::vec3(-400.0f, 600.0f, 0.0f)) * glm::scale(glm::vec3(5.0f));
+    renderMesh(m_demon, m_demonController3, m_camera, xform, prog);
+    renderMesh(m_demonFront, m_demonController3, m_camera, xform, prog);
 
     ERROR_CHECK_OPENGL;
 }

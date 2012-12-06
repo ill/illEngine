@@ -15,7 +15,7 @@ uniform mat3 normalMatrix;
 varying vec2 texCoordsOut;
 varying vec3 lightVec;
 
-#define MAX_BONES 64
+#define MAX_BONES 128
 uniform mat4 bones[MAX_BONES];
 
 void main()
@@ -37,7 +37,7 @@ void main()
 	vec3 lightTan = normalize(normalMatrix * tangent);
 	vec3 lightBitan = normalize(normalMatrix * bitangent);
 	
-	vec3 lightDir = normalize(vec3(100.0, 0.0, 0.0) - skinnedPos.xyz);		//TODO: pass in light pos
+	vec3 lightDir = normalize(vec3(0.0, 100.0, 100.0) - skinnedPos.xyz);		//TODO: pass in light pos
 	
 	lightVec = normalize(vec3(
 		dot(lightDir, lightTan),

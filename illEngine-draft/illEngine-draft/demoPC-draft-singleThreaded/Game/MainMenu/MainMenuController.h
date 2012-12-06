@@ -55,16 +55,27 @@ private:
     Graphics::Texture m_hellKnightNormal;
     Graphics::Skeleton m_hellKnightSkeleton;
     Graphics::SkeletonAnimation m_hellKnightAnimation;
-    Graphics::ModelAnimationController m_hellKnightController;
+
+    Graphics::ModelAnimationController m_hellKnightController0;
+    Graphics::ModelAnimationController m_hellKnightController1;
+    Graphics::ModelAnimationController m_hellKnightController2;
 
     //demon
 
-    Graphics::Mesh m_demonKnight;
-    Graphics::Texture m_demonKnightDiffuse;
-    Graphics::Texture m_demonKnightNormal;
-    Graphics::Skeleton m_demonKnightSkeleton;
-    Graphics::SkeletonAnimation m_demonKnightAnimation;
-    Graphics::ModelAnimationController m_demonKnightController;
+    Graphics::Mesh m_demon;
+    Graphics::Texture m_demonDiffuse;
+    Graphics::Texture m_demonNormal;
+    Graphics::Skeleton m_demonSkeleton;
+    Graphics::SkeletonAnimation m_demonAnimation;
+
+    Graphics::ModelAnimationController m_demonController0;
+    Graphics::ModelAnimationController m_demonController1;
+    Graphics::ModelAnimationController m_demonController2;
+    Graphics::ModelAnimationController m_demonController3;
+
+    //demon front
+
+    Graphics::Mesh m_demonFront;
 
     //the skinning shader
 
