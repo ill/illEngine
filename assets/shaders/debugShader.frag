@@ -13,5 +13,5 @@ void main()
 	// compute diffuse lighting
 	float lambertFactor = max (dot (lightVec, normal), 0.0);
 		
-    gl_FragColor = texture2D(diffuseMap, texCoordsOut) * lambertFactor;
+    gl_FragColor = texture2D(diffuseMap, texCoordsOut) * lambertFactor + texture2D(diffuseMap, texCoordsOut) * 0.1;
 }

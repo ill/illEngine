@@ -1,3 +1,5 @@
+#version 120
+
 attribute vec4 position;
 attribute vec3 normal;
 attribute vec3 tangent;
@@ -21,20 +23,21 @@ void main()
 	texCoordsOut = texCoords;
 
 	//skinning
-	mat4 transformedMat = bones[boneIndices[0]] * weights[0];
-	transformedMat += bones[boneIndices[1]] * weights[1];
-	transformedMat += bones[boneIndices[2]] * weights[2];
-	transformedMat += bones[boneIndices[3]] * weights[3];
+	mat4 transformedMat = bones[int(boneIndices[0])] * weights[0];
+	transformedMat += bones[int(boneIndices[1])] * weights[1];
+	transformedMat += bones[int(boneIndices[2])] * weights[2];
+	transformedMat += bones[int(boneIndices[3])] * weights[3];
 	
 	vec4 skinnedPos = modelViewMatrix * transformedMat * position;
 	
 	//lighting/normal mapping
+	mat3 transformedNormMat = mat3(transformedMat);
+	
     vec3 lightNorm = normalize(normalMatrix * normal);
 	vec3 lightTan = normalize(normalMatrix * tangent);
 	vec3 lightBitan = normalize(normalMatrix * bitangent);
 	
-	vec3 lightDir = normalize(vec3(5.0, 5.0, 5.0)
-		/*(modelViewProjectionMatrix * vec4(1.0, 1.0, 1.0, 1.0)).xyz*/ - skinnedPos.xyz);
+	vec3 lightDir = normalize(vec3(100.0, 0.0, 0.0) - skinnedPos.xyz);		//TODO: pass in light pos
 	
 	lightVec = normalize(vec3(
 		dot(lightDir, lightTan),

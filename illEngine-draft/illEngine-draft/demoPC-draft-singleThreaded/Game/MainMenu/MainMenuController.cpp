@@ -103,7 +103,7 @@ void debugDrawSkeleton(const Graphics::Skeleton * skeleton, const Graphics::Skel
         //glm::inverse(currBindXform) * currXform;
         //currXform * glm::inverse(currBindXform);
         //currAnimXform;
-
+        //glm::mat4();
         
         skeleton->getBone(currNode->m_boneIndex)->m_boneOffsetHack
             ? currXform * *skeleton->getBone(currNode->m_boneIndex)->m_boneOffsetHack
@@ -314,7 +314,7 @@ void MainMenuController::update(float seconds) {
 
     static float animTime = 0.0f;
 
-    animTime += seconds;// * 0.01f;
+    animTime += seconds * 0.01f;
     
     Graphics::SkeletonAnimation::InterpInfo interpInfo = m_animation.getFrames(animTime);
 
@@ -421,12 +421,12 @@ void MainMenuController::render() {
 
         //normal
         glm::vec3 thisNormal = m_mesh.m_meshFrontendData->getNormal(vertex);
-        glm::vec4 skinned(0.0f);
+        glm::vec3 skinned(0.0f);
 
         for(unsigned int weight = 0; weight < 4; weight++) {
             //bone xform * this position * bone weight
-            skinned += m_animationTestSkelMats[(int) m_mesh.m_meshFrontendData->getBlendData(vertex).m_blendIndex[weight]]
-                * glm::vec4(thisNormal, 1.0f) 
+            skinned += glm::mat3(m_animationTestSkelMats[(int) m_mesh.m_meshFrontendData->getBlendData(vertex).m_blendIndex[weight]])
+                * thisNormal
                 * m_mesh.m_meshFrontendData->getBlendData(vertex).m_blendWeight[weight];
         }
 
@@ -439,12 +439,12 @@ void MainMenuController::render() {
 
         //tangent
         glm::vec3 thisTangent = m_mesh.m_meshFrontendData->getTangent(vertex).m_tangent;
-        skinned = glm::vec4(0.0f);
+        skinned = glm::vec3(0.0f);
 
         for(unsigned int weight = 0; weight < 4; weight++) {
             //bone xform * this position * bone weight
-            skinned += m_animationTestSkelMats[(int) m_mesh.m_meshFrontendData->getBlendData(vertex).m_blendIndex[weight]]
-                * glm::vec4(thisTangent, 1.0f) 
+            skinned += glm::mat3(m_animationTestSkelMats[(int) m_mesh.m_meshFrontendData->getBlendData(vertex).m_blendIndex[weight]])
+                * thisTangent
                 * m_mesh.m_meshFrontendData->getBlendData(vertex).m_blendWeight[weight];
         }
 
@@ -457,12 +457,12 @@ void MainMenuController::render() {
 
         //bitangent
         glm::vec3 thisBitangent = m_mesh.m_meshFrontendData->getTangent(vertex).m_bitangent;
-        skinned = glm::vec4(0.0f);
+        skinned = glm::vec3(0.0f);
 
         for(unsigned int weight = 0; weight < 4; weight++) {
             //bone xform * this position * bone weight
-            skinned += m_animationTestSkelMats[(int) m_mesh.m_meshFrontendData->getBlendData(vertex).m_blendIndex[weight]]
-                * glm::vec4(thisBitangent, 1.0f) 
+            skinned += glm::mat3(m_animationTestSkelMats[(int) m_mesh.m_meshFrontendData->getBlendData(vertex).m_blendIndex[weight]])
+                * thisBitangent
                 * m_mesh.m_meshFrontendData->getBlendData(vertex).m_blendWeight[weight];
         }
 
