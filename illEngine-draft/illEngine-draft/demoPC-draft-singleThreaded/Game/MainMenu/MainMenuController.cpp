@@ -1,5 +1,6 @@
 #include <set>
 #include <glm/glm.hpp>
+#include <glm/gtx/transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
 #include "../../Engine.h"
@@ -101,13 +102,43 @@ void debugDrawSkeleton(const Graphics::Skeleton * skeleton, const Graphics::Skel
 
     animationTestSkelMats[currNode->m_boneIndex] = 
         //glm::inverse(currBindXform) * currXform;
-        //currXform * glm::inverse(currBindXform);
+        currXform * glm::inverse(currBindXform) * glm::rotate(-90.0f, glm::vec3(1.0f, 0.0, 0.0f));      //TODO: for now hardcoded to rotate this -90 degrees around x since all md5s seem to be flipped
+                                                                                                        //figure out how to export models in the right orientation
+                                                                                                        //THIS!  is why there's the horrible hack code below and why it took me days to get this working, 1 tiny mistake and it all explodes
         //currAnimXform;
         //glm::mat4();
         
-        skeleton->getBone(currNode->m_boneIndex)->m_boneOffsetHack
+        /*skeleton->getBone(currNode->m_boneIndex)->m_boneOffsetHack
             ? currXform * *skeleton->getBone(currNode->m_boneIndex)->m_boneOffsetHack
-            : glm::mat4();
+            : glm::mat4();*/
+
+    /*if(skeleton->getBone(currNode->m_boneIndex)->m_boneOffsetHack) {
+        glm::mat4 debMat = glm::inverse(currBindXform);
+    
+        LOG_DEBUG("\nBind inverse:\n\t%3.4f %3.4f %3.4f %3.4f\n\t%3.4f %3.4f %3.4f %3.4f\n\t%3.4f %3.4f %3.4f %3.4f\n\t%3.4f %3.4f %3.4f %3.4f\n",
+            debMat[0][0], debMat[0][1], debMat[0][2], debMat[0][3],
+            debMat[1][0], debMat[1][1], debMat[1][2], debMat[1][3],
+            debMat[2][0], debMat[2][1], debMat[2][2], debMat[2][3],
+            debMat[3][0], debMat[3][1], debMat[3][2], debMat[3][3]);
+
+        debMat = *skeleton->getBone(currNode->m_boneIndex)->m_boneOffsetHack;
+
+        LOG_DEBUG("\nBone Offset:\n\t%3.4f %3.4f %3.4f %3.4f\n\t%3.4f %3.4f %3.4f %3.4f\n\t%3.4f %3.4f %3.4f %3.4f\n\t%3.4f %3.4f %3.4f %3.4f\n",
+            debMat[0][0], debMat[0][1], debMat[0][2], debMat[0][3],
+            debMat[1][0], debMat[1][1], debMat[1][2], debMat[1][3],
+            debMat[2][0], debMat[2][1], debMat[2][2], debMat[2][3],
+            debMat[3][0], debMat[3][1], debMat[3][2], debMat[3][3]);
+
+        debMat = currBindXform * *skeleton->getBone(currNode->m_boneIndex)->m_boneOffsetHack;
+
+        LOG_DEBUG("\Difference Offset:\n\t%3.4f %3.4f %3.4f %3.4f\n\t%3.4f %3.4f %3.4f %3.4f\n\t%3.4f %3.4f %3.4f %3.4f\n\t%3.4f %3.4f %3.4f %3.4f\n",
+            debMat[0][0], debMat[0][1], debMat[0][2], debMat[0][3],
+            debMat[1][0], debMat[1][1], debMat[1][2], debMat[1][3],
+            debMat[2][0], debMat[2][1], debMat[2][2], debMat[2][3],
+            debMat[3][0], debMat[3][1], debMat[3][2], debMat[3][3]);
+
+        LOG_DEBUG("\n\n\n");
+    }*/
 
     debugDrawBone(currXform, prevXform, currNode->m_parent != NULL);
     debugDrawBone(currBindXform, prevBindXform, currNode->m_parent != NULL);
