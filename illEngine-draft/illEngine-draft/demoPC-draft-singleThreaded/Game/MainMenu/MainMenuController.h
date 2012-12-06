@@ -13,6 +13,7 @@
 #include "../../../illGraphics-draft-singleThreaded/Material/Texture.h"
 #include "../../../illGraphics-draft-singleThreaded/Model/Skeleton.h"
 #include "../../../illGraphics-draft-singleThreaded/Model/SkeletonAnimation.h"
+#include "../../../illGraphics-draft-singleThreaded/Model/ModelAnimationController.h"
 #include "../../../illGraphics-draft-singleThreaded/Material/ShaderProgram.h"
 
 namespace Demo {
@@ -34,19 +35,44 @@ private:
 
     Graphics::Camera m_camera;
     Graphics::CameraTransform m_cameraTransform;
-    Graphics::Mesh m_mesh;
-    Graphics::Mesh m_mesh2;
+    
+    //marine
+
+    Graphics::Mesh m_marine;
+    Graphics::Mesh m_marineHelmet;
     Graphics::Texture m_marineDiffuse;
     Graphics::Texture m_helmetDiffuse;
     Graphics::Texture m_marineNormal;
     Graphics::Texture m_helmetNormal;
+    Graphics::Skeleton m_marineSkeleton;
+    Graphics::SkeletonAnimation m_marineAnimation;
+    Graphics::ModelAnimationController m_marineController;
+
+    //hell knight
+
+    Graphics::Mesh m_hellKnight;
+    Graphics::Texture m_hellKnightDiffuse;
+    Graphics::Texture m_hellKnightNormal;
+    Graphics::Skeleton m_hellKnightSkeleton;
+    Graphics::SkeletonAnimation m_hellKnightAnimation;
+    Graphics::ModelAnimationController m_hellKnightController;
+
+    //demon
+
+    Graphics::Mesh m_demonKnight;
+    Graphics::Texture m_demonKnightDiffuse;
+    Graphics::Texture m_demonKnightNormal;
+    Graphics::Skeleton m_demonKnightSkeleton;
+    Graphics::SkeletonAnimation m_demonKnightAnimation;
+    Graphics::ModelAnimationController m_demonKnightController;
+
+    //the skinning shader
+
     Graphics::ShaderProgram m_debugShader;
     Graphics::ShaderProgramLoader * m_debugShaderLoader;
-    Graphics::Skeleton m_skeleton;
-    Graphics::SkeletonAnimation m_animation;
 
-    std::map<unsigned int, glm::mat4> m_animationTest;    //temporarily testing animations manually without the animation controller
-    glm::mat4 * m_animationTestSkelMats;
+    /*std::map<unsigned int, glm::mat4> m_animationTest;    //temporarily testing animations manually without the animation controller
+    glm::mat4 * m_animationTestSkelMats;*/
 };
 }
 

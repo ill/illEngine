@@ -17,143 +17,149 @@
 //TODO: for now I'm testing a bunch of stuff, normally all rendering is done through the renderer
 #include <GL/glew.h>
 
-void debugDrawBone(const glm::mat4& xForm, const glm::mat4& prevXform, bool drawLine) {
-    glm::vec4 currPoint(0.0f, 0.0f, 0.0f, 1.0f);
-    currPoint = xForm * currPoint;
+//void debugDrawBone(const glm::mat4& xForm, const glm::mat4& prevXform, bool drawLine) {
+//    glm::vec4 currPoint(0.0f, 0.0f, 0.0f, 1.0f);
+//    currPoint = xForm * currPoint;
+//
+//    glm::vec4 parentPos(0.0f, 0.0f, 0.0f, 1.0f);
+//    parentPos = prevXform * parentPos;
+//
+//    //draw line from this bone to the last bone
+//    glLineWidth(3.0f);
+//
+//    if(drawLine) {
+//        glColor4f(1.0f, 1.0f, 0.0f, 0.15f);
+//
+//        glBegin(GL_LINES);
+//            glVertex3fv(glm::value_ptr(parentPos));
+//            glVertex3fv(glm::value_ptr(currPoint));
+//        glEnd();
+//    }
+//
+//    glPointSize(5.0f);
+//    glColor4f(1.0f, 0.0f, 0.0f, 0.5f);
+//
+//    //draw the bone point
+//    glBegin(GL_POINTS);
+//    glVertex3fv(glm::value_ptr(currPoint));
+//    glEnd();
+//
+//    //draw the bone orientation
+//    glLineWidth(3.0f);
+//
+//    glBegin(GL_LINES);
+//        //x
+//        glColor4f(1.0f, 0.0f, 0.0f, 0.5f);
+//        glVertex3fv(glm::value_ptr(currPoint));
+//        
+//        glColor4f(1.0f, 0.0f, 0.0f, 0.0f);
+//        glVertex3fv(glm::value_ptr(glm::vec3(currPoint) + glm::mat3(xForm) * glm::vec3(1.0f, 0.0f, 0.0f) * 5.0f));
+//
+//        //y
+//        glColor4f(0.0f, 1.0f, 0.0f, 0.5f);
+//        glVertex3fv(glm::value_ptr(currPoint));
+//        
+//        glColor4f(0.0f, 1.0f, 0.0f, 0.0f);
+//        glVertex3fv(glm::value_ptr(glm::vec3(currPoint) + glm::mat3(xForm) * glm::vec3(0.0f, 1.0f, 0.0f) * 5.0f));
+//
+//        //z
+//        glColor4f(0.0f, 0.0f, 1.0f, 0.5f);
+//        glVertex3fv(glm::value_ptr(currPoint));
+//        
+//        glColor4f(0.0f, 0.0f, 1.0f, 0.0f);
+//        glVertex3fv(glm::value_ptr(glm::vec3(currPoint) + glm::mat3(xForm) * glm::vec3(0.0f, 0.0f, 1.0f) * 5.0f));
+//    glEnd();
+//    
+//    glLineWidth(1.0f);
+//}
+//
+//void debugDrawSkeleton(const Graphics::Skeleton * skeleton, const Graphics::Skeleton::BoneHeirarchy * currNode, glm::mat4 currXform, glm::mat4 currBindXform, glm::mat4 currAnimXform, std::map<unsigned int, glm::mat4>& animTransforms, glm::mat4 * animationTestSkelMats) {
+//    glm::mat4 prevXform = currXform;
+//    glm::mat4 prevBindXform = currBindXform;
+//    
+//    //currXform = currXform * skeleton->getBone(currNode->m_boneIndex)->m_transform * animTransforms[currNode->m_boneIndex];
+//
+//    std::map<unsigned int, glm::mat4>::iterator iter = animTransforms.find(currNode->m_boneIndex);
+//
+//    /*glm::mat4 relXform; //TODO: This should go into the animation file instead of absolute transforms from the bind pose, there's currently a limitation though so it's computed here
+//
+//    if(iter != animTransforms.end()) {
+//        relXform = glm::inverse(skeleton->getBone(currNode->m_boneIndex)->m_transform) * animTransforms[currNode->m_boneIndex];
+//    }
+//
+//    currXform = currXform * skeleton->getBone(currNode->m_boneIndex)->m_transform * relXform;
+//    currBindXform = currBindXform * skeleton->getBone(currNode->m_boneIndex)->m_transform;
+//    currAnimXform = currAnimXform * relXform;*/
+//    
+//    if(iter != animTransforms.end()) {
+//        currXform = currXform * animTransforms[currNode->m_boneIndex];
+//    }
+//    else {
+//        currXform = currXform * skeleton->getBone(currNode->m_boneIndex)->m_transform;
+//    }
+//
+//    currBindXform = currBindXform * skeleton->getBone(currNode->m_boneIndex)->m_transform;
+//
+//    animationTestSkelMats[currNode->m_boneIndex] = 
+//        //glm::inverse(currBindXform) * currXform;
+//        currXform * glm::inverse(currBindXform) * glm::rotate(-90.0f, glm::vec3(1.0f, 0.0, 0.0f));      //TODO: for now hardcoded to rotate this -90 degrees around x since all md5s seem to be flipped
+//                                                                                                        //figure out how to export models in the right orientation
+//                                                                                                        //THIS!  is why there's the horrible hack code below and why it took me days to get this working, 1 tiny mistake and it all explodes
+//        //currAnimXform;
+//        //glm::mat4();
+//        
+//        /*skeleton->getBone(currNode->m_boneIndex)->m_boneOffsetHack
+//            ? currXform * *skeleton->getBone(currNode->m_boneIndex)->m_boneOffsetHack
+//            : glm::mat4();*/
+//
+//    /*if(skeleton->getBone(currNode->m_boneIndex)->m_boneOffsetHack) {
+//        glm::mat4 debMat = glm::inverse(currBindXform);
+//    
+//        LOG_DEBUG("\nBind inverse:\n\t%3.4f %3.4f %3.4f %3.4f\n\t%3.4f %3.4f %3.4f %3.4f\n\t%3.4f %3.4f %3.4f %3.4f\n\t%3.4f %3.4f %3.4f %3.4f\n",
+//            debMat[0][0], debMat[0][1], debMat[0][2], debMat[0][3],
+//            debMat[1][0], debMat[1][1], debMat[1][2], debMat[1][3],
+//            debMat[2][0], debMat[2][1], debMat[2][2], debMat[2][3],
+//            debMat[3][0], debMat[3][1], debMat[3][2], debMat[3][3]);
+//
+//        debMat = *skeleton->getBone(currNode->m_boneIndex)->m_boneOffsetHack;
+//
+//        LOG_DEBUG("\nBone Offset:\n\t%3.4f %3.4f %3.4f %3.4f\n\t%3.4f %3.4f %3.4f %3.4f\n\t%3.4f %3.4f %3.4f %3.4f\n\t%3.4f %3.4f %3.4f %3.4f\n",
+//            debMat[0][0], debMat[0][1], debMat[0][2], debMat[0][3],
+//            debMat[1][0], debMat[1][1], debMat[1][2], debMat[1][3],
+//            debMat[2][0], debMat[2][1], debMat[2][2], debMat[2][3],
+//            debMat[3][0], debMat[3][1], debMat[3][2], debMat[3][3]);
+//
+//        debMat = currBindXform * *skeleton->getBone(currNode->m_boneIndex)->m_boneOffsetHack;
+//
+//        LOG_DEBUG("\Difference Offset:\n\t%3.4f %3.4f %3.4f %3.4f\n\t%3.4f %3.4f %3.4f %3.4f\n\t%3.4f %3.4f %3.4f %3.4f\n\t%3.4f %3.4f %3.4f %3.4f\n",
+//            debMat[0][0], debMat[0][1], debMat[0][2], debMat[0][3],
+//            debMat[1][0], debMat[1][1], debMat[1][2], debMat[1][3],
+//            debMat[2][0], debMat[2][1], debMat[2][2], debMat[2][3],
+//            debMat[3][0], debMat[3][1], debMat[3][2], debMat[3][3]);
+//
+//        LOG_DEBUG("\n\n\n");
+//    }*/
+//
+//    debugDrawBone(currXform, prevXform, currNode->m_parent != NULL);
+//    debugDrawBone(currBindXform, prevBindXform, currNode->m_parent != NULL);
+//
+//    for(std::vector<Graphics::Skeleton::BoneHeirarchy *>::const_iterator iter = currNode->m_children.begin(); iter != currNode->m_children.end(); iter++) {
+//        debugDrawSkeleton(skeleton, *iter, currXform, currBindXform, currAnimXform, animTransforms, animationTestSkelMats);
+//    }
+//}
 
-    glm::vec4 parentPos(0.0f, 0.0f, 0.0f, 1.0f);
-    parentPos = prevXform * parentPos;
-
-    //draw line from this bone to the last bone
-    glLineWidth(3.0f);
-
-    if(drawLine) {
-        glColor4f(1.0f, 1.0f, 0.0f, 0.15f);
-
-        glBegin(GL_LINES);
-            glVertex3fv(glm::value_ptr(parentPos));
-            glVertex3fv(glm::value_ptr(currPoint));
-        glEnd();
-    }
-
-    glPointSize(5.0f);
-    glColor4f(1.0f, 0.0f, 0.0f, 0.5f);
-
-    //draw the bone point
-    glBegin(GL_POINTS);
-    glVertex3fv(glm::value_ptr(currPoint));
-    glEnd();
-
-    //draw the bone orientation
-    glLineWidth(3.0f);
-
-    glBegin(GL_LINES);
-        //x
-        glColor4f(1.0f, 0.0f, 0.0f, 0.5f);
-        glVertex3fv(glm::value_ptr(currPoint));
-        
-        glColor4f(1.0f, 0.0f, 0.0f, 0.0f);
-        glVertex3fv(glm::value_ptr(glm::vec3(currPoint) + glm::mat3(xForm) * glm::vec3(1.0f, 0.0f, 0.0f) * 5.0f));
-
-        //y
-        glColor4f(0.0f, 1.0f, 0.0f, 0.5f);
-        glVertex3fv(glm::value_ptr(currPoint));
-        
-        glColor4f(0.0f, 1.0f, 0.0f, 0.0f);
-        glVertex3fv(glm::value_ptr(glm::vec3(currPoint) + glm::mat3(xForm) * glm::vec3(0.0f, 1.0f, 0.0f) * 5.0f));
-
-        //z
-        glColor4f(0.0f, 0.0f, 1.0f, 0.5f);
-        glVertex3fv(glm::value_ptr(currPoint));
-        
-        glColor4f(0.0f, 0.0f, 1.0f, 0.0f);
-        glVertex3fv(glm::value_ptr(glm::vec3(currPoint) + glm::mat3(xForm) * glm::vec3(0.0f, 0.0f, 1.0f) * 5.0f));
-    glEnd();
-    
-    glLineWidth(1.0f);
-}
-
-void debugDrawSkeleton(const Graphics::Skeleton * skeleton, const Graphics::Skeleton::BoneHeirarchy * currNode, glm::mat4 currXform, glm::mat4 currBindXform, glm::mat4 currAnimXform, std::map<unsigned int, glm::mat4>& animTransforms, glm::mat4 * animationTestSkelMats) {
-    glm::mat4 prevXform = currXform;
-    glm::mat4 prevBindXform = currBindXform;
-    
-    //currXform = currXform * skeleton->getBone(currNode->m_boneIndex)->m_transform * animTransforms[currNode->m_boneIndex];
-
-    std::map<unsigned int, glm::mat4>::iterator iter = animTransforms.find(currNode->m_boneIndex);
-
-    /*glm::mat4 relXform; //TODO: This should go into the animation file instead of absolute transforms from the bind pose, there's currently a limitation though so it's computed here
-
-    if(iter != animTransforms.end()) {
-        relXform = glm::inverse(skeleton->getBone(currNode->m_boneIndex)->m_transform) * animTransforms[currNode->m_boneIndex];
-    }
-
-    currXform = currXform * skeleton->getBone(currNode->m_boneIndex)->m_transform * relXform;
-    currBindXform = currBindXform * skeleton->getBone(currNode->m_boneIndex)->m_transform;
-    currAnimXform = currAnimXform * relXform;*/
-    
-    if(iter != animTransforms.end()) {
-        currXform = currXform * animTransforms[currNode->m_boneIndex];
-    }
-    else {
-        currXform = currXform * skeleton->getBone(currNode->m_boneIndex)->m_transform;
-    }
-
-    currBindXform = currBindXform * skeleton->getBone(currNode->m_boneIndex)->m_transform;
-
-    animationTestSkelMats[currNode->m_boneIndex] = 
-        //glm::inverse(currBindXform) * currXform;
-        currXform * glm::inverse(currBindXform) * glm::rotate(-90.0f, glm::vec3(1.0f, 0.0, 0.0f));      //TODO: for now hardcoded to rotate this -90 degrees around x since all md5s seem to be flipped
-                                                                                                        //figure out how to export models in the right orientation
-                                                                                                        //THIS!  is why there's the horrible hack code below and why it took me days to get this working, 1 tiny mistake and it all explodes
-        //currAnimXform;
-        //glm::mat4();
-        
-        /*skeleton->getBone(currNode->m_boneIndex)->m_boneOffsetHack
-            ? currXform * *skeleton->getBone(currNode->m_boneIndex)->m_boneOffsetHack
-            : glm::mat4();*/
-
-    /*if(skeleton->getBone(currNode->m_boneIndex)->m_boneOffsetHack) {
-        glm::mat4 debMat = glm::inverse(currBindXform);
-    
-        LOG_DEBUG("\nBind inverse:\n\t%3.4f %3.4f %3.4f %3.4f\n\t%3.4f %3.4f %3.4f %3.4f\n\t%3.4f %3.4f %3.4f %3.4f\n\t%3.4f %3.4f %3.4f %3.4f\n",
-            debMat[0][0], debMat[0][1], debMat[0][2], debMat[0][3],
-            debMat[1][0], debMat[1][1], debMat[1][2], debMat[1][3],
-            debMat[2][0], debMat[2][1], debMat[2][2], debMat[2][3],
-            debMat[3][0], debMat[3][1], debMat[3][2], debMat[3][3]);
-
-        debMat = *skeleton->getBone(currNode->m_boneIndex)->m_boneOffsetHack;
-
-        LOG_DEBUG("\nBone Offset:\n\t%3.4f %3.4f %3.4f %3.4f\n\t%3.4f %3.4f %3.4f %3.4f\n\t%3.4f %3.4f %3.4f %3.4f\n\t%3.4f %3.4f %3.4f %3.4f\n",
-            debMat[0][0], debMat[0][1], debMat[0][2], debMat[0][3],
-            debMat[1][0], debMat[1][1], debMat[1][2], debMat[1][3],
-            debMat[2][0], debMat[2][1], debMat[2][2], debMat[2][3],
-            debMat[3][0], debMat[3][1], debMat[3][2], debMat[3][3]);
-
-        debMat = currBindXform * *skeleton->getBone(currNode->m_boneIndex)->m_boneOffsetHack;
-
-        LOG_DEBUG("\Difference Offset:\n\t%3.4f %3.4f %3.4f %3.4f\n\t%3.4f %3.4f %3.4f %3.4f\n\t%3.4f %3.4f %3.4f %3.4f\n\t%3.4f %3.4f %3.4f %3.4f\n",
-            debMat[0][0], debMat[0][1], debMat[0][2], debMat[0][3],
-            debMat[1][0], debMat[1][1], debMat[1][2], debMat[1][3],
-            debMat[2][0], debMat[2][1], debMat[2][2], debMat[2][3],
-            debMat[3][0], debMat[3][1], debMat[3][2], debMat[3][3]);
-
-        LOG_DEBUG("\n\n\n");
-    }*/
-
-    debugDrawBone(currXform, prevXform, currNode->m_parent != NULL);
-    debugDrawBone(currBindXform, prevBindXform, currNode->m_parent != NULL);
-
-    for(std::vector<Graphics::Skeleton::BoneHeirarchy *>::const_iterator iter = currNode->m_children.begin(); iter != currNode->m_children.end(); iter++) {
-        debugDrawSkeleton(skeleton, *iter, currXform, currBindXform, currAnimXform, animTransforms, animationTestSkelMats);
-    }
-}
-
-void renderMesh(Graphics::Mesh& mesh, GLuint prog) {
+void renderMesh(Graphics::Mesh& mesh, Graphics::ModelAnimationController& controller, GLuint prog) {
     GLuint buffer = *((GLuint *) mesh.getMeshBackendData() + 0);
 
     glBindBuffer(GL_ARRAY_BUFFER, buffer);
 
-    GLint loc = glGetAttribLocation(prog, "position");
+    GLint loc = glGetUniformLocation(prog, "bones");
+    if(loc == -1) {
+        LOG_FATAL_ERROR("Unknown uniform bones");
+    }
+    glUniformMatrix4fv(loc, controller.m_skeleton->getNumBones(), false, &controller.m_skelMats[0][0][0]);
+
+    loc = glGetAttribLocation(prog, "position");
     if(loc == -1) {
         LOG_FATAL_ERROR("Unknown attrib position");
     }
@@ -233,19 +239,19 @@ MainMenuController::MainMenuController(Engine * engine)
     {
         IllmeshLoader<> meshLoader("Meshes/doomguy8.illmesh");
 
-        m_mesh.m_meshFrontendData = new MeshData<>(meshLoader.m_numInd / 3, meshLoader.m_numVert, meshLoader.m_features);
+        m_marine.m_meshFrontendData = new MeshData<>(meshLoader.m_numInd / 3, meshLoader.m_numVert, meshLoader.m_features);
     
-        meshLoader.buildMesh(*m_mesh.m_meshFrontendData);
-        m_mesh.frontendBackendTransfer(m_engine->m_rendererBackend, false);
+        meshLoader.buildMesh(*m_marine.m_meshFrontendData);
+        m_marine.frontendBackendTransfer(m_engine->m_rendererBackend, false);
     }
 
     {
         IllmeshLoader<> meshLoader("Meshes/doomguy.illmesh");
 
-        m_mesh2.m_meshFrontendData = new MeshData<>(meshLoader.m_numInd / 3, meshLoader.m_numVert, meshLoader.m_features);
+        m_marineHelmet.m_meshFrontendData = new MeshData<>(meshLoader.m_numInd / 3, meshLoader.m_numVert, meshLoader.m_features);
     
-        meshLoader.buildMesh(*m_mesh2.m_meshFrontendData);
-        m_mesh2.frontendBackendTransfer(m_engine->m_rendererBackend, false);
+        meshLoader.buildMesh(*m_marineHelmet.m_meshFrontendData);
+        m_marineHelmet.frontendBackendTransfer(m_engine->m_rendererBackend, false);
     }
 
     //load the diffuse texture
@@ -292,16 +298,21 @@ MainMenuController::MainMenuController(Engine * engine)
     {
         Graphics::SkeletonLoadArgs loadArgs;
         loadArgs.m_path = "Meshes/doomguy.illskel";
-        m_skeleton.load(loadArgs, NULL);
+        m_marineSkeleton.load(loadArgs, NULL);
 
-        m_animationTestSkelMats = new glm::mat4[m_skeleton.getNumBones()];
+        //m_animationTestSkelMats = new glm::mat4[m_marineSkeleton.getNumBones()];
+
+        m_marineController.alloc(m_marineSkeleton.getNumBones());
+        m_marineController.m_skeleton = &m_marineSkeleton;
     }
 
     //load the animation
     {
         Graphics::SkeletonAnimationLoadArgs loadArgs;
         loadArgs.m_path = "Meshes/doomguy.illanim";
-        m_animation.load(loadArgs, NULL);
+        m_marineAnimation.load(loadArgs, NULL);
+
+        m_marineController.m_animation = &m_marineAnimation;
     }
 
     //load the test shader
@@ -336,14 +347,16 @@ MainMenuController::MainMenuController(Engine * engine)
 }
 
 MainMenuController::~MainMenuController() {
-    delete[] m_animationTestSkelMats;
+    //delete[] m_animationTestSkelMats;
     delete m_debugShaderLoader;
 }
 
 void MainMenuController::update(float seconds) {
     m_cameraController.update(seconds);
 
-    static float animTime = 0.0f;
+    m_marineController.update(seconds);
+
+    /*static float animTime = 0.0f;
 
     animTime += seconds * 0.01f;
     
@@ -371,7 +384,7 @@ void MainMenuController::update(float seconds) {
                 
         //place the transform into the thing
         m_animationTest[iter->second] = transform;
-    }
+    }*/
 }
 
 void MainMenuController::updateSound(float seconds) {
@@ -382,6 +395,8 @@ void MainMenuController::render() {
     m_cameraTransform.m_transform = m_cameraController.m_transform;
     m_camera.setTransform(m_cameraTransform, m_engine->m_window->getAspectRatio(), Graphics::DEFAULT_FOV * m_cameraController.m_zoom);
     
+    m_marineController.computeAnimPose();
+
     //debug drawing
     glEnable(GL_BLEND);
     glDisable(GL_DEPTH_TEST);
@@ -416,96 +431,96 @@ void MainMenuController::render() {
     glEnd();
 
     //debug draw the skeleton
-    debugDrawSkeleton(&m_skeleton, m_skeleton.getRootBoneNode(), glm::mat4(), glm::mat4(), glm::mat4(), m_animationTest, m_animationTestSkelMats);
+    //debugDrawSkeleton(&m_skeleton, m_skeleton.getRootBoneNode(), glm::mat4(), glm::mat4(), glm::mat4(), m_animationTest, m_animationTestSkelMats);
 
-    //debug draw the mesh stuff
-    glPointSize(5.0f);
+    ////debug draw the mesh stuff
+    //glPointSize(5.0f);
 
-    //make all the computed poses be the relative xform
+    ////make all the computed poses be the relative xform
 
-    for(unsigned int vertex = 0; vertex < m_mesh.m_meshFrontendData->getNumVert(); vertex++) {
-        glm::vec3 thisPos = m_mesh.m_meshFrontendData->getPosition(vertex);
-        glm::vec4 pos(0.0f);
-        
-        for(unsigned int weight = 0; weight < 4; weight++) {
-            //bone xform * this position * bone weight
-            glm::mat4 xform = m_animationTestSkelMats[(int) m_mesh.m_meshFrontendData->getBlendData(vertex).m_blendIndex[weight]];
-            glm::vec4 weightsArray = m_mesh.m_meshFrontendData->getBlendData(vertex).m_blendWeight;
-            glm::mediump_float wgt = m_mesh.m_meshFrontendData->getBlendData(vertex).m_blendWeight[weight];
+    //for(unsigned int vertex = 0; vertex < m_mesh.m_meshFrontendData->getNumVert(); vertex++) {
+    //    glm::vec3 thisPos = m_mesh.m_meshFrontendData->getPosition(vertex);
+    //    glm::vec4 pos(0.0f);
+    //    
+    //    for(unsigned int weight = 0; weight < 4; weight++) {
+    //        //bone xform * this position * bone weight
+    //        glm::mat4 xform = m_animationTestSkelMats[(int) m_mesh.m_meshFrontendData->getBlendData(vertex).m_blendIndex[weight]];
+    //        glm::vec4 weightsArray = m_mesh.m_meshFrontendData->getBlendData(vertex).m_blendWeight;
+    //        glm::mediump_float wgt = m_mesh.m_meshFrontendData->getBlendData(vertex).m_blendWeight[weight];
 
-            pos += m_animationTestSkelMats[(int) m_mesh.m_meshFrontendData->getBlendData(vertex).m_blendIndex[weight]]
-                * glm::vec4(thisPos, 1.0f) 
-                * m_mesh.m_meshFrontendData->getBlendData(vertex).m_blendWeight[weight];
-        }
+    //        pos += m_animationTestSkelMats[(int) m_mesh.m_meshFrontendData->getBlendData(vertex).m_blendIndex[weight]]
+    //            * glm::vec4(thisPos, 1.0f) 
+    //            * m_mesh.m_meshFrontendData->getBlendData(vertex).m_blendWeight[weight];
+    //    }
 
-        //transformed point
-        glBegin(GL_POINTS);
+    //    //transformed point
+    //    glBegin(GL_POINTS);
 
-        glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
-        glVertex3fv(glm::value_ptr(pos));
+    //    glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
+    //    glVertex3fv(glm::value_ptr(pos));
 
-        glEnd();
+    //    glEnd();
 
-        glBegin(GL_LINES);
+    //    glBegin(GL_LINES);
 
-        glm::vec3 tail;
+    //    glm::vec3 tail;
 
-        //normal
-        glm::vec3 thisNormal = m_mesh.m_meshFrontendData->getNormal(vertex);
-        glm::vec3 skinned(0.0f);
+    //    //normal
+    //    glm::vec3 thisNormal = m_mesh.m_meshFrontendData->getNormal(vertex);
+    //    glm::vec3 skinned(0.0f);
 
-        for(unsigned int weight = 0; weight < 4; weight++) {
-            //bone xform * this position * bone weight
-            skinned += glm::mat3(m_animationTestSkelMats[(int) m_mesh.m_meshFrontendData->getBlendData(vertex).m_blendIndex[weight]])
-                * thisNormal
-                * m_mesh.m_meshFrontendData->getBlendData(vertex).m_blendWeight[weight];
-        }
+    //    for(unsigned int weight = 0; weight < 4; weight++) {
+    //        //bone xform * this position * bone weight
+    //        skinned += glm::mat3(m_animationTestSkelMats[(int) m_mesh.m_meshFrontendData->getBlendData(vertex).m_blendIndex[weight]])
+    //            * thisNormal
+    //            * m_mesh.m_meshFrontendData->getBlendData(vertex).m_blendWeight[weight];
+    //    }
 
-        tail = glm::vec3(pos) + glm::vec3(skinned);
+    //    tail = glm::vec3(pos) + glm::vec3(skinned);
 
-        glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
-        glVertex3fv(glm::value_ptr(pos));
-        glColor4f(1.0f, 1.0f, 1.0f, 0.0f);
-        glVertex3fv(glm::value_ptr(tail));
+    //    glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
+    //    glVertex3fv(glm::value_ptr(pos));
+    //    glColor4f(1.0f, 1.0f, 1.0f, 0.0f);
+    //    glVertex3fv(glm::value_ptr(tail));
 
-        //tangent
-        glm::vec3 thisTangent = m_mesh.m_meshFrontendData->getTangent(vertex).m_tangent;
-        skinned = glm::vec3(0.0f);
+    //    //tangent
+    //    glm::vec3 thisTangent = m_mesh.m_meshFrontendData->getTangent(vertex).m_tangent;
+    //    skinned = glm::vec3(0.0f);
 
-        for(unsigned int weight = 0; weight < 4; weight++) {
-            //bone xform * this position * bone weight
-            skinned += glm::mat3(m_animationTestSkelMats[(int) m_mesh.m_meshFrontendData->getBlendData(vertex).m_blendIndex[weight]])
-                * thisTangent
-                * m_mesh.m_meshFrontendData->getBlendData(vertex).m_blendWeight[weight];
-        }
+    //    for(unsigned int weight = 0; weight < 4; weight++) {
+    //        //bone xform * this position * bone weight
+    //        skinned += glm::mat3(m_animationTestSkelMats[(int) m_mesh.m_meshFrontendData->getBlendData(vertex).m_blendIndex[weight]])
+    //            * thisTangent
+    //            * m_mesh.m_meshFrontendData->getBlendData(vertex).m_blendWeight[weight];
+    //    }
 
-        tail = glm::vec3(pos) + glm::vec3(skinned);
+    //    tail = glm::vec3(pos) + glm::vec3(skinned);
 
-        glColor4f(1.0f, 0.0f, 0.0f, 1.0f);
-        glVertex3fv(glm::value_ptr(pos));
-        glColor4f(1.0f, 0.0f, 0.0f, 0.0f);
-        glVertex3fv(glm::value_ptr(tail));
+    //    glColor4f(1.0f, 0.0f, 0.0f, 1.0f);
+    //    glVertex3fv(glm::value_ptr(pos));
+    //    glColor4f(1.0f, 0.0f, 0.0f, 0.0f);
+    //    glVertex3fv(glm::value_ptr(tail));
 
-        //bitangent
-        glm::vec3 thisBitangent = m_mesh.m_meshFrontendData->getTangent(vertex).m_bitangent;
-        skinned = glm::vec3(0.0f);
+    //    //bitangent
+    //    glm::vec3 thisBitangent = m_mesh.m_meshFrontendData->getTangent(vertex).m_bitangent;
+    //    skinned = glm::vec3(0.0f);
 
-        for(unsigned int weight = 0; weight < 4; weight++) {
-            //bone xform * this position * bone weight
-            skinned += glm::mat3(m_animationTestSkelMats[(int) m_mesh.m_meshFrontendData->getBlendData(vertex).m_blendIndex[weight]])
-                * thisBitangent
-                * m_mesh.m_meshFrontendData->getBlendData(vertex).m_blendWeight[weight];
-        }
+    //    for(unsigned int weight = 0; weight < 4; weight++) {
+    //        //bone xform * this position * bone weight
+    //        skinned += glm::mat3(m_animationTestSkelMats[(int) m_mesh.m_meshFrontendData->getBlendData(vertex).m_blendIndex[weight]])
+    //            * thisBitangent
+    //            * m_mesh.m_meshFrontendData->getBlendData(vertex).m_blendWeight[weight];
+    //    }
 
-        tail = glm::vec3(pos) + glm::vec3(skinned);
+    //    tail = glm::vec3(pos) + glm::vec3(skinned);
 
-        glColor4f(0.0f, 0.0f, 1.0f, 1.0f);
-        glVertex3fv(glm::value_ptr(pos));
-        glColor4f(0.0f, 0.0f, 1.0f, 0.0f);
-        glVertex3fv(glm::value_ptr(tail));
+    //    glColor4f(0.0f, 0.0f, 1.0f, 1.0f);
+    //    glVertex3fv(glm::value_ptr(pos));
+    //    glColor4f(0.0f, 0.0f, 1.0f, 0.0f);
+    //    glVertex3fv(glm::value_ptr(tail));
 
-        glEnd();
-    }
+    //    glEnd();
+    //}
     
     //glPolygonMode( GL_FRONT_AND_BACK, GL_LINE );
     glEnable(GL_DEPTH_TEST);
@@ -538,13 +553,7 @@ void MainMenuController::render() {
         LOG_FATAL_ERROR("Unknown uniform normalMatrix");
     }
     glUniformMatrix3fv(loc, 1, false, glm::value_ptr(m_camera.getNormal()));
-
-    loc = glGetUniformLocation(prog, "bones");
-    if(loc == -1) {
-        LOG_FATAL_ERROR("Unknown uniform bones");
-    }
-    glUniformMatrix4fv(loc, m_skeleton.getNumBones(), false, &m_animationTestSkelMats[0][0][0]);
-
+    
     loc = glGetUniformLocation(prog, "diffuseMap");
     if(loc == -1) {
         LOG_FATAL_ERROR("Unknown uniform diffuseMap");
@@ -565,7 +574,7 @@ void MainMenuController::render() {
     glBindTexture(GL_TEXTURE_2D, texture);
     glUniform1i(loc, 1);
     
-    renderMesh(m_mesh, prog);
+    renderMesh(m_marine, m_marineController, prog);
 
     glActiveTexture(GL_TEXTURE0);
     texture = *((GLuint *) m_helmetDiffuse.getTextureData());
@@ -577,7 +586,7 @@ void MainMenuController::render() {
     glBindTexture(GL_TEXTURE_2D, texture);
     //glUniform1i(loc, 1);
 
-    renderMesh(m_mesh2, prog);
+    renderMesh(m_marineHelmet, m_marineController, prog);
 
     ERROR_CHECK_OPENGL;
 }

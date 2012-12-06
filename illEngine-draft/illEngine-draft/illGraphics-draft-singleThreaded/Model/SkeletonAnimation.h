@@ -14,6 +14,8 @@ namespace Graphics {
 
 class RendererBackend;
 
+//TODO: put this together right, at the moment it's just quickly thrown together
+
 struct SkeletonAnimationLoadArgs {
     std::string m_path; //path of skeleton animation file
 
