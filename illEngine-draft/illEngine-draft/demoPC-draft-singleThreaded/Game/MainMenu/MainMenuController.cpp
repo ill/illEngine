@@ -100,10 +100,14 @@ void debugDrawSkeleton(const Graphics::Skeleton * skeleton, const Graphics::Skel
     currBindXform = currBindXform * skeleton->getBone(currNode->m_boneIndex)->m_transform;
 
     animationTestSkelMats[currNode->m_boneIndex] = 
-        glm::inverse(currBindXform) * currXform;
+        //glm::inverse(currBindXform) * currXform;
         //currXform * glm::inverse(currBindXform);
         //currAnimXform;
-        //glm::mat4();
+
+        
+        skeleton->getBone(currNode->m_boneIndex)->m_boneOffsetHack
+            ? currXform * *skeleton->getBone(currNode->m_boneIndex)->m_boneOffsetHack
+            : glm::mat4();
 
     debugDrawBone(currXform, prevXform, currNode->m_parent != NULL);
     debugDrawBone(currBindXform, prevBindXform, currNode->m_parent != NULL);
@@ -196,7 +200,7 @@ MainMenuController::MainMenuController(Engine * engine)
     m_mesh.frontendBackendTransfer(m_engine->m_rendererBackend);*/
 
     {
-        IllmeshLoader<> meshLoader("Meshes/simple3.illmesh");
+        IllmeshLoader<> meshLoader("Meshes/doomguy8.illmesh");
 
         m_mesh.m_meshFrontendData = new MeshData<>(meshLoader.m_numInd / 3, meshLoader.m_numVert, meshLoader.m_features);
     
@@ -256,7 +260,7 @@ MainMenuController::MainMenuController(Engine * engine)
     //load the skeleton
     {
         Graphics::SkeletonLoadArgs loadArgs;
-        loadArgs.m_path = "Meshes/simple3.illskel";
+        loadArgs.m_path = "Meshes/doomguy.illskel";
         m_skeleton.load(loadArgs, NULL);
 
         m_animationTestSkelMats = new glm::mat4[m_skeleton.getNumBones()];
@@ -265,7 +269,7 @@ MainMenuController::MainMenuController(Engine * engine)
     //load the animation
     {
         Graphics::SkeletonAnimationLoadArgs loadArgs;
-        loadArgs.m_path = "Meshes/simple3.illanim";
+        loadArgs.m_path = "Meshes/doomguy.illanim";
         m_animation.load(loadArgs, NULL);
     }
 
@@ -472,7 +476,7 @@ void MainMenuController::render() {
         glEnd();
     }
     
-    glPolygonMode( GL_FRONT_AND_BACK, GL_LINE );
+    //glPolygonMode( GL_FRONT_AND_BACK, GL_LINE );
     glEnable(GL_DEPTH_TEST);
     //glDepthMask(GL_TRUE);
     glCullFace(GL_BACK);
@@ -542,7 +546,7 @@ void MainMenuController::render() {
     glBindTexture(GL_TEXTURE_2D, texture);
     //glUniform1i(loc, 1);
 
-    //renderMesh(m_mesh2, prog);
+    renderMesh(m_mesh2, prog);
 
     ERROR_CHECK_OPENGL;
 }

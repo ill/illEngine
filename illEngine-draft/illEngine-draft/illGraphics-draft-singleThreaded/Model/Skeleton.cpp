@@ -60,6 +60,9 @@ void Skeleton::reload(RendererBackend * rendererBackend) {
 
     //read the bind poses
     for(unsigned bone = 0; bone < m_numBones; bone++) {
+        //TODO: hack
+        m_bones[bone].m_boneOffsetHack = NULL;
+
         for(unsigned int matRow = 0; matRow < 4; matRow++) {
             for(unsigned int matCol = 0; matCol < 4; matCol++) {
                 (*openFile) >> m_bones[bone].m_transform[matCol][matRow];
@@ -149,6 +152,33 @@ void Skeleton::reload(RendererBackend * rendererBackend) {
     }
 
     delete openFile;
+
+    //Dirty hack: loading the bone offset file
+
+    readFile("Meshes/BoneOffsets", &objText);
+    openFile = new std::stringstream(std::string(objText), std::ios_base::in);        
+    delete[] objText;
+
+    unsigned int numBones;
+
+    (*openFile) >> numBones;
+
+    for(unsigned int bone = 0; bone < numBones; bone++) {
+        std::string boneName;
+        (*openFile) >> boneName;
+
+        glm::mat4 matrix;
+
+        for(unsigned int matRow = 0; matRow < 4; matRow++) {
+            for(unsigned int matCol = 0; matCol < 4; matCol++) {
+                (*openFile) >> matrix[matCol][matRow];
+            }            
+        }
+
+        Bone * bonObj = (Bone *) getBone(getBone(boneName));
+        bonObj->m_boneOffsetHack = new glm::mat4;
+        memcpy(bonObj->m_boneOffsetHack, &matrix, sizeof(glm::mediump_float) * 16);
+    }
 
     m_state = RES_LOADED;
 }

@@ -23,6 +23,7 @@ class Skeleton : public ResourceBase<Skeleton, SkeletonLoadArgs, RendererBackend
 public:
     struct Bone {
         glm::mat4 m_transform;  //TODO: for now it's a transform while I debug this, later use quats and positions
+        glm::mat4 * m_boneOffsetHack;
     };
     
     struct BoneHeirarchy {
