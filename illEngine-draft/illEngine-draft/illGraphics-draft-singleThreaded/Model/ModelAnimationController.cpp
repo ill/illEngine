@@ -61,7 +61,7 @@ void ModelAnimationController::update(float seconds) {
         Graphics::SkeletonAnimation::Transform currentTransform;
 
         currentTransform.m_position = glm::mix(transforms[interpInfo.m_frame1].m_position, transforms[interpInfo.m_frame2].m_position, interpInfo.m_delta);
-        currentTransform.m_rotation = glm::fastMix(transforms[interpInfo.m_frame1].m_rotation, transforms[interpInfo.m_frame2].m_rotation, interpInfo.m_delta);
+        currentTransform.m_rotation = glm::shortMix(transforms[interpInfo.m_frame1].m_rotation, transforms[interpInfo.m_frame2].m_rotation, interpInfo.m_delta);
         currentTransform.m_scale = glm::mix(transforms[interpInfo.m_frame1].m_scale, transforms[interpInfo.m_frame2].m_scale, interpInfo.m_delta);
 
         //compute the matrix
