@@ -143,12 +143,12 @@ public:
     @param allocate Whether or not the data for the mesh should be allocated on the CPU side.
     */
     MeshData(uint32_t numTri, uint32_t numVert, /*uint8_t numGroups,*/ FeaturesMask features = MF_POSITION | MF_NORMAL | MF_TANGENT | MF_TEX_COORD, bool allocate = true)
-        : m_numTri(numTri),
-        m_numVert(numVert),
-        //m_numGroups(numGroups),
-        m_features(features),
+        : m_numVert(numVert),
         m_data(NULL),
-        m_indeces(NULL)
+        m_numTri(numTri),
+        m_indeces(NULL),
+        //m_numGroups(numGroups),
+        m_features(features)
     {
         free();
 
@@ -358,7 +358,7 @@ public:
     Use this as a parameter for any functions that take stride of data between face.
     */
     inline size_t getFaceSize() const {
-        return m_faceSize;
+        return m_vertexSize * 3;
     }
 
     /**
@@ -466,7 +466,7 @@ public:
     @param vertInd The face vertex index, a value from 0 to 2.
     */
     inline BlendData& getBlendData(uint32_t faceInd, uint32_t vertInd) {
-        assert(hasBlendIndices());
+        assert(hasBlendData());
         assert(faceInd < m_numTri);
         assert(vertInd < 3);
         assert(m_data);

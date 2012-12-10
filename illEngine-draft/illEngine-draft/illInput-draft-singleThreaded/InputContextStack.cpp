@@ -1,3 +1,5 @@
+#include <cstdlib>
+
 #include "InputContextStack.h"
 #include "InputContext.h"
 #include "InputBinding.h"

@@ -12,7 +12,9 @@ Loads the amazing illmesh ASCII format.  It's a nice simple format where you don
 template <typename T = glm::mediump_float>
 struct IllmeshLoader {
     IllmeshLoader(const std::string& fileName)
-        : m_features(0)
+        : m_features(0),
+        m_numVert(0),
+        m_numInd(0)
     {
         //TODO: LOL this is horrible, inefficient, and temporary, and works just fine in most situations so whatever...
         //I need to write a nice file IO interface around physfs for PC and whatever we need on Android and Ios when the time comes, for now this will work

@@ -3,7 +3,8 @@
 namespace Demo {
 
 CameraController::CameraController()
-    : m_speed(0.0f),
+    : m_zoom(1.0f),
+    m_speed(0.0f),
     m_rollSpeed(0.0f),
 
     m_forward(false),
@@ -16,9 +17,7 @@ CameraController::CameraController()
     m_rollRight(false),
     m_sprint(false),
 
-    m_lookMode(true),
-
-    m_zoom(1.0f)
+    m_lookMode(true)
 {
     //init listeners
     m_horzLookListener.m_controller = this;

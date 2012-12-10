@@ -1,3 +1,4 @@
+#include <cstring>
 #include <IL/il.h>          //TODO: temporary for now, on PC this is fine, usually nice ways to load image files exist on ios and android
 //TODO: support loading s3tc and other compressed textures depending on the device
 

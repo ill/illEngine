@@ -1,6 +1,7 @@
 #ifndef __CASTING_H__
 #define __CASTING_H__
 
+#include <typeinfo>
 #include <sstream>
 #include "Logging\logging.h"
 

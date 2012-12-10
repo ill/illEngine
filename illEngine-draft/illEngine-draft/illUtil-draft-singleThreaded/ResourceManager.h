@@ -89,7 +89,7 @@ public:
     }
 
     inline Id getIdForName(const std::string& name) const {
-        std::map<std::string, Id>::iterator idIter = m_nameMap->find(name);
+        typename std::map<std::string, Id>::iterator idIter = m_nameMap->find(name);
 
         if(idIter == m_nameMap->end()) {
             LOG_FATAL_ERROR("getIdForName() passed invalid resource name %s.", name.c_str());

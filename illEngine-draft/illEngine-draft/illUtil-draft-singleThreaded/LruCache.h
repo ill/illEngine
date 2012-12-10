@@ -42,7 +42,8 @@ private:
    struct ElementInfo {
 
       ElementInfo() 
-         : m_element(NULL) 
+         : m_element(NULL),
+         m_timeFreed(0.0)
       {}
 
       ~ElementInfo() {
@@ -56,7 +57,8 @@ private:
 
 public:
    LruCache(CreateFunc createFunc, size_t bucketSize = 20)
-      : m_createFunc(createFunc)
+      : m_createFunc(createFunc),
+      m_creator(NULL)
    {
       m_elements = ElementsMap(bucketSize);
    }
@@ -69,7 +71,7 @@ public:
    }
 
    inline RefCountPtr<T> getElement(Key key) {
-      ElementsMap::iterator iter = m_elements.find(key);
+      typename ElementsMap::iterator iter = m_elements.find(key);
 
       //if element in cache, return it
       if(iter != m_elements.end()) {

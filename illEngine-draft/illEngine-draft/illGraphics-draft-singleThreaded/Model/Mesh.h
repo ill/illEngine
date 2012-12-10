@@ -29,8 +29,8 @@ struct Mesh {
         return m_meshBackendData;
     }
 
-    RendererBackend * m_backend;
     MeshData<> * m_meshFrontendData;
+    RendererBackend * m_backend;
     void * m_meshBackendData;
 };
 }

@@ -68,7 +68,8 @@ struct CameraController {
 private:
     struct HorzLook : public Input::InputListenerRange::InputCallback {
         HorzLook() 
-            : Input::InputListenerRange::InputCallback()
+            : Input::InputListenerRange::InputCallback(),
+            m_controller(NULL)
         {}
 
         virtual ~HorzLook() {}
@@ -87,7 +88,8 @@ private:
 
     struct VertLook : public Input::InputListenerRange::InputCallback {
         VertLook()
-            : Input::InputListenerRange::InputCallback()
+            : Input::InputListenerRange::InputCallback(),
+            m_controller(NULL)
         {}
 
         virtual ~VertLook() {}
@@ -115,7 +117,8 @@ private:
     //TODO: the state and toggle listeners look like they'd be useful everywhere, move them to the Input project?
     struct State : public Input::InputListenerState::InputCallback {
         State()
-            : Input::InputListenerState::InputCallback()
+            : Input::InputListenerState::InputCallback(),
+            m_state(NULL)
         {}
 
         virtual ~State() {}
@@ -129,7 +132,8 @@ private:
 
     struct LookMode : public Input::InputListenerState::InputCallback {
         LookMode()
-            : Input::InputListenerState::InputCallback()
+            : Input::InputListenerState::InputCallback(),
+            m_controller(NULL)
         {}
 
         virtual ~LookMode() {}
@@ -156,7 +160,8 @@ private:
 
     struct ZoomIn : public Input::InputListenerState::InputCallback {
         ZoomIn()
-            : Input::InputListenerState::InputCallback()
+            : Input::InputListenerState::InputCallback(),
+            m_zoom(NULL)
         {}
 
         virtual ~ZoomIn() {}
@@ -174,7 +179,8 @@ private:
 
     struct ZoomOut : public Input::InputListenerState::InputCallback {
         ZoomOut()
-            : Input::InputListenerState::InputCallback()
+            : Input::InputListenerState::InputCallback(),
+            m_zoom(NULL)
         {}
 
         virtual ~ZoomOut() {}
@@ -188,7 +194,8 @@ private:
 
     struct ZoomDefault : public Input::InputListenerState::InputCallback {
         ZoomDefault()
-            : Input::InputListenerState::InputCallback()
+            : Input::InputListenerState::InputCallback(),
+            m_zoom(NULL)
         {}
 
         virtual ~ZoomDefault() {}

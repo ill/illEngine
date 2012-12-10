@@ -18,7 +18,7 @@ class DeveloperConsole : public LogDestination {
 public:
    
    DeveloperConsole();
-   ~DeveloperConsole();
+   virtual ~DeveloperConsole();
 
    /**
    Process all queued up actions and performs them.

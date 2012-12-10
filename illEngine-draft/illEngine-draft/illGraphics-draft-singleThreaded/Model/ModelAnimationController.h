@@ -17,9 +17,10 @@ class ModelAnimationController {
 public:
 
     ModelAnimationController()
-        : m_skeleton(NULL),
+        : m_animTime(0.0f),
+        m_skeleton(NULL),
         m_animation(NULL),
-        m_animTime(0.0f)
+        m_skelMats(NULL)
     {}
 
     inline void alloc(unsigned int numBones) {

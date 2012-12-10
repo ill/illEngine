@@ -28,10 +28,10 @@ private:
         APPST_EXITING
     };
 
+    State m_state;
+
     GameControllerBase * m_gameController;
     Engine * m_engine;
-
-    State m_state;
 };
 
 }

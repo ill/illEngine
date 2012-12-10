@@ -2,6 +2,7 @@
 #define __REF_COUNT_PTR_H__
 
 #include <cassert>
+#include "casting.h"
 
 template <typename T>
 struct RefCountPtr;
@@ -13,7 +14,10 @@ struct RefCountPtrRoot;
 */
 template <typename T>
 struct PtrHelper {
-    PtrHelper() {}
+    PtrHelper()
+        : m_root(NULL)
+    {}
+
     virtual ~PtrHelper() {}
 
     virtual inline void onZeroReferences() {

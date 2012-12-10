@@ -33,7 +33,7 @@ public:
    Returns a resource's loading args.
    */
    inline const LoadArgs& getLoadArgs() const {
-      return m_loadInfo;
+      return m_loadArgs;
    }
 
    /**
@@ -54,7 +54,8 @@ protected:
    Creates a resource in an uninitialized state
    */
    inline ResourceBase()
-      : m_state(RES_UNINITIALIZED)
+      : m_loader(NULL),
+      m_state(RES_UNINITIALIZED)
    {}
    
    enum State {
