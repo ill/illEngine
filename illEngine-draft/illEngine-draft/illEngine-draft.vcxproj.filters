@@ -15,288 +15,309 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="demoPC-draft-singleThreaded\main.cpp">
+    <ClCompile Include="Tests\testVectorManager.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="illConsole-draft-singleThreaded\DeveloperConsole.cpp">
+    <ClCompile Include="Tests\testRefCountPtr.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="illConsole-draft-singleThreaded\consoleConsole.cpp">
+    <ClCompile Include="demoPC\Game\MainMenu\MainMenuController.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="illUtil-draft-singleThreaded\util.cpp">
+    <ClCompile Include="demoPC\Game\CameraController.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="illInput-draft-singleThreaded\InputContextStack.cpp">
+    <ClCompile Include="demoPC\Game\MainController.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="illInput-draft-singleThreaded\InputContext.cpp">
+    <ClCompile Include="demoPC\FixedStepController.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="illInput-draft-singleThreaded\InputManager.cpp">
+    <ClCompile Include="demoPC\main.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="illUtil-draft-singleThreaded\Logging\Logger.cpp">
+    <ClCompile Include="illPhysFs\PhysFsFile.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="illPC-draft-singleThreaded\SdlWindow.cpp">
+    <ClCompile Include="serial-illConsole\consoleConsole.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="illGlCommon-draft-singleThreaded\GlRenderer.cpp">
+    <ClCompile Include="serial-illConsole\DeveloperConsole.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="illGlCommon-draft-singleThreaded\loadTexture.cpp">
+    <ClCompile Include="serial-illGlCommon\GlRenderer.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="illGlCommon-draft-singleThreaded\loadShader.cpp">
+    <ClCompile Include="serial-illGlCommon\loadMesh.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="illGlCommon-draft-singleThreaded\loadShaderProgram.cpp">
+    <ClCompile Include="serial-illGlCommon\loadShader.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="illGlCommon-draft-singleThreaded\loadMesh.cpp">
+    <ClCompile Include="serial-illGlCommon\loadShaderProgram.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="illGraphics-draft-singleThreaded\Material\Shader.cpp">
+    <ClCompile Include="serial-illGlCommon\loadTexture.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="illGraphics-draft-singleThreaded\Material\Texture.cpp">
+    <ClCompile Include="serial-illGraphics\Material\Shader.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="illGraphics-draft-singleThreaded\Material\ShaderProgram.cpp">
+    <ClCompile Include="serial-illGraphics\Material\ShaderProgram.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="demoPC-draft-singleThreaded\FixedStepController.cpp">
+    <ClCompile Include="serial-illGraphics\Material\Texture.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="demoPC-draft-singleThreaded\Game\MainController.cpp">
+    <ClCompile Include="serial-illGraphics\Model\Mesh.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="demoPC-draft-singleThreaded\Game\MainMenu\MainMenuController.cpp">
+    <ClCompile Include="serial-illGraphics\Model\ModelAnimationController.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="illGraphics-draft-singleThreaded\Model\Mesh.cpp">
+    <ClCompile Include="serial-illGraphics\Model\Skeleton.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="demoPC-draft-singleThreaded\Game\CameraController.cpp">
+    <ClCompile Include="serial-illGraphics\Model\SkeletonAnimation.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="illGraphics-draft-singleThreaded\Model\Skeleton.cpp">
+    <ClCompile Include="serial-illInput\InputContext.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="illGraphics-draft-singleThreaded\Model\SkeletonAnimation.cpp">
+    <ClCompile Include="serial-illInput\InputContextStack.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="illGraphics-draft-singleThreaded\Model\ModelAnimationController.cpp">
+    <ClCompile Include="serial-illInput\InputManager.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="serial-illPC\SdlWindow.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="serial-illUtil\util.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="illPhysFs\PhysFsFileSystem.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Tests\testEndian.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="serial-illLogging\Logger.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="illPC-draft-singleThreaded\SdlWindow.h">
+    <ClInclude Include="Tests\tests.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="illConsole-draft-singleThreaded\DeveloperConsole.h">
+    <ClInclude Include="illFileSystem\File.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="illConsole-draft-singleThreaded\ConsoleVariable.h">
+    <ClInclude Include="illFileSystem\FileSystem.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="illConsole-draft-singleThreaded\consoleConsole.h">
+    <ClInclude Include="demoPC\Game\MainMenu\MainMenuController.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="illConsole-draft-singleThreaded\VariableManager.h">
+    <ClInclude Include="demoPC\Game\CameraController.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="illUtil-draft-singleThreaded\util.h">
+    <ClInclude Include="demoPC\Game\MainController.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="illUtil-draft-singleThreaded\physFsUtil.h">
+    <ClInclude Include="demoPC\Engine.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="illUtil-draft-singleThreaded\VectorManager.h">
+    <ClInclude Include="demoPC\FixedStepController.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="illUtil-draft-singleThreaded\UidGenerator.h">
+    <ClInclude Include="demoPC\GameControllerBase.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="illGraphics-draft-singleThreaded\Light.h">
+    <ClInclude Include="illPhysFs\PhysFsFile.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="illGraphics-draft-singleThreaded\Effect.h">
+    <ClInclude Include="illPhysFs\PhysFsFileSystem.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="illGraphics-draft-singleThreaded\Window.h">
+    <ClInclude Include="serial-illConsole\consoleConsole.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="illInput-draft-singleThreaded\InputContext.h">
+    <ClInclude Include="serial-illConsole\ConsoleVariable.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="illInput-draft-singleThreaded\InputContextStack.h">
+    <ClInclude Include="serial-illConsole\DeveloperConsole.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="illInput-draft-singleThreaded\InputBinding.h">
+    <ClInclude Include="serial-illConsole\VariableManager.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="illInput-draft-singleThreaded\InputListenerBase.h">
+    <ClInclude Include="serial-illGlCommon\glLogging.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="illInput-draft-singleThreaded\InputListenerState.h">
+    <ClInclude Include="serial-illGlCommon\GlRenderer.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="illInput-draft-singleThreaded\InputListenerRange.h">
+    <ClInclude Include="serial-illGraphics\Camera\Camera.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="illInput-draft-singleThreaded\inputAxisEnum.h">
+    <ClInclude Include="serial-illGraphics\Camera\CameraTransform.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="illInput-draft-singleThreaded\InputManager.h">
+    <ClInclude Include="serial-illGraphics\Material\Material.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="illPC-draft-singleThreaded\sdlInputEnum.h">
+    <ClInclude Include="serial-illGraphics\Material\Shader.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="illPC-draft-singleThreaded\SdlWindow.h">
+    <ClInclude Include="serial-illGraphics\Material\ShaderProgram.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="illUtil-draft-singleThreaded\Logging\logging.h">
+    <ClInclude Include="serial-illGraphics\Material\Texture.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="illUtil-draft-singleThreaded\Logging\Logger.h">
+    <ClInclude Include="serial-illGraphics\Model\Mesh.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="illUtil-draft-singleThreaded\Logging\LogDestination.h">
+    <ClInclude Include="serial-illGraphics\Model\ModelAnimationController.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="demoPC-draft-singleThreaded\Engine.h">
+    <ClInclude Include="serial-illGraphics\Model\Skeleton.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="illUtil-draft-singleThreaded\RefCountPtr.h">
+    <ClInclude Include="serial-illGraphics\Model\SkeletonAnimation.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="illUtil-draft-singleThreaded\LruCache.h">
+    <ClInclude Include="serial-illGraphics\Scene\GraphicsScene.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="illUtil-draft-singleThreaded\ResourceManager.h">
+    <ClInclude Include="serial-illGraphics\Effect.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="illUtil-draft-singleThreaded\ResourceBase.h">
+    <ClInclude Include="serial-illGraphics\graphicsLogging.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="illUtil-draft-singleThreaded\casting.h">
+    <ClInclude Include="serial-illGraphics\Light.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="illUtil-draft-singleThreaded\FileIO\FileIO.h">
+    <ClInclude Include="serial-illGraphics\RendererBackend.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="illUtil-draft-singleThreaded\Geometry\BoundingVolume.h">
+    <ClInclude Include="serial-illGraphics\RendererFrontent.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="illUtil-draft-singleThreaded\Geometry\Sphere.h">
+    <ClInclude Include="serial-illGraphics\Window.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="illUtil-draft-singleThreaded\Geometry\Box.h">
+    <ClInclude Include="serial-illInput\inputAxisEnum.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="illUtil-draft-singleThreaded\Geometry\BoxIterator.h">
+    <ClInclude Include="serial-illInput\InputBinding.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="illUtil-draft-singleThreaded\Geometry\Frustum.h">
+    <ClInclude Include="serial-illInput\InputContext.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="illUtil-draft-singleThreaded\Geometry\FrustumIterator-old.h">
+    <ClInclude Include="serial-illInput\InputContextStack.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="illUtil-draft-singleThreaded\Geometry\FrustumIterator.h">
+    <ClInclude Include="serial-illInput\InputListenerBase.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="illUtil-draft-singleThreaded\Geometry\geomUtil.h">
+    <ClInclude Include="serial-illInput\InputListenerRange.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="illUtil-draft-singleThreaded\Geometry\GridVolume3D.h">
+    <ClInclude Include="serial-illInput\InputListenerState.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="illUtil-draft-singleThreaded\Geometry\LineIterator.h">
+    <ClInclude Include="serial-illInput\InputManager.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="illUtil-draft-singleThreaded\Geometry\MeshData.h">
+    <ClInclude Include="serial-illPC\sdlInputEnum.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="illUtil-draft-singleThreaded\Geometry\MeshEdgeList.h">
+    <ClInclude Include="serial-illPC\SdlWindow.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="illUtil-draft-singleThreaded\Geometry\Plane.h">
+    <ClInclude Include="serial-illUtil\Geometry\BoundingVolume.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="illGlCommon-draft-singleThreaded\GlRenderer.h">
+    <ClInclude Include="serial-illUtil\Geometry\Box.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="illGraphics-draft-singleThreaded\Material\Material.h">
+    <ClInclude Include="serial-illUtil\Geometry\BoxIterator.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="illGraphics-draft-singleThreaded\Material\Shader.h">
+    <ClInclude Include="serial-illUtil\Geometry\Frustum.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="illGraphics-draft-singleThreaded\Material\ShaderProgram.h">
+    <ClInclude Include="serial-illUtil\Geometry\FrustumIterator-old.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="illGraphics-draft-singleThreaded\Material\Texture.h">
+    <ClInclude Include="serial-illUtil\Geometry\FrustumIterator.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="illGraphics-draft-singleThreaded\Model\Mesh.h">
+    <ClInclude Include="serial-illUtil\Geometry\geomUtil.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="illGraphics-draft-singleThreaded\Model\Skeleton.h">
+    <ClInclude Include="serial-illUtil\Geometry\GridVolume3D.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="illGraphics-draft-singleThreaded\Model\SkeletonAnimation.h">
+    <ClInclude Include="serial-illUtil\Geometry\LineIterator.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="illGraphics-draft-singleThreaded\Model\ModelAnimationController.h">
+    <ClInclude Include="serial-illUtil\Geometry\MeshData.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="illGlCommon-draft-singleThreaded\glLogging.h">
+    <ClInclude Include="serial-illUtil\Geometry\MeshEdgeList.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="illGraphics-draft-singleThreaded\graphicsLogging.h">
+    <ClInclude Include="serial-illUtil\Geometry\Plane.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="demoPC-draft-singleThreaded\GameControllerBase.h">
+    <ClInclude Include="serial-illUtil\Geometry\Sphere.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="demoPC-draft-singleThreaded\FixedStepController.h">
+    <ClInclude Include="serial-illUtil\Geometry\Transform.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="demoPC-draft-singleThreaded\Game\MainController.h">
+    <ClInclude Include="serial-illUtil\Illmesh\IllmeshLoader.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="demoPC-draft-singleThreaded\Game\MainMenu\MainMenuController.h">
+    <ClInclude Include="serial-illUtil\casting.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="illGraphics-draft-singleThreaded\RendererBackend.h">
+    <ClInclude Include="serial-illUtil\LruCache.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="illGraphics-draft-singleThreaded\RendererFrontent.h">
+    <ClInclude Include="serial-illUtil\RefCountPtr.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="illGraphics-draft-singleThreaded\Scene\GraphicsScene.h">
+    <ClInclude Include="serial-illUtil\ResourceBase.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="illGraphics-draft-singleThreaded\Camera\Camera.h">
+    <ClInclude Include="serial-illUtil\ResourceManager.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="illGraphics-draft-singleThreaded\Camera\CameraTransform.h">
+    <ClInclude Include="serial-illUtil\UidGenerator.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="illUtil-draft-singleThreaded\ObjLoader.h">
+    <ClInclude Include="serial-illUtil\util.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="demoPC-draft-singleThreaded\Game\CameraController.h">
+    <ClInclude Include="serial-illUtil\VectorManager.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="illUtil-draft-singleThreaded\Illmesh\IllmeshLoader.h">
+    <ClInclude Include="illUtil\endian.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="illUtil-draft-singleThreaded\Illmesh\IllskelLoader.h">
+    <ClInclude Include="serial-illLogging\LogDestination.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="serial-illLogging\logging.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="serial-illLogging\Logger.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
