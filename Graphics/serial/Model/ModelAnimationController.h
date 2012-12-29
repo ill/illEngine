@@ -4,7 +4,7 @@
 #include <map>
 
 #include <glm/glm.hpp>
-#include "serial-illUtil/RefCountPtr.h"
+#include "Util/serial/RefCountPtr.h"
 
 namespace Graphics {
 
@@ -36,10 +36,10 @@ public:
     void update(float seconds);         //it's fine to do this every update since this would be also used for transforming the hitboxes and 
     void computeAnimPose();
 
-    float m_animTime;
-
     Skeleton * m_skeleton;
     SkeletonAnimation * m_animation;
+
+    float m_animTime;
 
     std::map<unsigned int, glm::mat4> m_animationTest;      //This is horrible
     glm::mat4 * m_skelMats;                                 //This is the bone array that goes to the shader

@@ -23,7 +23,7 @@ public:
       ID newId = m_idGenerator.generateId(isReusing);
       
       if(isReusing) {
-         m_vector[(std::vector<T>::size_type) newId] = element;
+         m_vector[(size_t) newId] = element;
       }
       else {
          m_vector.push_back(element);
@@ -54,7 +54,7 @@ public:
    inline T get(ID id) const {
       //TODO: make sure id is valid, at least in debug build
 
-      return (m_vector[(std::vector<T>::size_type) id]);
+      return (m_vector[(size_t) id]);
    }
 
    inline const std::vector<T>& getVector() const {

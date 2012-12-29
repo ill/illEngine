@@ -33,7 +33,7 @@ public:
    Returns a resource's loading args.
    */
    inline const LoadArgs& getLoadArgs() const {
-      return m_loadInfo;
+      return m_loadArgs;
    }
 
    /**

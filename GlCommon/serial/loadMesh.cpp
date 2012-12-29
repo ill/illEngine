@@ -1,6 +1,6 @@
 #include <GL/glew.h>
-#include "GlRenderer.h"
-#include "serial-illUtil/Geometry/MeshData.h"
+#include "GlCommon/serial/GlRenderer.h"
+#include "Util/Geometry/MeshData.h"
 
 namespace GlCommon {
 

@@ -1,13 +1,13 @@
 #include <SDL.h>
 
-#include "serial-illLogging/logging.h"
+#include "Logging/logging.h"
 
-#include "serial-illGraphics/RendererBackend.h"
+#include "Graphics/RendererBackend.h"
 
-#include "serial-illInput/InputManager.h"
-#include "serial-illInput/InputBinding.h"
-#include "serial-illInput/inputAxisEnum.h"
-#include "serial-illInput/InputListenerBase.h"
+#include "Input/serial/InputManager.h"
+#include "Input/serial/InputBinding.h"
+#include "Input/serial/inputAxisEnum.h"
+#include "Input/serial/InputListenerBase.h"
 
 #include "SdlWindow.h"
 #include "sdlInputEnum.h"

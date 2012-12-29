@@ -3,7 +3,7 @@
 
 #include <SDL.h>
 
-#include "serial-illGraphics/Window.h"
+#include "Graphics/Window.h"
 
 namespace Input {
 class InputManager;

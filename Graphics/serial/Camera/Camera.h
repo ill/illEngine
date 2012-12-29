@@ -5,13 +5,13 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/matrix_inverse.hpp>
 
-#include "serial-illUtil/Geometry/Plane.h"
-#include "serial-illUtil/Geometry/Box.h"
-#include "serial-illUtil/Geometry/Frustum.h"
-#include "serial-illUtil/Geometry/geomUtil.h"
-#include "serial-illUtil/util.h"
+#include "Util/Geometry/Plane.h"
+#include "Util/Geometry/Box.h"
+#include "Util/Geometry/Frustum.h"
+#include "Util/Geometry/geomUtil.h"
+#include "Util/util.h"
 
-#include "CameraTransform.h"
+#include "Graphics/serial/Camera/CameraTransform.h"
 
 namespace Graphics {  
 

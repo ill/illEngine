@@ -3,7 +3,7 @@
 
 #include <GL/glew.h>
 
-#include "serial-illLogging/logging.h"
+#include "Logging/logging.h"
 
 #ifndef NDEBUG      //Debug Build
 

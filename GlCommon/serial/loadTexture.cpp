@@ -1,13 +1,14 @@
+#include <cstring>
+
 #include <IL/il.h>          //TODO: temporary for now, on PC this is fine, usually nice ways to load image files exist on ios and android
 //TODO: support loading s3tc and other compressed textures depending on the device
 
 #include <GL/glew.h>
 
-
 #include "GlRenderer.h"
-#include "serial-illGraphics/Material/Texture.h"
-#include "illFileSystem/FileSystem.h"
-#include "illFileSystem/File.h"
+#include "Graphics/serial/Material/Texture.h"
+#include "FileSystem/FileSystem.h"
+#include "FileSystem/File.h"
 
 namespace GlCommon {
 

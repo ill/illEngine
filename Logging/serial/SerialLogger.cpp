@@ -1,5 +1,5 @@
-#include <SDL_assert.h>		//TODO: make this non platform dependant later
-#include "Logger.h"
+#include "Util/debug.h"
+#include "SerialLogger.h"
 
 const std::string ERROR_MESSAGE("ERROR: ");
 const std::string FATAL_ERROR_MESSAGE("FATAL ERROR: ");
@@ -7,7 +7,7 @@ const std::string DEBUG_MESSAGE("Debug: ");
 
 namespace illLogging {
 
-void Logger::printMessage(LogDestination::MessageLevel messageLevel, const char * message) {	
+void SerialLogger::printMessage(LogDestination::MessageLevel messageLevel, const char * message) {
     std::string finalMessage = "";
 
     //prepend with proper prefixes
@@ -36,7 +36,7 @@ void Logger::printMessage(LogDestination::MessageLevel messageLevel, const char 
     //if fatal error message, just exit the application
     if(messageLevel == LogDestination::MT_FATAL) {
         //if debugging, cause a breakpoint so I can do a stack trace
-        SDL_TriggerBreakpoint();
+        TriggerBreakpoint();
 
         exit(-1);
     }

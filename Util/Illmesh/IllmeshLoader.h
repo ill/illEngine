@@ -2,10 +2,10 @@
 #define __ILLMESHLOADER_H__
 
 #include <string>
-#include "serial-illLogging/logging.h"
-#include "../Geometry/MeshData.h"
-#include "illFileSystem/FileSystem.h"
-#include "illFileSystem/File.h"
+#include "Logging/logging.h"
+#include "Util/Geometry/MeshData.h"
+#include "FileSystem/FileSystem.h"
+#include "FileSystem/File.h"
 
 /**
 Loads the amazing illmesh ASCII format.  It's a nice simple format where you don't deal with any BS and just load what you need into the VBO and IBO.

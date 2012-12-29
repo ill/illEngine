@@ -1,7 +1,7 @@
 #include <cassert>
 #include "tests.h"
-#include "illUtil/endian.h"
-#include "serial-illLogging/logging.h"
+#include "Util/endian.h"
+#include "Logging/logging.h"
 
 const uint16_t a16 = 0x1234;
 const uint16_t b16 = 0x3412;

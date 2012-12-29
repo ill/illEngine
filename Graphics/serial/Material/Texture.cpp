@@ -1,7 +1,7 @@
-#include "Texture.h"
-#include "../RendererBackend.h"
+#include "Graphics/serial/Material/Texture.h"
+#include "Graphics/RendererBackend.h"
 
-#include "serial-illLogging/logging.h"
+#include "Logging/logging.h"
 
 namespace Graphics {
 

@@ -2,7 +2,7 @@
 #include "PhysFsFileSystem.h"
 #include "PhysFsFile.h"
 
-#include "serial-illLogging/logging.h"
+#include "Logging/logging.h"
 
 namespace illPhysFs {
 void PhysFsFileSystem::init(const char * argv0) {

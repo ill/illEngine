@@ -1,13 +1,26 @@
-#ifndef __LOGGER_H__
-#define __LOGGER_H__
+/*
+ * Logger.h
+ *
+ *  Created on: Dec 29, 2012
+ *      Author: Ilya
+ */
 
-#include <set>
+#ifndef LOGGER_H_
+#define LOGGER_H_
 
-#include "serial-illUtil/util.h"
-#include "LogDestination.h"
+#include "Util/util.h"
+#include "Logging/LogDestination.h"
 
 namespace illLogging {
-
+/**
+ * The logger is what umm, does all the logging.
+ * You should, in most cases, use the macros in logging.h since they are nice wrappers around these methods.
+ * The logger itself doesn't do the logging, it contains LogDestination objects.
+ * You should add LogDestinations to actually see results of logging.
+ * Those can be developer consoles, output, Android or iOS debug message loggers, etc...
+ *
+ * Your application should typically have one of these and the global variable below should point to it.
+ */
 class Logger {
 public:
     /**
@@ -16,7 +29,7 @@ public:
     If receiving MT_FATAL, the game will shut down after printing.
     @param message The Message to print. Takes a printf style formatted message with variable arguments.
     */
-    void printMessage(LogDestination::MessageLevel messageLevel, const char * message);
+    virtual void printMessage(LogDestination::MessageLevel messageLevel, const char * message) = 0;
 
     /**
     Tells the console to log a message.
@@ -31,36 +44,17 @@ public:
         printMessage(messageLevel, formatString("%s, %u: %s", fileName, lineNumber, message).c_str());
     }
 
-    void addLogDestination(LogDestination * logDestination) {
-        m_logDestinations.insert(logDestination);
-    }
+    virtual void addLogDestination(LogDestination * logDestination) = 0;
 
-    void removeLogDestination(LogDestination * logDestination) {
-        std::set<LogDestination *>::iterator iter = m_logDestinations.find(logDestination);
+    virtual void removeLogDestination(LogDestination * logDestination) = 0;
 
-        if(iter == m_logDestinations.end()) {
-            
-        }
-        else {
-            m_logDestinations.erase(iter);
-        }
-    }
+    virtual bool logDestinationExists(LogDestination * logDestination) const = 0;
 
-    bool logDestinationExists(LogDestination * logDestination) const {
-        return m_logDestinations.find(logDestination) == m_logDestinations.end();
-    }
-
-    void clearLogDestinations() {
-        m_logDestinations.clear();
-    }
-
-private:
-    std::set<LogDestination *> m_logDestinations;
+    virtual void clearLogDestinations() = 0;
 };
 
 //a public global variable, problem?
 extern Logger * logger;
-
 }
 
 /**
@@ -73,9 +67,9 @@ Put the CONS_END_CATCH macro at the end of a block of code that should have any 
 @param console a reference to the developer console that will do the error reporting
 */
 #define LOGGER_END_CATCH(logger) } catch(std::exception& e) {\
-   LOG_FATAL_ERROR(e.what());\
+    LOG_FATAL_ERROR(e.what());\
 } catch(...) {\
-   LOG_FATAL_ERROR("Unknown exception caught");\
+    LOG_FATAL_ERROR("Unknown exception caught");\
 }
 
-#endif
+#endif /* LOGGER_H_ */

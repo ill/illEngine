@@ -7,9 +7,9 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/quaternion.hpp>
 
-#include "serial-illUtil/ResourceBase.h"
-#include "serial-illUtil/ResourceManager.h"
-#include "serial-illUtil/Geometry/Transform.h"
+#include "Util/serial/ResourceBase.h"
+#include "Util/serial/ResourceManager.h"
+#include "Util/Geometry/Transform.h"
 
 namespace Graphics {
 

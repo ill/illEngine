@@ -1,7 +1,7 @@
 #ifndef __RESOURCEMANAGER_H__
 #define __RESOURCEMANAGER_H__
 
-#include "serial-illLogging\logging.h"
+#include "Logging/logging.h"
 #include <string>
 #include <map>
 
@@ -89,7 +89,7 @@ public:
     }
 
     inline Id getIdForName(const char * name) const {
-        std::map<std::string, Id>::iterator idIter = m_nameMap->find(name);
+        typename std::map<std::string, Id>::iterator idIter = m_nameMap->find(name);
 
         if(idIter == m_nameMap->end()) {
             LOG_FATAL_ERROR("getIdForName() passed invalid resource name %s.", name);

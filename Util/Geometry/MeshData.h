@@ -137,18 +137,16 @@ public:
     Creates the mesh.
     @param numTri The number of triangles in the mesh.
     @param numVert The number of vertices in the mesh.  Not necessairly numTri multiplied by 3 since there can be shared vertices.
-    @param numGroups The number of triangle groups.  This would correspond to the number of materials in a multimaterial mesh for example.
     @param features Which features are stored in the verteces.
     By default it creates a mesh that stores positions, normals, tangents, and texture coordinates.
     @param allocate Whether or not the data for the mesh should be allocated on the CPU side.
     */
-    MeshData(uint32_t numTri, uint32_t numVert, /*uint8_t numGroups,*/ FeaturesMask features = MF_POSITION | MF_NORMAL | MF_TANGENT | MF_TEX_COORD, bool allocate = true)
-        : m_numTri(numTri),
-        m_numVert(numVert),
-        //m_numGroups(numGroups),
-        m_features(features),
-        m_data(NULL),
-        m_indeces(NULL)
+    MeshData(uint32_t numTri, uint32_t numVert, FeaturesMask features = MF_POSITION | MF_NORMAL | MF_TANGENT | MF_TEX_COORD, bool allocate = true)
+        : m_numVert(numVert),
+          m_data(NULL),
+          m_numTri(numTri),
+          m_indeces(NULL),
+          m_features(features)
     {
         free();
 
@@ -358,7 +356,7 @@ public:
     Use this as a parameter for any functions that take stride of data between face.
     */
     inline size_t getFaceSize() const {
-        return m_faceSize;
+        return getVertexSize() * 3;
     }
 
     /**
@@ -466,7 +464,7 @@ public:
     @param vertInd The face vertex index, a value from 0 to 2.
     */
     inline BlendData& getBlendData(uint32_t faceInd, uint32_t vertInd) {
-        assert(hasBlendIndices());
+        assert(hasBlendData());
         assert(faceInd < m_numTri);
         assert(vertInd < 3);
         assert(m_data);

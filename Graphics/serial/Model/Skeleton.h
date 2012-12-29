@@ -5,9 +5,9 @@
 #include <map>
 #include <vector>
 #include <string>
-#include "serial-illUtil/ResourceBase.h"
-#include "serial-illUtil/ResourceManager.h"
-#include "serial-illLogging/logging.h"
+#include "Util/serial/ResourceBase.h"
+#include "Util/serial/ResourceManager.h"
+#include "Logging/logging.h"
 
 namespace Graphics {
 

@@ -2,8 +2,8 @@
 #define __DEVELOPERCONSOLE_H__
 
 #include <fstream>
-#include "serial-illUtil/util.h"
-#include "serial-illLogging/LogDestination.h"
+#include "Util/util.h"
+#include "Logging/LogDestination.h"
 
 namespace Console {
 

@@ -1,10 +1,12 @@
+#include <cstring>
+
 #include <GL/glew.h>
 
-#include "GlRenderer.h"
-#include "serial-illGraphics/Material/Shader.h"
+#include "GlCommon/serial/GlRenderer.h"
+#include "Graphics/serial/Material/Shader.h"
 
-#include "glLogging.h"
-#include "serial-illGraphics/graphicsLogging.h"
+#include "GlCommon/glLogging.h"
+#include "Graphics/graphicsLogging.h"
 
 namespace GlCommon {
 

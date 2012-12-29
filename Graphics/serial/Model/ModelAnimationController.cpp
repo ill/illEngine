@@ -6,9 +6,6 @@
 #include "SkeletonAnimation.h"
 
 void updateSkeleton(const Graphics::Skeleton * skeleton, const Graphics::Skeleton::BoneHeirarchy * currNode, glm::mat4 currXform, glm::mat4 currBindXform, std::map<unsigned int, glm::mat4>& animTransforms, glm::mat4 * animationTestSkelMats) {
-    glm::mat4 prevXform = currXform;
-    glm::mat4 prevBindXform = currBindXform;
-    
     //currXform = currXform * skeleton->getBone(currNode->m_boneIndex)->m_transform * animTransforms[currNode->m_boneIndex];
 
     std::map<unsigned int, glm::mat4>::iterator iter = animTransforms.find(currNode->m_boneIndex);

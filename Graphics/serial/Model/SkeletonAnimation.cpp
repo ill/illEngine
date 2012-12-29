@@ -1,8 +1,8 @@
 #include "SkeletonAnimation.h"
 
-#include "serial-illLogging/logging.h"
-#include "illFileSystem/FileSystem.h"
-#include "illFileSystem/File.h"
+#include "Logging/logging.h"
+#include "FileSystem/FileSystem.h"
+#include "FileSystem/File.h"
 
 namespace Graphics {
 

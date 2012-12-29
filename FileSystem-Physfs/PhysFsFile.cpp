@@ -1,7 +1,7 @@
 #include <cassert>
 #include "PhysFsFile.h"
-#include "illUtil/endian.h"
-#include "serial-illLogging/logging.h"
+#include "Util/endian.h"
+#include "Logging/logging.h"
 
 namespace illPhysFs {
 void PhysFsFile::close() {

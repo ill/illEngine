@@ -1,5 +1,5 @@
 #include "InputManager.h"
-#include "serial-illLogging/logging.h"
+#include "Logging/logging.h"
 
 namespace Input {
 

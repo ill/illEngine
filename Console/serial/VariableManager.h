@@ -3,7 +3,7 @@
 
 #include <string>
 #include <map>
-#include "serial-illLogging/logging.h"
+#include "Logging/logging.h"
 
 namespace Console {
 

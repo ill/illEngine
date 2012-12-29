@@ -1,7 +1,7 @@
 #include <SDL_assert.h>
 
-#include "serial-illLogging/logging.h"
-#include "serial-illUtil/RefCountPtr.h"
+#include "Logging/logging.h"
+#include "Util/serial/RefCountPtr.h"
 
 #include "tests.h"
 
@@ -19,14 +19,14 @@ struct TestPtrHelper : public PtrHelper<T> {
       LOG_INFO("On Zero References");
       SDL_TriggerBreakpoint();
 
-      PtrHelper::onZeroReferences();
+      PtrHelper<T>::onZeroReferences();
    }
 
    virtual inline void onNonZeroReferences() {
       LOG_INFO("On Non Zero References");
       SDL_TriggerBreakpoint();
 
-      PtrHelper::onNonZeroReferences();
+      PtrHelper<T>::onNonZeroReferences();
    }
 };
 

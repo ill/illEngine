@@ -1,8 +1,8 @@
 #include <GL/glew.h>
-#include "serial-illLogging/logging.h"
-#include "glLogging.h"
+#include "Logging/logging.h"
+#include "glCommon/glLogging.h"
 
-#include "GlRenderer.h"
+#include "glCommon/serial/GlRenderer.h"
 
 namespace GlCommon {
 

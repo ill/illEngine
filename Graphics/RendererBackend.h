@@ -5,8 +5,8 @@
 #include <stdint.h>
 #include <vector>
 
-#include "serial-illUtil/RefCountPtr.h"
-#include "serial-illUtil/Geometry/MeshData.h"
+#include "Util/serial/RefCountPtr.h"
+#include "Util/Geometry/MeshData.h"
 
 namespace Graphics {
 

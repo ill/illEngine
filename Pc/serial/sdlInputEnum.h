@@ -2,7 +2,7 @@
 #define __SDL_INPUT_ENUM_H__
 
 #include <cstdint>
-#include "serial-illInput/inputAxisEnum.h"
+#include "Input/serial/inputAxisEnum.h"
 
 /**
 Includes an enum of the keycodes

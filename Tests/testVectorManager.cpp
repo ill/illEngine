@@ -1,5 +1,5 @@
 #include <cassert>
-#include "serial-illUtil/VectorManager.h"
+#include "Util/serial/VectorManager.h"
 #include "tests.h"
 
 void singleThreadedTest() {

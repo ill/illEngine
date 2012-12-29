@@ -2,7 +2,7 @@
 #define __PHYSFS_FILE_H__
 
 #include <physfs.h>
-#include "illFileSystem/File.h"
+#include "FileSystem/File.h"
 
 namespace illPhysFs {
 class PhysFsFileSystem;

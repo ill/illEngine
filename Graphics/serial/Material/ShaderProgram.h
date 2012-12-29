@@ -4,8 +4,8 @@
 #include <cstdint>
 #include <vector>
 
-#include "serial-illUtil/ResourceBase.h"
-#include "serial-illUtil/ResourceManager.h"
+#include "Util/serial/ResourceBase.h"
+#include "Util/serial/ResourceManager.h"
 #include "Shader.h"
 
 namespace Graphics {

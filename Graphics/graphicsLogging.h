@@ -5,7 +5,7 @@
 Logger stuff for communication
 */
 
-#include "serial-illLogging/logging.h"
+#include "Logging/logging.h"
 
 //whether or not to log video debug messages
 #define ENABLE_LOG_DEBUG_GRAPHICS 1

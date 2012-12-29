@@ -2,7 +2,7 @@
 #define __CASTING_H__
 
 #include <sstream>
-#include "Logging\logging.h"
+#include "Logging/logging.h"
 
 /**
 Functions useful for typecasting in C++ that make use of dynamic_cast.
@@ -60,7 +60,7 @@ inline CastType * safeAs(ThisType * thisObject, const char * file, unsigned int 
     CastType * retVal;
 
     if(!(retVal = dynamic_cast<CastType *>(thisObject))) {
-        LOG_FATAL_ERROR("Cannot cast %s to %s", typeid(ThisType).name(), typeid(CastType).name());
+        LOG_FATAL_ERROR("Cannot cast");
     }
 
     return retVal;

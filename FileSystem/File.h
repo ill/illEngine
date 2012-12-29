@@ -107,9 +107,8 @@ protected:
         m_fileName(fileName)
     {}
 
-    std::string m_fileName;
-
     State m_state;
+    std::string m_fileName;
 };
 
 };

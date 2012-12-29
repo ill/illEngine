@@ -1,7 +1,7 @@
 #ifndef __PHYSFS_FILE_SYSTEM_H__
 #define __PHYSFS_FILE_SYSTEM_H__
 
-#include "illFileSystem/FileSystem.h"
+#include "FileSystem/FileSystem.h"
 
 namespace illPhysFs {
 class PhysFsFileSystem : public illFileSystem::FileSystem {
