@@ -1,5 +1,5 @@
-#ifndef __FRUSTUM_ITERATOR_H__
-#define __FRUSTUM_ITERATOR_H__
+#ifndef ILL_FRUSTUM_ITERATOR_H__
+#define ILL_FRUSTUM_ITERATOR_H__
 
 #include <list>
 #include <stack>

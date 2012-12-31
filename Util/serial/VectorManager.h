@@ -1,5 +1,5 @@
-#ifndef __VECTORMANAGER_H__
-#define __VECTORMANAGER_H__
+#ifndef ILL_VECTORMANAGER_H__
+#define ILL_VECTORMANAGER_H__
 
 #include <vector>
 #include "UidGenerator.h"

@@ -1,5 +1,5 @@
-#ifndef __MESH_DATA_H__
-#define __MESH_DATA_H__
+#ifndef ILL_MESH_DATA_H__
+#define ILL_MESH_DATA_H__
 
 #include <cstdint>
 #include <cassert>

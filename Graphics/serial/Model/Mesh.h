@@ -1,5 +1,5 @@
-#ifndef __MESH_H__
-#define __MESH_H__
+#ifndef ILL_MESH_H__
+#define ILL_MESH_H__
 
 #include "Util/Geometry/MeshData.h"
 

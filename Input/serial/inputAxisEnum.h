@@ -1,5 +1,5 @@
-#ifndef __INPUT_ENUM_H__
-#define __INPUT_ENUM_H__
+#ifndef ILL_INPUT_ENUM_H__
+#define ILL_INPUT_ENUM_H__
 
 namespace Input {
 /**

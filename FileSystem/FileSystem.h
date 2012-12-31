@@ -1,5 +1,5 @@
-#ifndef __FILE_SYSTEM_H__
-#define __FILE_SYSTEM_H__
+#ifndef ILL_FILE_SYSTEM_H__
+#define ILL_FILE_SYSTEM_H__
 
 namespace illFileSystem {
 

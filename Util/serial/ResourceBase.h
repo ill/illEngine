@@ -1,5 +1,5 @@
-#ifndef __RESOURCEBASE_H__
-#define __RESOURCEBASE_H__
+#ifndef ILL_RESOURCEBASE_H__
+#define ILL_RESOURCEBASE_H__
 
 #include <cstdint>
 

@@ -1,5 +1,5 @@
-#ifndef __SHADER_H__
-#define __SHADER_H__
+#ifndef ILL_SHADER_H__
+#define ILL_SHADER_H__
 
 #include <stdint.h>
 

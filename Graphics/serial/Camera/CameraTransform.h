@@ -1,5 +1,5 @@
-#ifndef __CAMERATRANSFORM_H__
-#define __CAMERATRANSFORM_H__
+#ifndef ILL_CAMERATRANSFORM_H__
+#define ILL_CAMERATRANSFORM_H__
 
 #include <glm/glm.hpp>
 

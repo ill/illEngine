@@ -1,5 +1,5 @@
-#ifndef __INPUT_CONTEXT_STACK_H__
-#define __INPUT_CONTEXT_STACK_H__
+#ifndef ILL_INPUT_CONTEXT_STACK_H__
+#define ILL_INPUT_CONTEXT_STACK_H__
 
 #include <vector>
 

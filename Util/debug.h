@@ -5,8 +5,8 @@
  *      Author: Ilya
  */
 
-#ifndef DEBUG_H_
-#define DEBUG_H_
+#ifndef ILL_DEBUG_H_
+#define ILL_DEBUG_H_
 
 //TODO: my own version of assert possibly?  I forget what it was missing that I wish it had.
 

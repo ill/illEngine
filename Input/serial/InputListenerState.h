@@ -1,5 +1,5 @@
-#ifndef __INPUT_LISTER_STATE_H__
-#define __INPUT_LISTER_STATE_H__
+#ifndef ILL_INPUT_LISTER_STATE_H__
+#define ILL_INPUT_LISTER_STATE_H__
 
 #include "InputListenerBase.h"
 

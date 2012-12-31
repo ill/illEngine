@@ -1,5 +1,5 @@
-#ifndef __DEVELOPERCONSOLE_H__
-#define __DEVELOPERCONSOLE_H__
+#ifndef ILL_DEVELOPERCONSOLE_H__
+#define ILL_DEVELOPERCONSOLE_H__
 
 #include <fstream>
 #include "Util/util.h"

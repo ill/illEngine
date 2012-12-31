@@ -1,5 +1,5 @@
-#ifndef __PHYSFS_FILE_H__
-#define __PHYSFS_FILE_H__
+#ifndef ILL_PHYSFS_FILE_H__
+#define ILL_PHYSFS_FILE_H__
 
 #include <physfs.h>
 #include "FileSystem/File.h"
@@ -23,16 +23,16 @@ public:
     
     void read(void* destination, size_t size);
     
-    void read8(int8_t& destination);
+    void read8(uint8_t& destination);
 
-    void readL16(int16_t& destination);
-    void readB16(int16_t& destination);
+    void readL16(uint16_t& destination);
+    void readB16(uint16_t& destination);
     
-    void readL32(int32_t& destination);
-    void readB32(int32_t& destination);
+    void readL32(uint32_t& destination);
+    void readB32(uint32_t& destination);
 
-    void readL64(int64_t& destination);
-    void readB64(int64_t& destination);
+    void readL64(uint64_t& destination);
+    void readB64(uint64_t& destination);
     
     void readLF(float& destination);
     void readBF(float& destination);

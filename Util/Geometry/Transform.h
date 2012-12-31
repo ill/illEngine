@@ -1,5 +1,5 @@
-#ifndef __TRANSFORM_H__
-#define __TRANSFORM_H__
+#ifndef ILL_TRANSFORM_H__
+#define ILL_TRANSFORM_H__
 
 #include <glm/gtc/quaternion.hpp>
 #include "geomUtil.h"

@@ -1,5 +1,5 @@
-#ifndef __CASTING_H__
-#define __CASTING_H__
+#ifndef ILL_CASTING_H__
+#define ILL_CASTING_H__
 
 #include <sstream>
 #include "Logging/logging.h"

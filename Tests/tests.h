@@ -1,5 +1,5 @@
-#ifndef __TESTS_H__
-#define __TESTS_H__
+#ifndef ILL_TESTS_H__
+#define ILL_TESTS_H__
 
 /**
 Just putting together some unit tests and stuff, better than nothing...

@@ -1,5 +1,5 @@
-#ifndef SERIAL_LOGGER_H_
-#define SERIAL_LOGGER_H_
+#ifndef ILL_SERIAL_LOGGER_H_
+#define ILL_SERIAL_LOGGER_H_
 
 #include <set>
 #include "Logging/Logger.h"

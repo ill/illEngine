@@ -6,8 +6,8 @@
 //  Copyright (c) 2012 __MyCompanyName__. All rights reserved.
 //
 
-#ifndef __GEOMUTIL_H__
-#define __GEOMUTIL_H__
+#ifndef ILL_GEOMUTIL_H__
+#define ILL_GEOMUTIL_H__
 
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>

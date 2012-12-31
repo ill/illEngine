@@ -1,5 +1,5 @@
-#ifndef __GL_LOGGING_H__
-#define __GL_LOGGING_H__
+#ifndef ILL_GL_LOGGING_H__
+#define ILL_GL_LOGGING_H__
 
 #include <GL/glew.h>
 

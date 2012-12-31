@@ -1,5 +1,5 @@
-#ifndef __MESH_EDGE_LIST_H__
-#define __MESH_EDGE_LIST_H__
+#ifndef ILL_MESH_EDGE_LIST_H__
+#define ILL_MESH_EDGE_LIST_H__
 
 #include <glm/glm.hpp>
 #include <vector>

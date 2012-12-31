@@ -1,5 +1,5 @@
-#ifndef __VARIABLEMANAGER_H__
-#define __VARIABLEMANAGER_H__
+#ifndef ILL_VARIABLEMANAGER_H__
+#define ILL_VARIABLEMANAGER_H__
 
 #include <string>
 #include <map>

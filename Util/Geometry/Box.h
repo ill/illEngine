@@ -1,5 +1,5 @@
-#ifndef __BOX_H__
-#define __BOX_H__
+#ifndef ILL_BOX_H__
+#define ILL_BOX_H__
 
 #include <glm/glm.hpp>
 #include "Sphere.h"

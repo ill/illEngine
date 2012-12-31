@@ -1,5 +1,5 @@
-#ifndef __INPUT_BINDING_H__
-#define __INPUT_BINDING_H__
+#ifndef ILL_INPUT_BINDING_H__
+#define ILL_INPUT_BINDING_H__
 
 namespace Input {
 

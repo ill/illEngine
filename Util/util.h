@@ -7,8 +7,8 @@
  *      Author: ilya
  */
 
-#ifndef __UTIL_H__
-#define __UTIL_H__
+#ifndef ILL_UTIL_H__
+#define ILL_UTIL_H__
 
 #include <cmath>
 #include <climits>

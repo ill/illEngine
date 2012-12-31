@@ -1,5 +1,5 @@
-#ifndef __RESOURCEMANAGER_H__
-#define __RESOURCEMANAGER_H__
+#ifndef ILL_RESOURCEMANAGER_H__
+#define ILL_RESOURCEMANAGER_H__
 
 #include "Logging/logging.h"
 #include <string>

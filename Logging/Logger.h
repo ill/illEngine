@@ -5,8 +5,8 @@
  *      Author: Ilya
  */
 
-#ifndef LOGGER_H_
-#define LOGGER_H_
+#ifndef ILL_LOGGER_H_
+#define ILL_LOGGER_H_
 
 #include "Util/util.h"
 #include "Logging/LogDestination.h"

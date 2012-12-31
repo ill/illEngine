@@ -1,5 +1,5 @@
-#ifndef __SDL_INPUT_ENUM_H__
-#define __SDL_INPUT_ENUM_H__
+#ifndef ILL_SDL_INPUT_ENUM_H__
+#define ILL_SDL_INPUT_ENUM_H__
 
 #include <cstdint>
 #include "Input/serial/inputAxisEnum.h"

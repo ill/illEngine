@@ -1,5 +1,5 @@
-#ifndef __ENDIAN_H__
-#define __ENDIAN_H__
+#ifndef ILL_ENDIAN_H_
+#define ILL_ENDIAN_H_
 
 #include <stdint.h>
 

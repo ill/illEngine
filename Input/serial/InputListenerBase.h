@@ -1,5 +1,5 @@
-#ifndef __INPUT_LISTENER_BASE_H__
-#define __INPUT_LISTENER_BASE_H__
+#ifndef ILL_INPUT_LISTENER_BASE_H__
+#define ILL_INPUT_LISTENER_BASE_H__
 
 namespace Input {
 

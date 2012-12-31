@@ -1,5 +1,5 @@
-#ifndef __SKELETON_ANIMATION_H__
-#define __SKELETON_ANIMATION_H__
+#ifndef ILL_SKELETON_ANIMATION_H__
+#define ILL_SKELETON_ANIMATION_H__
 
 #include <map>
 #include <string>

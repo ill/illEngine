@@ -1,5 +1,5 @@
-#ifndef __GL_RENDERER_H__
-#define __GL_RENDERER_H__
+#ifndef ILL_GL_RENDERER_H__
+#define ILL_GL_RENDERER_H__
 
 #include "Graphics/RendererBackend.h"
 

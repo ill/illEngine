@@ -1,5 +1,5 @@
-#ifndef __LOG_DESTINATION_H__
-#define __LOG_DESTINATION_H__
+#ifndef ILL_LOG_DESTINATION_H__
+#define ILL_LOG_DESTINATION_H__
 
 namespace illLogging {
 

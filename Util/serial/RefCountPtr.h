@@ -1,5 +1,5 @@
-#ifndef __REF_COUNT_PTR_H__
-#define __REF_COUNT_PTR_H__
+#ifndef ILL_REF_COUNT_PTR_H__
+#define ILL_REF_COUNT_PTR_H__
 
 #include <cassert>
 #include "Util/casting.h"

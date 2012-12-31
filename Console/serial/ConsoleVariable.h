@@ -1,5 +1,5 @@
-#ifndef __VARIABLE_H__
-#define __VARIABLE_H__
+#ifndef ILL_VARIABLE_H__
+#define ILL_VARIABLE_H__
 
 #include <string>
 

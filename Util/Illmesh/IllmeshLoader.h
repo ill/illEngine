@@ -1,5 +1,5 @@
-#ifndef __ILLMESHLOADER_H__
-#define __ILLMESHLOADER_H__
+#ifndef ILL_ILLMESHLOADER_H__
+#define ILL_ILLMESHLOADER_H__
 
 #include <string>
 #include "Logging/logging.h"

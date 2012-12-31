@@ -1,5 +1,5 @@
-#ifndef __TEXTURE_H__
-#define __TEXTURE_H__
+#ifndef ILL_TEXTURE_H__
+#define ILL_TEXTURE_H__
 
 #include <string>
 #include "Util/serial/ResourceBase.h"

@@ -1,5 +1,5 @@
-#ifndef __GRAPHICS_LOGGING_H__
-#define __GRAPHICS_LOGGING_H__
+#ifndef ILL_GRAPHICS_LOGGING_H__
+#define ILL_GRAPHICS_LOGGING_H__
 
 /*
 Logger stuff for communication

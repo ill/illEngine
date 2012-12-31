@@ -1,5 +1,5 @@
-#ifndef __BOX_ITERATOR_H__
-#define __BOX_ITERATOR_H__
+#ifndef ILL_BOX_ITERATOR_H__
+#define ILL_BOX_ITERATOR_H__
 
 #include "Box.h"
 

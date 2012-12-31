@@ -1,5 +1,5 @@
-#ifndef __FRUSTUM_H__
-#define __FRUSTUM_H__
+#ifndef ILL_FRUSTUM_H__
+#define ILL_FRUSTUM_H__
 
 #include <stdint.h>
 #include <glm/glm.hpp>

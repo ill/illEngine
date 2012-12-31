@@ -1,5 +1,5 @@
-#ifndef __PHYSFS_FILE_SYSTEM_H__
-#define __PHYSFS_FILE_SYSTEM_H__
+#ifndef ILL_PHYSFS_FILE_SYSTEM_H__
+#define ILL_PHYSFS_FILE_SYSTEM_H__
 
 #include "FileSystem/FileSystem.h"
 

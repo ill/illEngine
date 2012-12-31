@@ -1,5 +1,5 @@
-#ifndef __PLANE_H__
-#define __PLANE_H__
+#ifndef ILL_PLANE_H__
+#define ILL_PLANE_H__
 
 #include <glm/glm.hpp>
 

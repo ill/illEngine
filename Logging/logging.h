@@ -6,8 +6,8 @@ For best results, do all logging through here and never call the logging functio
 For info on why I wrote do {} while(0) go here http://cnicholson.net/2009/02/stupid-c-tricks-adventures-in-assert/
 */
 
-#ifndef __LOGGING_H__
-#define __LOGGING_H__
+#ifndef ILL_LOGGING_H__
+#define ILL_LOGGING_H__
 
 #include "Logger.h"
 #include "LogDestination.h"

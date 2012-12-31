@@ -1,5 +1,5 @@
-#ifndef __BOUNDING_VOLUME_H__
-#define __BOUNDING_VOLUME_H__
+#ifndef ILL_BOUNDING_VOLUME_H__
+#define ILL_BOUNDING_VOLUME_H__
 
 #include "Box.h"
 #include "Sphere.h"

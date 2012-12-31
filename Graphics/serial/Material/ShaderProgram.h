@@ -1,5 +1,5 @@
-#ifndef __SHADER_PROGRAM_H__
-#define __SHADER_PROGRAM_H__
+#ifndef ILL_SHADER_PROGRAM_H__
+#define ILL_SHADER_PROGRAM_H__
 
 #include <cstdint>
 #include <vector>

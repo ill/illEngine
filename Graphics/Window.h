@@ -1,5 +1,5 @@
-#ifndef __WINDOW_H__
-#define __WINDOW_H__
+#ifndef ILL_WINDOW_H__
+#define ILL_WINDOW_H__
 
 #include <set>
 #include <glm/glm.hpp>

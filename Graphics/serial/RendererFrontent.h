@@ -1,5 +1,5 @@
-#ifndef __RENDERER_FRONTEND_H__
-#define __RENDERER_FRONTEND_H__
+#ifndef ILL_RENDERER_FRONTEND_H__
+#define ILL_RENDERER_FRONTEND_H__
 
 namespace Graphics {
 

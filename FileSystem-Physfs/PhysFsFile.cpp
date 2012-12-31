@@ -48,19 +48,19 @@ void PhysFsFile::read(void* destination, size_t size) {
 
 
 
-void PhysFsFile::read8(int8_t& destination) {
+void PhysFsFile::read8(uint8_t& destination) {
     read(&destination, sizeof(int8_t));
 }
 
 
 
-void PhysFsFile::readL16(int16_t& destination) {
+void PhysFsFile::readL16(uint16_t& destination) {
     read(&destination, sizeof(int16_t));
 
     destination = little16(destination);
 }
 
-void PhysFsFile::readB16(int16_t& destination) {
+void PhysFsFile::readB16(uint16_t& destination) {
     read(&destination, sizeof(int16_t));
 
     destination = big16(destination);
@@ -68,13 +68,13 @@ void PhysFsFile::readB16(int16_t& destination) {
 
 
     
-void PhysFsFile::readL32(int32_t& destination) {
+void PhysFsFile::readL32(uint32_t& destination) {
     read(&destination, sizeof(int32_t));
 
     destination = little32(destination);
 }
 
-void PhysFsFile::readB32(int32_t& destination) {
+void PhysFsFile::readB32(uint32_t& destination) {
     read(&destination, sizeof(int32_t));
 
     destination = big32(destination);
@@ -82,13 +82,13 @@ void PhysFsFile::readB32(int32_t& destination) {
 
 
 
-void PhysFsFile::readL64(int64_t& destination) {
+void PhysFsFile::readL64(uint64_t& destination) {
     read(&destination, sizeof(int64_t));
 
     destination = little64(destination);
 }
 
-void PhysFsFile::readB64(int64_t& destination) {
+void PhysFsFile::readB64(uint64_t& destination) {
     read(&destination, sizeof(int64_t));
 
     destination = big64(destination);

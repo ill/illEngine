@@ -1,5 +1,5 @@
-#ifndef __INPUT_MANAGER_H__
-#define __INPUT_MANAGER_H__
+#ifndef ILL_INPUT_MANAGER_H__
+#define ILL_INPUT_MANAGER_H__
 
 #include <map>
 #include <set>

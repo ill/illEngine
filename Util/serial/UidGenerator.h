@@ -1,5 +1,5 @@
-#ifndef __UIDGENERATOR_H__
-#define __UIDGENERATOR_H__
+#ifndef ILL_UIDGENERATOR_H__
+#define ILL_UIDGENERATOR_H__
 
 #include <stdexcept>
 #include <queue>

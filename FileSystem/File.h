@@ -1,5 +1,5 @@
-#ifndef __FILE_H__
-#define __FILE_H__
+#ifndef ILL_FILE_H__
+#define ILL_FILE_H__
 
 #include <stdint.h>
 #include <string>
@@ -72,22 +72,22 @@ public:
     //TODO: virtual void readString(std::string& destination) = 0;
 
     ///Convenience method to read a byte into destination.
-    virtual void read8(int8_t& destination) = 0;
+    virtual void read8(uint8_t& destination) = 0;
 
     ///Convenience method to platform independently read a 16 bit little endian into destination.
-    virtual void readL16(int16_t& destination) = 0;
+    virtual void readL16(uint16_t& destination) = 0;
     ///Convenience method to platform independently read a 16 bit big endian into destination.
-    virtual void readB16(int16_t& destination) = 0;
+    virtual void readB16(uint16_t& destination) = 0;
     
     ///Convenience method to platform independently read a 32 bit little endian into destination.
-    virtual void readL32(int32_t& destination) = 0;
+    virtual void readL32(uint32_t& destination) = 0;
     ///Convenience method to platform independently read a 32 bit big endian into destination.
-    virtual void readB32(int32_t& destination) = 0;
+    virtual void readB32(uint32_t& destination) = 0;
 
     ///Convenience method to platform independently read a 64 bit little endian into destination.
-    virtual void readL64(int64_t& destination) = 0;
+    virtual void readL64(uint64_t& destination) = 0;
     ///Convenience method to platform independently read a 64 bit big endian into destination.
-    virtual void readB64(int64_t& destination) = 0;
+    virtual void readB64(uint64_t& destination) = 0;
     
     ///Convenience method to platform independently read a little endian float into destination.
     virtual void readLF(float& destination) = 0;

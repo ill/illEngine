@@ -1,5 +1,5 @@
-#ifndef __GRAPHICS_SCENE_H__
-#define __GRAPHICS_SCENE_H__
+#ifndef ILL_GRAPHICS_SCENE_H__
+#define ILL_GRAPHICS_SCENE_H__
 
 //TODO: make all this work again later
 

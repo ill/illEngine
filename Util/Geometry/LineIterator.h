@@ -1,5 +1,5 @@
-#ifndef __LINE_ITERATOR_H__
-#define __LINE_ITERATOR_H__
+#ifndef ILL_LINE_ITERATOR_H__
+#define ILL_LINE_ITERATOR_H__
 
 #include <glm/glm.hpp>
 #include "geomUtil.h"

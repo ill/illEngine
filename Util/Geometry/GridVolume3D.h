@@ -1,5 +1,5 @@
-#ifndef __GRID_VOLUME_3D_H__
-#define __GRID_VOLUME_3D_H__
+#ifndef ILL_GRID_VOLUME_3D_H__
+#define ILL_GRID_VOLUME_3D_H__
 
 #include <glm/glm.hpp>
 #include "Box.h"

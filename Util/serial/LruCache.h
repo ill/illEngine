@@ -1,5 +1,5 @@
-#ifndef __LRU_CACHE_H__
-#define __LRU_CACHE_H__
+#ifndef ILL_LRU_CACHE_H__
+#define ILL_LRU_CACHE_H__
 
 #include <map>
 #include <list>

@@ -1,5 +1,5 @@
-#ifndef __SKELETON_H__
-#define __SKELETON_H__
+#ifndef ILL_SKELETON_H__
+#define ILL_SKELETON_H__
 
 #include <glm/glm.hpp>
 #include <map>

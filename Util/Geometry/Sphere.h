@@ -1,5 +1,5 @@
-#ifndef __SPHERE_H__
-#define __SPHERE_H__
+#ifndef ILL_SPHERE_H__
+#define ILL_SPHERE_H__
 
 #include <glm/glm.hpp>
 

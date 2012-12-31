@@ -1,5 +1,5 @@
-#ifndef __INPUT_LISTENER_RANGE_H__
-#define __INPUT_LISTENER_RANGE_H__
+#ifndef ILL_INPUT_LISTENER_RANGE_H__
+#define ILL_INPUT_LISTENER_RANGE_H__
 
 #include "InputListenerBase.h"
 

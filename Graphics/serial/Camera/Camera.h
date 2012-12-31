@@ -1,5 +1,5 @@
-#ifndef __CAMERA_H__
-#define __CAMERA_H__
+#ifndef ILL_CAMERA_H__
+#define ILL_CAMERA_H__
 
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>

@@ -1,5 +1,5 @@
-#ifndef __RENDERER_H__
-#define __RENDERER_H__
+#ifndef ILL_RENDERER_H__
+#define ILL_RENDERER_H__
 
 #include <glm/glm.hpp>
 #include <stdint.h>

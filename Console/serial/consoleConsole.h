@@ -3,8 +3,8 @@ This excellently named header file holds the console variable and command
 definitions of relating to the developer console itself.
 */
 
-#ifndef __CONSOLECONSOLE_H__
-#define __CONSOLECONSOLE_H__
+#ifndef ILL_CONSOLECONSOLE_H__
+#define ILL_CONSOLECONSOLE_H__
 
 #include "ConsoleVariable.h"
 #include "DeveloperConsole.h"
