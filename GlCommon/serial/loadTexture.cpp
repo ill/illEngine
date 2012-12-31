@@ -12,7 +12,7 @@
 
 namespace GlCommon {
 
-void GlRenderer::loadTexture(void ** textureData, const Graphics::TextureLoadArgs& loadArgs) {
+void GlRenderer::loadTexture(void ** textureData, const illGraphics::TextureLoadArgs& loadArgs) {
     //////////////////////////////////
     //declare stuff
     char * textureMemBuffer;

@@ -8,7 +8,7 @@
 #include "Util/serial/ResourceManager.h"
 #include "Shader.h"
 
-namespace Graphics {
+namespace illGraphics {
 
 class RendererBackend;
 

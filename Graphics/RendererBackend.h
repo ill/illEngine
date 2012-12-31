@@ -8,7 +8,7 @@
 #include "Util/serial/RefCountPtr.h"
 #include "Util/Geometry/MeshData.h"
 
-namespace Graphics {
+namespace illGraphics {
 
 struct TextureLoadArgs;
 class Shader;

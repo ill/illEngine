@@ -6,7 +6,7 @@
 #include "FileSystem/FileSystem.h"
 #include "FileSystem/File.h"
 
-namespace Graphics {
+namespace illGraphics {
 
 void Skeleton::unload() {
     if(m_state == RES_LOADING) {

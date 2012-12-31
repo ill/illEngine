@@ -3,7 +3,7 @@
 
 #include <glm/glm.hpp>
 
-namespace Graphics {
+namespace illGraphics {
    
 /**
 Camera transforms can be animated and combined in various ways.

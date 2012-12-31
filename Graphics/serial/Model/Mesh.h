@@ -3,7 +3,7 @@
 
 #include "Util/Geometry/MeshData.h"
 
-namespace Graphics {
+namespace illGraphics {
 
 class RendererBackend;
 

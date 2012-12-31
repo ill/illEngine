@@ -8,7 +8,7 @@ namespace Input {
 class InputManager;
 }
 
-namespace Graphics {
+namespace illGraphics {
 
 class Renderer;
 

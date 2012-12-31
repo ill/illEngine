@@ -9,7 +9,7 @@
 #include "Util/serial/ResourceManager.h"
 #include "Logging/logging.h"
 
-namespace Graphics {
+namespace illGraphics {
 
 class RendererBackend;
 

@@ -5,7 +5,7 @@
 
 namespace GlCommon {
 
-class GlRenderer : public Graphics::RendererBackend {
+class GlRenderer : public illGraphics::RendererBackend {
 public:
     void initialize();
     void uninitialize();
@@ -13,7 +13,7 @@ public:
     void beginFrame();
     void endFrame();
 
-    void loadTexture(void ** textureData, const Graphics::TextureLoadArgs& loadArgs);
+    void loadTexture(void ** textureData, const illGraphics::TextureLoadArgs& loadArgs);
     void unloadTexture(void ** textureData);
     
     void loadMesh(void** meshBackendData, const MeshData<>& meshFrontendData);
@@ -23,7 +23,7 @@ public:
     void loadShaderInternal(void ** shaderData, const char * path, unsigned int shaderType, const char * defines);
     void unloadShader(void ** shaderData);
 
-    void loadShaderProgram(void ** programData, const std::vector<RefCountPtr<Graphics::Shader> >& shaderList);
+    void loadShaderProgram(void ** programData, const std::vector<RefCountPtr<illGraphics::Shader> >& shaderList);
     void unloadShaderProgram(void ** programData);
 };
 

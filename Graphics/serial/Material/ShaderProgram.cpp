@@ -6,7 +6,7 @@
 
 using namespace std;
 
-namespace Graphics {
+namespace illGraphics {
 
 void ShaderProgram::unload() {
     if(m_state == RES_LOADING) {

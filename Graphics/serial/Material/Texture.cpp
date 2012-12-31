@@ -3,7 +3,7 @@
 
 #include "Logging/logging.h"
 
-namespace Graphics {
+namespace illGraphics {
 
 void Texture::unload() {
     if(m_state == RES_LOADING) {

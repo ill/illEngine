@@ -11,7 +11,7 @@
 #include "Util/serial/ResourceManager.h"
 #include "Util/Geometry/Transform.h"
 
-namespace Graphics {
+namespace illGraphics {
 
 class RendererBackend;
 

@@ -4,7 +4,7 @@
 #include "FileSystem/FileSystem.h"
 #include "FileSystem/File.h"
 
-namespace Graphics {
+namespace illGraphics {
 
 SkeletonAnimation::InterpInfo SkeletonAnimation::getFrames(glm::mediump_float time) const {
     InterpInfo res;

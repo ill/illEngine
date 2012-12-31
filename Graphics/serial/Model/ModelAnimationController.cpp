@@ -5,7 +5,7 @@
 #include "Skeleton.h"
 #include "SkeletonAnimation.h"
 
-void updateSkeleton(const Graphics::Skeleton * skeleton, const Graphics::Skeleton::BoneHeirarchy * currNode, glm::mat4 currXform, glm::mat4 currBindXform, std::map<unsigned int, glm::mat4>& animTransforms, glm::mat4 * animationTestSkelMats) {
+void updateSkeleton(const illGraphics::Skeleton * skeleton, const illGraphics::Skeleton::BoneHeirarchy * currNode, glm::mat4 currXform, glm::mat4 currBindXform, std::map<unsigned int, glm::mat4>& animTransforms, glm::mat4 * animationTestSkelMats) {
     //currXform = currXform * skeleton->getBone(currNode->m_boneIndex)->m_transform * animTransforms[currNode->m_boneIndex];
 
     std::map<unsigned int, glm::mat4>::iterator iter = animTransforms.find(currNode->m_boneIndex);
@@ -35,15 +35,15 @@ void updateSkeleton(const Graphics::Skeleton * skeleton, const Graphics::Skeleto
                                                                                                         //figure out how to export models in the right orientation
                                                                                                         //THIS!  is why there's the horrible hack code below and why it took me days to get this working, 1 tiny mistake and it all explodes
            
-    for(std::vector<Graphics::Skeleton::BoneHeirarchy *>::const_iterator iter = currNode->m_children.begin(); iter != currNode->m_children.end(); iter++) {
+    for(std::vector<illGraphics::Skeleton::BoneHeirarchy *>::const_iterator iter = currNode->m_children.begin(); iter != currNode->m_children.end(); iter++) {
         updateSkeleton(skeleton, *iter, currXform, currBindXform, animTransforms, animationTestSkelMats);
     }
 }
 
-namespace Graphics {
+namespace illGraphics {
 
 void ModelAnimationController::update(float seconds) {
-    Graphics::SkeletonAnimation::InterpInfo interpInfo = m_animation->getFrames(m_animTime);
+    illGraphics::SkeletonAnimation::InterpInfo interpInfo = m_animation->getFrames(m_animTime);
 
     //get transforms for all the bones
     for(std::map<std::string, unsigned int>::const_iterator iter = m_skeleton->getBoneNameMap().begin(); iter != m_skeleton->getBoneNameMap().end(); iter++) {

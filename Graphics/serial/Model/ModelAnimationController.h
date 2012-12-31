@@ -6,7 +6,7 @@
 #include <glm/glm.hpp>
 #include "Util/serial/RefCountPtr.h"
 
-namespace Graphics {
+namespace illGraphics {
 
 class Skeleton;
 class SkeletonAnimation;

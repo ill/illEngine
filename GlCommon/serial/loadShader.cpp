@@ -21,47 +21,47 @@ void GlRenderer::loadShader(void ** shaderData, uint64_t featureMask) {
     unsigned int shaderType;
     std::string defines;
 
-    if(featureMask & Graphics::Shader::SHADER_3D_VERT) {
+    if(featureMask & illGraphics::Shader::SHADER_3D_VERT) {
         shaderType = GL_VERTEX_SHADER;
         path = "shaders/main.vert";
     }
 
-    if(featureMask & Graphics::Shader::SHADER_FORWARD_FRAG) {
+    if(featureMask & illGraphics::Shader::SHADER_FORWARD_FRAG) {
         shaderType = GL_FRAGMENT_SHADER;
         path = "shaders/forward.frag";
     }
 
     ///////////////////////////////////////
     //determine shader includes
-    if(featureMask & Graphics::Shader::SHADER_POSITIONS) {
+    if(featureMask & illGraphics::Shader::SHADER_POSITIONS) {
         defines += "#define POSITION_TRANSFORM\n";
     }
 
-    if(featureMask & Graphics::Shader::SHADER_NORMALS) {
+    if(featureMask & illGraphics::Shader::SHADER_NORMALS) {
         defines += "#define NORMAL_ATTRIBUTE\n";
     }
 
-    if(featureMask & Graphics::Shader::SHADER_TEX_COORDS) {
+    if(featureMask & illGraphics::Shader::SHADER_TEX_COORDS) {
         defines += "#define TEX_COORD_ATTRIBUTE\n";
     }
 
-    if(featureMask & Graphics::Shader::SHADER_TANGENTS) {
+    if(featureMask & illGraphics::Shader::SHADER_TANGENTS) {
         defines += "#define TANGENT_ATTRIBUTE\n";
     }
 
-    if(featureMask & Graphics::Shader::SHADER_DIFFUSE_MAP) {
+    if(featureMask & illGraphics::Shader::SHADER_DIFFUSE_MAP) {
         defines += "#define DIFFUSE_MAP\n";
     }
 
-    if(featureMask & Graphics::Shader::SHADER_SPECULAR_MAP) {
+    if(featureMask & illGraphics::Shader::SHADER_SPECULAR_MAP) {
         defines += "#define SPECULAR_MAP\n";
     }
 
-    if(featureMask & Graphics::Shader::SHADER_EMISSIVE_MAP) {
+    if(featureMask & illGraphics::Shader::SHADER_EMISSIVE_MAP) {
         defines += "#define EMISSIVE_MAP\n";
     }
 
-    if(featureMask & Graphics::Shader::SHADER_NORMAL_MAP) {
+    if(featureMask & illGraphics::Shader::SHADER_NORMAL_MAP) {
         defines += "#define NORMAL_MAP\n";
     }
 

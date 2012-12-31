@@ -3,7 +3,7 @@
 
 using namespace std;
 
-namespace Graphics {
+namespace illGraphics {
 
 void Shader::unload() {
     if(m_state == RES_LOADING) {

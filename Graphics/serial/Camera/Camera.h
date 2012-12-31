@@ -13,7 +13,7 @@
 
 #include "Graphics/serial/Camera/CameraTransform.h"
 
-namespace Graphics {  
+namespace illGraphics {  
 
 const float DEFAULT_FOV = 90.0f;
 const float DEFAULT_ASPECT = 1.0f;

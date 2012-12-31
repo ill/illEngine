@@ -1,7 +1,7 @@
 #include "Mesh.h"
 #include "Graphics/RendererBackend.h"
 
-namespace Graphics {
+namespace illGraphics {
 void Mesh::cleanBackend() {
     if(m_backend) {
         m_backend->unloadMesh(&m_meshBackendData);

@@ -10,7 +10,7 @@
 
 namespace GlCommon {
 
-void GlRenderer::loadShaderProgram(void ** programData, const std::vector<RefCountPtr<Graphics::Shader> >& shaderList) {
+void GlRenderer::loadShaderProgram(void ** programData, const std::vector<RefCountPtr<illGraphics::Shader> >& shaderList) {
     //////////////////////////////////
     //declare stuff
     GLint status; //status of shader
@@ -19,7 +19,7 @@ void GlRenderer::loadShaderProgram(void ** programData, const std::vector<RefCou
     //create the shader program
     GLuint program = glCreateProgram(); 
 
-    for(std::vector<RefCountPtr<Graphics::Shader> >::const_iterator iter = shaderList.begin(); iter != shaderList.end(); iter++) {
+    for(std::vector<RefCountPtr<illGraphics::Shader> >::const_iterator iter = shaderList.begin(); iter != shaderList.end(); iter++) {
         glAttachShader(program, *(GLuint*) ((*iter)->getShaderData()));
     }
 
