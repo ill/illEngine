@@ -4,7 +4,7 @@
 #include <stdexcept>
 #include <list>
 
-#include "../StaticList.h"
+#include "Util/serial/StaticList.h"
 #include "GridVolume3D.h"
 #include "Frustum.h"
 #include "geomUtil.h"

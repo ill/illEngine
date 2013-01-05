@@ -7,6 +7,8 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/quaternion.hpp>
 
+#include "Graphics/serial/Model/LastFrameInfo.h"
+
 #include "Util/serial/ResourceBase.h"
 #include "Util/serial/ResourceManager.h"
 #include "Util/Geometry/Transform.h"
@@ -25,20 +27,43 @@ struct SkeletonAnimationLoadArgs {
 
 class SkeletonAnimation : public ResourceBase<SkeletonAnimation, SkeletonAnimationLoadArgs, RendererBackend> {
 public:
-    /**
-    Information about interpolation between two keyframes for a point in time.
-    In most cases frame2 will come directly after frame1 but sometimes frame1 might be the last frame and frame2 may be the first frame as the animation is looping.
-    */
-    struct InterpInfo {
-        unsigned int m_frame1;          ///<The first keyframe being interpolated
-        unsigned int m_frame2;          ///<The second keyframe being interpolated
-        glm::mediump_float m_delta;     ///<How much interpolation between the two keyframes
+    struct AnimData {
+        AnimData()
+            : m_numPositionKeys(0),
+              m_numRotationKeys(0),
+              m_numScalingKeys(0),
+
+              m_positionKeys(NULL),
+              m_rotationKeys(NULL),
+              m_scalingKeys(NULL)
+        {}
+
+        ~AnimData() {
+            delete[] m_positionKeys;
+            delete[] m_rotationKeys;
+            delete[] m_scalingKeys;
+        }
+
+        template <typename T>
+        struct Key {
+            glm::mediump_float m_time;
+            T m_data;
+        };
+
+        glm::mat4 getTransform(glm::mediump_float time, glm::mediump_float duration, LastFrameInfo& lastFrameInfo = LastFrameInfo()) const;
+
+        unsigned int m_numPositionKeys;
+        unsigned int m_numRotationKeys;
+        unsigned int m_numScalingKeys;
+
+        Key<glm::vec3> * m_positionKeys;
+        Key<glm::quat> * m_rotationKeys;
+        Key<glm::vec3> * m_scalingKeys;
     };
 
     SkeletonAnimation()
         : ResourceBase(),
-        m_numFrames(0),
-        m_frameRate(0.0f)
+          m_duration(0.0f)
     {}
 
     virtual ~SkeletonAnimation() {
@@ -52,36 +77,37 @@ public:
         return (unsigned int) m_boneAnimation.size();
     }
 
-    inline unsigned int getNumFrames() const {
-        return m_numFrames;
+    /**
+     * Gets the duration in seconds.
+     */
+    inline glm::mediump_float getDuration() const {
+        return m_duration;
     }
 
-    inline glm::mediump_float getFrameRate() const {
-        return m_frameRate;
-    }
-
-    InterpInfo getFrames(glm::mediump_float time) const;
-
-    inline const Transform<> * getTransform(const char * boneName, unsigned int frame) {
-        std::map<std::string, Transform<>*>::const_iterator iter = m_boneAnimation.find(boneName);
+    /**
+     * Gets a bone's transform some time in the animation in seconds.
+     * Allows looping of passing in seconds past the duration and negative times and all that.
+     */
+    inline bool getTransform(const char * boneName, glm::mediump_float time, glm::mat4& destination, LastFrameInfo& lastFrameInfo = LastFrameInfo()) const {
+        std::map<std::string, AnimData>::const_iterator iter = m_boneAnimation.find(boneName);
 
         if(iter == m_boneAnimation.end()) {
-            LOG_ERROR("No bone with name %s in animation", boneName);
-            return NULL;
+            return false;
         }
         else {
-            return iter->second + frame;
+            destination = iter->second.getTransform(time, m_duration, lastFrameInfo);
+
+            return true;
         }
     }
 
-    inline const std::map<std::string, Transform<>*>& getAnimations() const {
+    inline const std::map<std::string, AnimData>& getAnimations() const {
         return m_boneAnimation;
     }
 
 private:
-    unsigned int m_numFrames;
-    glm::mediump_float m_frameRate;
-    std::map<std::string, Transform<>*> m_boneAnimation;  //map of bone name to animation
+    glm::mediump_float m_duration;                      ///<Duration in seconds
+    std::map<std::string, AnimData> m_boneAnimation;    ///<map of bone name to animation
 };
 
 }

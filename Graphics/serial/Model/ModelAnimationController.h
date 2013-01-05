@@ -5,6 +5,7 @@
 
 #include <glm/glm.hpp>
 #include "Util/serial/RefCountPtr.h"
+#include "Graphics/serial/Model/LastFrameInfo.h"
 
 namespace illGraphics {
 
@@ -40,8 +41,13 @@ public:
     SkeletonAnimation * m_animation;
 
     float m_animTime;
+    
+    struct BoneInfo {
+        glm::mat4 m_transform;
+        LastFrameInfo m_lastFrameInfo;
+    };
 
-    std::map<unsigned int, glm::mat4> m_animationTest;      //This is horrible
+    std::map<unsigned int, BoneInfo> m_animationTest;       //This is horrible
     glm::mat4 * m_skelMats;                                 //This is the bone array that goes to the shader
 };
 

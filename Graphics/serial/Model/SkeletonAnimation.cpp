@@ -1,3 +1,5 @@
+#include <glm/gtx/transform.hpp>
+
 #include "SkeletonAnimation.h"
 
 #include "Logging/logging.h"
@@ -6,18 +8,107 @@
 
 namespace illGraphics {
 
-SkeletonAnimation::InterpInfo SkeletonAnimation::getFrames(glm::mediump_float time) const {
-    InterpInfo res;
+glm::mat4 SkeletonAnimation::AnimData::getTransform(glm::mediump_float time, glm::mediump_float duration, LastFrameInfo& lastFrameInfo) const {
+    time = fmod(time, duration);
+    
+    if(time < lastFrameInfo.m_lastTime) {
+        lastFrameInfo.m_lastPositionKey = 0;
+        lastFrameInfo.m_lastRotationKey = 0;
+        lastFrameInfo.m_lastScalingKey = 0;
+    }
 
-    glm::mediump_float baseFrame = time * m_frameRate;
+    lastFrameInfo.m_lastTime = time;
 
-    res.m_frame1 = ((unsigned int) baseFrame);
-    res.m_delta = baseFrame - res.m_frame1;
+    //find the right keys
+    while(lastFrameInfo.m_lastPositionKey < m_numPositionKeys - 1) {
+        if(time < m_positionKeys[lastFrameInfo.m_lastPositionKey + 1].m_time) {
+            break;
+        }
+        lastFrameInfo.m_lastPositionKey++;
+    }
 
-    res.m_frame1 %= m_numFrames;
-    res.m_frame2 = (res.m_frame1 + 1) % m_numFrames;
+    while(lastFrameInfo.m_lastRotationKey < m_numRotationKeys - 1) {
+        if(time < m_rotationKeys[lastFrameInfo.m_lastRotationKey + 1].m_time) {
+            break;
+        }
+        lastFrameInfo.m_lastRotationKey++;
+    }
 
-    return res;
+    while(lastFrameInfo.m_lastScalingKey < m_numScalingKeys - 1) {
+        if(time < m_scalingKeys[lastFrameInfo.m_lastScalingKey + 1].m_time) {
+            break;
+        }
+        lastFrameInfo.m_lastScalingKey++;
+    }
+    
+    //LOG_DEBUG("Time: %f Pos: %u Rot: %u Scale: %u", time, lastKey[0], lastKey[1], lastKey[2]);
+
+    //interpolate between keys
+    glm::vec3 pos;
+    glm::quat rot;
+    glm::vec3 scale;
+
+    //position
+    {
+        unsigned int key1 = lastFrameInfo.m_lastPositionKey;
+        unsigned int key2 = (lastFrameInfo.m_lastPositionKey + 1) % m_numPositionKeys;
+
+        glm::mediump_float interp = m_positionKeys[key2].m_time - m_positionKeys[key1].m_time;
+
+        if(interp < 0.0f) {
+            interp += duration;
+        }
+
+        if(interp == 0.0f) {
+            pos = m_positionKeys[key1].m_data;
+        }
+        else {
+            interp = (time - m_positionKeys[key1].m_time) / interp;
+            pos = m_positionKeys[key1].m_data + (m_positionKeys[key2].m_data - m_positionKeys[key1].m_data) * interp;
+        }
+    }
+
+    //rotation
+    {
+        unsigned int key1 = lastFrameInfo.m_lastRotationKey;
+        unsigned int key2 = (lastFrameInfo.m_lastRotationKey + 1) % m_numRotationKeys;
+
+        glm::mediump_float interp = m_rotationKeys[key2].m_time - m_rotationKeys[key1].m_time;
+
+        if(interp < 0.0f) {
+            interp += duration;
+        }
+
+        if(interp == 0.0f) {
+            rot = m_rotationKeys[key1].m_data;
+        }
+        else {
+            interp = (time - m_rotationKeys[key1].m_time) / interp;
+            rot = glm::shortMix(m_rotationKeys[key1].m_data, m_rotationKeys[key2].m_data, interp);
+        }
+    }
+
+    //scaling
+    {
+        unsigned int key1 = lastFrameInfo.m_lastScalingKey;
+        unsigned int key2 = (lastFrameInfo.m_lastScalingKey + 1) % m_numScalingKeys;
+
+        glm::mediump_float interp = m_scalingKeys[key2].m_time - m_scalingKeys[key1].m_time;
+
+        if(interp < 0.0f) {
+            interp += duration;
+        }
+
+        if(interp == 0.0f) {
+            scale = m_scalingKeys[key1].m_data;
+        }
+        else {
+            interp = (time - m_scalingKeys[key1].m_time) / interp;
+            scale = m_scalingKeys[key1].m_data + (m_scalingKeys[key2].m_data - m_scalingKeys[key1].m_data) * interp;
+        }
+    }
+
+    return glm::scale(glm::translate(pos) * glm::mat4_cast(rot), scale);
 }
 
 void SkeletonAnimation::unload() {
@@ -29,12 +120,7 @@ void SkeletonAnimation::unload() {
         return;
     }
 
-    m_numFrames = 0;
-    m_frameRate = 0.0f;
-
-    for(std::map<std::string, Transform<>*>::iterator iter = m_boneAnimation.begin(); iter != m_boneAnimation.end(); iter++) {
-        delete[] iter->second;
-    }
+    m_duration = 0;
 
     m_boneAnimation.clear();
     
@@ -69,19 +155,16 @@ void SkeletonAnimation::reload(RendererBackend * rendererBackend) {
 
         (*stream) >> magicStr;
 
-        if(magicStr.compare("ILLANIM0") != 0) {
-            LOG_ERROR("Not a valid ILLANIM0 file.");
+        if(magicStr.compare("ILLANIM1") != 0) {
+            LOG_ERROR("Not a valid ILLANIM1 file.");
             m_state = RES_UNLOADED;
             delete stream;
             return;
         }
     }
 
-    //read framerate
-    (*stream) >> m_frameRate;
-
-    //read number of frames
-    (*stream) >> m_numFrames;
+    //read duration
+    (*stream) >> m_duration;
 
     //read the number of bones
     unsigned int numBones;
@@ -92,9 +175,9 @@ void SkeletonAnimation::reload(RendererBackend * rendererBackend) {
         //get the bone name
         std::string name;
         (*stream) >> name;
-
-        Transform<> * currentAnim;
         
+        AnimData * currentAnim;
+
         if(m_boneAnimation.find(name) != m_boneAnimation.end()) {
             LOG_ERROR("Skeleton animation %s has duplicate bone name %s.  This will cause problems when animating.", m_loadArgs.m_path.c_str(), name.c_str());
             m_state = RES_LOADED;
@@ -103,26 +186,53 @@ void SkeletonAnimation::reload(RendererBackend * rendererBackend) {
             return;
         }
         else {
-            m_boneAnimation[name] = currentAnim = new Transform<>[m_numFrames];
+            currentAnim = &m_boneAnimation[name];
         }
 
-        //read the keyframes themselves
-        for(unsigned int frame = 0; frame < m_numFrames; frame++) {
+        //read the number of position keys
+        (*stream) >> currentAnim->m_numPositionKeys;
+        currentAnim->m_positionKeys = new AnimData::Key<glm::vec3>[currentAnim->m_numPositionKeys];
+
+        //read the position keys themselves
+        for(unsigned int frame = 0; frame < currentAnim->m_numPositionKeys; frame++) {
+            //read the timestamp
+            (*stream) >> currentAnim->m_positionKeys[frame].m_time;
+
             //read the position
-            (*stream) >> currentAnim[frame].m_position.x;
-            (*stream) >> currentAnim[frame].m_position.y;
-            (*stream) >> currentAnim[frame].m_position.z;
+            (*stream) >> currentAnim->m_positionKeys[frame].m_data.x;
+            (*stream) >> currentAnim->m_positionKeys[frame].m_data.y;
+            (*stream) >> currentAnim->m_positionKeys[frame].m_data.z;
+        }
 
-            //read the rotation
-            (*stream) >> currentAnim[frame].m_rotation.x;
-            (*stream) >> currentAnim[frame].m_rotation.y;
-            (*stream) >> currentAnim[frame].m_rotation.z;
-            (*stream) >> currentAnim[frame].m_rotation.w;
+        //read the number of rotation keys
+        (*stream) >> currentAnim->m_numRotationKeys;
+        currentAnim->m_rotationKeys = new AnimData::Key<glm::quat>[currentAnim->m_numRotationKeys];
 
-            //read the scale
-            (*stream) >> currentAnim[frame].m_scale.x;
-            (*stream) >> currentAnim[frame].m_scale.y;
-            (*stream) >> currentAnim[frame].m_scale.z;
+        //read the position keys themselves
+        for(unsigned int frame = 0; frame < currentAnim->m_numRotationKeys; frame++) {
+            //read the timestamp
+            (*stream) >> currentAnim->m_rotationKeys[frame].m_time;
+
+            //read the position
+            (*stream) >> currentAnim->m_rotationKeys[frame].m_data.x;
+            (*stream) >> currentAnim->m_rotationKeys[frame].m_data.y;
+            (*stream) >> currentAnim->m_rotationKeys[frame].m_data.z;
+            (*stream) >> currentAnim->m_rotationKeys[frame].m_data.w;
+        }
+
+        //read the number of scaling keys
+        (*stream) >> currentAnim->m_numScalingKeys;
+        currentAnim->m_scalingKeys = new AnimData::Key<glm::vec3>[currentAnim->m_numScalingKeys];
+
+        //read the scaling keys themselves
+        for(unsigned int frame = 0; frame < currentAnim->m_numScalingKeys; frame++) {
+            //read the timestamp
+            (*stream) >> currentAnim->m_scalingKeys[frame].m_time;
+
+            //read the position
+            (*stream) >> currentAnim->m_scalingKeys[frame].m_data.x;
+            (*stream) >> currentAnim->m_scalingKeys[frame].m_data.y;
+            (*stream) >> currentAnim->m_scalingKeys[frame].m_data.z;
         }
     }
     
