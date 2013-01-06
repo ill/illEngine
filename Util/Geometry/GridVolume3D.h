@@ -24,7 +24,10 @@ public:
         : m_cellDimensions(cellDimensions),
         m_cellNumber(cellNumber)
     {
-        m_volumeBounds = Box<P>(glm::detail::tvec3<P>((P) 0), glm::detail::tvec3<P>(m_cellDimensions.x * m_cellNumber.x - (P)0.1, m_cellDimensions.y * m_cellNumber.y - (P)0.1, m_cellDimensions.z * m_cellNumber.z - (P)0.1));
+        m_volumeBounds = Box<P>(glm::detail::tvec3<P>((P) 0), 
+            glm::detail::tvec3<P>(m_cellDimensions.x * m_cellNumber.x - (P)0.1, 
+                m_cellDimensions.y * m_cellNumber.y - (P)0.1, 
+                m_cellDimensions.z * m_cellNumber.z - (P)0.1));
         m_cells = new T[m_cellNumber.x * m_cellNumber.y * m_cellNumber.z];
     }
 
