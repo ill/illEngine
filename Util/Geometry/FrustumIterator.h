@@ -12,6 +12,10 @@
 const bool LEFT_SIDE = true;
 const bool RIGHT_SIDE = false;
 
+const uint8_t SLICE_DIM = 0;
+const uint8_t X_DIM = 2;
+const uint8_t Y_DIM = 1;
+
 /**
 Traverses front to back in the view frustum that intersects a GridVolume3D.
 The frustum should have a field of view less than 180 degrees or else assumptions made about
@@ -36,9 +40,9 @@ public:
         glm::detail::tvec3<W> sliceTo3D(const glm::detail::tvec2<W>& coord, W sliceCoord) const {
             glm::detail::tvec3<W> res;
 
-            res[m_iterator->m_dimensionOrder[0]] = sliceCoord;
-            res[m_iterator->m_dimensionOrder[1]] = coord.y;
-            res[m_iterator->m_dimensionOrder[2]] = coord.x;
+            res[m_iterator->m_dimensionOrder[SLICE_DIM]] = sliceCoord;
+            res[m_iterator->m_dimensionOrder[X_DIM]] = coord.x;
+            res[m_iterator->m_dimensionOrder[Y_DIM]] = coord.y;
 
             return res;
         }
@@ -94,7 +98,7 @@ public:
 
         m_currentPosition = m_range.m_min;
 
-        uint8_t sliceDimension = m_dimensionOrder[0];
+        uint8_t sliceDimension = m_dimensionOrder[SLICE_DIM];
 
         m_sliceStart = m_spaceRange.m_min[sliceDimension];
         W sliceEnd = m_sliceStart + m_directionSign[sliceDimension] * m_cellDimensions[sliceDimension];
@@ -131,14 +135,14 @@ public:
     }
 
     inline bool atEnd() const {
-        return m_currentPosition[m_dimensionOrder[2]] == m_sliceMax.x 
-            && m_currentPosition[m_dimensionOrder[1]] == m_sliceMax.y 
-            && geq(m_currentPosition[m_dimensionOrder[0]], m_range.m_max[m_dimensionOrder[0]], m_directionSign[0]);
+        return m_currentPosition[m_dimensionOrder[X_DIM]] == m_sliceMax.x 
+            && m_currentPosition[m_dimensionOrder[Y_DIM]] == m_sliceMax.y 
+            && geq(m_currentPosition[m_dimensionOrder[SLICE_DIM]], m_range.m_max[m_dimensionOrder[SLICE_DIM]], m_directionSign[SLICE_DIM]);
     }
 
     inline bool forward() {      
-        if(m_currentPosition[m_dimensionOrder[2]] == m_sliceMax.x) {
-            if(m_currentPosition[m_dimensionOrder[1]] == m_sliceMax.y) {
+        if(m_currentPosition[m_dimensionOrder[X_DIM]] == m_sliceMax.x) {
+            if(m_currentPosition[m_dimensionOrder[Y_DIM]] == m_sliceMax.y) {
                 while(!advanceSlice()) {
                     return atEnd();
                 }
@@ -148,7 +152,7 @@ public:
             }         
         }
         else {
-            m_currentPosition[m_dimensionOrder[2]] += m_directionSign[m_dimensionOrder[2]];
+            m_currentPosition[m_dimensionOrder[X_DIM]] += m_directionSign[m_dimensionOrder[X_DIM]];
 
             m_debugger.m_rasterizedCells.push_back(m_cellDimensions * vec3cast<P, W>(m_currentPosition) + m_cellDimensions * 0.5f * vec3cast<int8_t, W>(m_directionSign));
         }
@@ -212,12 +216,12 @@ public:
         uint8_t inactiveEdgeIndex = 0;
         bool otherPoint;
 
-        m_pointList[m_currentPointList].add(glm::detail::tvec2<W>(m_frustum->m_points[point][m_dimensionOrder[2]], m_frustum->m_points[point][m_dimensionOrder[1]]));
-        m_debugger.m_pointListMissingDim[m_currentPointList].add(m_frustum->m_points[point][m_dimensionOrder[0]]);
+        m_pointList[m_currentPointList].add(glm::detail::tvec2<W>(m_frustum->m_points[point][m_dimensionOrder[X_DIM]], m_frustum->m_points[point][m_dimensionOrder[Y_DIM]]));
+        m_debugger.m_pointListMissingDim[m_currentPointList].add(m_frustum->m_points[point][m_dimensionOrder[SLICE_DIM]]);
 
         while((inactiveEdgeIndex = findInactiveEdge(point, inactiveEdgeIndex, otherPoint)) != FRUSTUM_NUM_EDGES) {
             //find which slice the other point is in relative to this slice
-            int sliceNum = gridDistance(m_frustum->m_points[FRUSTUM_EDGE_LIST[inactiveEdgeIndex][otherPoint]][m_dimensionOrder[0]] - m_sliceStart, m_dimensionOrder[0]);
+            int sliceNum = gridDistance(m_frustum->m_points[FRUSTUM_EDGE_LIST[inactiveEdgeIndex][otherPoint]][m_dimensionOrder[SLICE_DIM]] - m_sliceStart, m_dimensionOrder[SLICE_DIM]);
 
             //discard edge if also in this slice
             if(sliceNum <= 0) {
@@ -251,12 +255,12 @@ public:
             glm::detail::tvec2<W>& pointA = m_sliceRasterizeEdges[isLeftSide].m_data[m_activeSliceEdgeIndex[isLeftSide]];
             glm::detail::tvec2<W>& pointB = m_sliceRasterizeEdges[isLeftSide].m_data[m_activeSliceEdgeIndex[isLeftSide] + 1];
 
-            int rowNum = gridDistance((pointB.y - pointA.y) * m_directionSign[m_dimensionOrder[1]], m_dimensionOrder[1]);
+            int rowNum = gridDistance((pointB.y - pointA.y) * m_directionSign[m_dimensionOrder[Y_DIM]], m_dimensionOrder[Y_DIM]);
 
             int column = gridDistance(isLeftSide
-                ? (m_spaceRange.m_max[m_dimensionOrder[2]] - pointB.x) * m_directionSign[m_dimensionOrder[2]]
-            : (pointB.x - m_spaceRange.m_min[m_dimensionOrder[2]]) * m_directionSign[m_dimensionOrder[2]], 
-                m_dimensionOrder[2]);
+                ? (m_spaceRange.m_max[m_dimensionOrder[X_DIM]] - pointB.x) * m_directionSign[m_dimensionOrder[X_DIM]]
+            : (pointB.x - m_spaceRange.m_min[m_dimensionOrder[X_DIM]]) * m_directionSign[m_dimensionOrder[X_DIM]], 
+                m_dimensionOrder[X_DIM]);
 
             //if next point is in the same row, advance
             if(rowNum <= 0) {
@@ -270,14 +274,14 @@ public:
                     m_activeSliceEdgeIndex[isLeftSide]++;
                 }
                 else {
-                    m_acticeSliceEdgeOutward[isLeftSide] = gt(pointB.x, pointA.x, isLeftSide ? -m_directionSign[m_dimensionOrder[2]] : m_directionSign[m_dimensionOrder[2]]);
+                    m_acticeSliceEdgeOutward[isLeftSide] = gt(pointB.x, pointA.x, isLeftSide ? -m_directionSign[m_dimensionOrder[X_DIM]] : m_directionSign[m_dimensionOrder[X_DIM]]);
                     m_activeSliceEdges[isLeftSide] = rowNum;
 
                     break;
                 }
             }
             else {
-                m_acticeSliceEdgeOutward[isLeftSide] = gt(pointB.x, pointA.x, isLeftSide ? -m_directionSign[m_dimensionOrder[2]] : m_directionSign[m_dimensionOrder[2]]);
+                m_acticeSliceEdgeOutward[isLeftSide] = gt(pointB.x, pointA.x, isLeftSide ? -m_directionSign[m_dimensionOrder[X_DIM]] : m_directionSign[m_dimensionOrder[X_DIM]]);
                 m_activeSliceEdges[isLeftSide] = rowNum;
                 break;
             }
@@ -285,11 +289,11 @@ public:
 
         if(foundThisRow) {
             if(isLeftSide) {
-                m_currentPosition[m_dimensionOrder[2]] = m_range.m_max[m_dimensionOrder[2]] - farthestColumn * m_directionSign[m_dimensionOrder[2]];
-                m_debugger.m_sliceMin.x = m_currentPosition[m_dimensionOrder[2]];
+                m_currentPosition[m_dimensionOrder[X_DIM]] = m_range.m_max[m_dimensionOrder[X_DIM]] - farthestColumn * m_directionSign[m_dimensionOrder[X_DIM]];
+                m_debugger.m_sliceMin.x = m_currentPosition[m_dimensionOrder[X_DIM]];
             }
             else {
-                m_sliceMax.x = m_range.m_min[m_dimensionOrder[2]] + farthestColumn * m_directionSign[m_dimensionOrder[2]];
+                m_sliceMax.x = m_range.m_min[m_dimensionOrder[X_DIM]] + farthestColumn * m_directionSign[m_dimensionOrder[X_DIM]];
             }
         }
     }
@@ -371,7 +375,7 @@ public:
             currentPoint = *unclippedRasterizeEdges.m_data[currentPointIndex];
 
             //if past the min vertical bounds
-            if(geq(currentPoint.y, min.y, m_directionSign[m_dimensionOrder[1]])) {
+            if(geq(currentPoint.y, min.y, m_directionSign[m_dimensionOrder[Y_DIM]])) {
                 //find the current point's side region
                 if(geq(currentPoint.x, min.x, xSign)) {
                     if(leq(currentPoint.x, max.x, xSign)) {
@@ -426,7 +430,7 @@ public:
                     }
                 }
                 else {
-                    if(gt(currentPoint.y, max.y, m_directionSign[m_dimensionOrder[1]])) {
+                    if(gt(currentPoint.y, max.y, m_directionSign[m_dimensionOrder[Y_DIM]])) {
                         //slice is outside the volume
                         assert(m_sliceRasterizeEdges[isLeftSide].m_size == 0);
 
@@ -461,7 +465,7 @@ public:
             currentPoint = *unclippedRasterizeEdges.m_data[currentPointIndex];
 
             //if past max vert bounds
-            if(gt(currentPoint.y, max.y, m_directionSign[m_dimensionOrder[1]])) {
+            if(gt(currentPoint.y, max.y, m_directionSign[m_dimensionOrder[Y_DIM]])) {
                 //clip segment against the top
                 currentPoint.x = lineInterceptX(prevPoint, currentPoint, max.y);
                 currentPoint.y = max.y;
@@ -581,11 +585,11 @@ public:
             return true;
         }
 
-        m_currentPosition[m_dimensionOrder[1]] += m_directionSign[1];      
+        m_currentPosition[m_dimensionOrder[Y_DIM]] += m_directionSign[Y_DIM];      
 
         //advance slice planes
-        m_slicePlane.m_distance -= m_cellDimensions[m_dimensionOrder[0]];    //TODO: pretty sure this is going to fail if plane is in a negative quadrant
-        m_sliceStart += m_directionSign[m_dimensionOrder[0]] * m_cellDimensions[m_dimensionOrder[0]];
+        m_slicePlane.m_distance -= m_cellDimensions[m_dimensionOrder[SLICE_DIM]];    //TODO: pretty sure this is going to fail if plane is in a negative quadrant
+        m_sliceStart += m_directionSign[m_dimensionOrder[SLICE_DIM]] * m_cellDimensions[m_dimensionOrder[SLICE_DIM]];
 
         //swap current point buffers
         m_currentPointList = !m_currentPointList;
@@ -633,8 +637,8 @@ public:
                 bool intersection = m_slicePlane.lineIntersection(m_frustum->m_points[FRUSTUM_EDGE_LIST[activeEdge][0]], m_frustum->m_points[FRUSTUM_EDGE_LIST[activeEdge][1]], dest);
                 assert(intersection);   //this assert definitely helps find some nasty bugs
 
-                m_pointList[!m_currentPointList].add(glm::detail::tvec2<W>(dest[m_dimensionOrder[2]], dest[m_dimensionOrder[1]]));
-                m_debugger.m_pointListMissingDim[!m_currentPointList].add(dest[m_dimensionOrder[0]]);
+                m_pointList[!m_currentPointList].add(glm::detail::tvec2<W>(dest[m_dimensionOrder[X_DIM]], dest[m_dimensionOrder[Y_DIM]]));
+                m_debugger.m_pointListMissingDim[!m_currentPointList].add(dest[m_dimensionOrder[SLICE_DIM]]);
             }
         }
 
@@ -658,77 +662,77 @@ public:
         //find the convex hull and split it into lists of edges for 1 side and the other
         StaticList<glm::detail::tvec2<W>*, FRUSTUM_NUM_EDGES> unclippedRasterizeEdges[2];
 
-        uint8_t secondaryDimension = m_dimensionOrder[1];
-        uint8_t tertiaryDimension = m_dimensionOrder[2];
+        uint8_t secondaryDimension = m_dimensionOrder[Y_DIM];
+        uint8_t tertiaryDimension = m_dimensionOrder[X_DIM];
 
         {
             int8_t convexSign = m_directionSign[secondaryDimension] * m_directionSign[tertiaryDimension];
 
             //"right" edge
-            convexHull(sortedPoints.begin(), sortedPoints.end(), unclippedRasterizeEdges[0], convexSign);
+            convexHull(sortedPoints.begin(), sortedPoints.end(), unclippedRasterizeEdges[RIGHT_SIDE], convexSign);
 
             //"left" edge
-            convexHull(sortedPoints.rbegin(), sortedPoints.rend(), unclippedRasterizeEdges[1], convexSign);
+            convexHull(sortedPoints.rbegin(), sortedPoints.rend(), unclippedRasterizeEdges[LEFT_SIDE], convexSign);
         }
 
-        m_debugger.m_unclippedRasterizeEdges[0] = unclippedRasterizeEdges[0];
-        m_debugger.m_unclippedRasterizeEdges[1] = unclippedRasterizeEdges[1];
+        m_debugger.m_unclippedRasterizeEdges[RIGHT_SIDE] = unclippedRasterizeEdges[RIGHT_SIDE];
+        m_debugger.m_unclippedRasterizeEdges[LEFT_SIDE] = unclippedRasterizeEdges[LEFT_SIDE];
 
         /////
         //clip convex hull using modified sutherland-hodgman clipping
 
-        m_sliceRasterizeEdges[0].clear();
-        m_sliceRasterizeEdges[1].clear();
+        m_sliceRasterizeEdges[RIGHT_SIDE].clear();
+        m_sliceRasterizeEdges[LEFT_SIDE].clear();
 
         m_debugger.m_clipPoints.clear();
 
         //right edge
-        clipHull<RIGHT_SIDE>(unclippedRasterizeEdges[0], glm::detail::tvec2<W>(m_spaceRange.m_min[tertiaryDimension], m_spaceRange.m_min[secondaryDimension]), glm::detail::tvec2<W>(m_spaceRange.m_max[tertiaryDimension], m_spaceRange.m_max[secondaryDimension]), m_directionSign[tertiaryDimension]);
+        clipHull<RIGHT_SIDE>(unclippedRasterizeEdges[RIGHT_SIDE], glm::detail::tvec2<W>(m_spaceRange.m_min[tertiaryDimension], m_spaceRange.m_min[secondaryDimension]), glm::detail::tvec2<W>(m_spaceRange.m_max[tertiaryDimension], m_spaceRange.m_max[secondaryDimension]), m_directionSign[tertiaryDimension]);
 
-        if(m_sliceRasterizeEdges[0].m_size == 0) {
+        if(m_sliceRasterizeEdges[RIGHT_SIDE].m_size == 0) {
             //slice is outside the volume
-            assert(m_sliceRasterizeEdges[0].m_size == 0);
-            assert(m_sliceRasterizeEdges[1].m_size == 0);
+            assert(m_sliceRasterizeEdges[RIGHT_SIDE].m_size == 0);
+            assert(m_sliceRasterizeEdges[LEFT_SIDE].m_size == 0);
 
             return false;
         }
 
-        assert(m_sliceRasterizeEdges[0].m_size >= 2);
+        assert(m_sliceRasterizeEdges[RIGHT_SIDE].m_size >= 2);
 
         //left
-        clipHull<LEFT_SIDE>(unclippedRasterizeEdges[1], glm::detail::tvec2<W>(m_spaceRange.m_max[tertiaryDimension], m_spaceRange.m_min[secondaryDimension]), glm::detail::tvec2<W>(m_spaceRange.m_min[tertiaryDimension], m_spaceRange.m_max[secondaryDimension]), -m_directionSign[tertiaryDimension]);
+        clipHull<LEFT_SIDE>(unclippedRasterizeEdges[LEFT_SIDE], glm::detail::tvec2<W>(m_spaceRange.m_max[tertiaryDimension], m_spaceRange.m_min[secondaryDimension]), glm::detail::tvec2<W>(m_spaceRange.m_min[tertiaryDimension], m_spaceRange.m_max[secondaryDimension]), -m_directionSign[tertiaryDimension]);
 
-        if(m_sliceRasterizeEdges[1].m_size == 0) {
+        if(m_sliceRasterizeEdges[LEFT_SIDE].m_size == 0) {
             //slice is outside the volume
             return false;
         }
 
         //make sure we have a proper polygon, this should only compile into the debug build
-        assert(m_sliceRasterizeEdges[0].m_size >= 2);
-        assert(m_sliceRasterizeEdges[1].m_size >= 2);
+        assert(m_sliceRasterizeEdges[RIGHT_SIDE].m_size >= 2);
+        assert(m_sliceRasterizeEdges[LEFT_SIDE].m_size >= 2);
 
         //clip the minimum vertical side
-        if(lt(m_sliceRasterizeEdges[0].m_data[0].y, 
-            m_sliceRasterizeEdges[1].m_data[0].y, 
+        if(lt(m_sliceRasterizeEdges[RIGHT_SIDE].m_data[0].y, 
+            m_sliceRasterizeEdges[LEFT_SIDE].m_data[0].y, 
             m_directionSign[secondaryDimension])) {
-                m_sliceRasterizeEdges[0].m_data[0].y = m_sliceRasterizeEdges[1].m_data[0].y;
+                m_sliceRasterizeEdges[RIGHT_SIDE].m_data[0].y = m_sliceRasterizeEdges[LEFT_SIDE].m_data[0].y;
         }
-        else if(lt(m_sliceRasterizeEdges[1].m_data[0].y, 
-            m_sliceRasterizeEdges[0].m_data[0].y, 
+        else if(lt(m_sliceRasterizeEdges[LEFT_SIDE].m_data[0].y, 
+            m_sliceRasterizeEdges[RIGHT_SIDE].m_data[0].y, 
             m_directionSign[secondaryDimension])) {
-                m_sliceRasterizeEdges[1].m_data[0].y = m_sliceRasterizeEdges[0].m_data[0].y;
+                m_sliceRasterizeEdges[LEFT_SIDE].m_data[0].y = m_sliceRasterizeEdges[RIGHT_SIDE].m_data[0].y;
         }
 
         //clip the maximum vertical side
-        if(gt(m_sliceRasterizeEdges[0].m_data[m_sliceRasterizeEdges[0].m_size - 1].y, 
-            m_sliceRasterizeEdges[1].m_data[m_sliceRasterizeEdges[1].m_size - 1].y, 
+        if(gt(m_sliceRasterizeEdges[RIGHT_SIDE].m_data[m_sliceRasterizeEdges[RIGHT_SIDE].m_size - 1].y, 
+            m_sliceRasterizeEdges[LEFT_SIDE].m_data[m_sliceRasterizeEdges[LEFT_SIDE].m_size - 1].y, 
             m_directionSign[secondaryDimension])) {
-                m_sliceRasterizeEdges[0].m_data[m_sliceRasterizeEdges[0].m_size - 1].y = m_sliceRasterizeEdges[1].m_data[m_sliceRasterizeEdges[1].m_size - 1].y;
+                m_sliceRasterizeEdges[RIGHT_SIDE].m_data[m_sliceRasterizeEdges[RIGHT_SIDE].m_size - 1].y = m_sliceRasterizeEdges[LEFT_SIDE].m_data[m_sliceRasterizeEdges[LEFT_SIDE].m_size - 1].y;
         }
-        else if(gt(m_sliceRasterizeEdges[1].m_data[m_sliceRasterizeEdges[1].m_size - 1].y, 
-            m_sliceRasterizeEdges[0].m_data[m_sliceRasterizeEdges[0].m_size - 1].y, 
+        else if(gt(m_sliceRasterizeEdges[LEFT_SIDE].m_data[m_sliceRasterizeEdges[LEFT_SIDE].m_size - 1].y, 
+            m_sliceRasterizeEdges[RIGHT_SIDE].m_data[m_sliceRasterizeEdges[RIGHT_SIDE].m_size - 1].y, 
             m_directionSign[secondaryDimension])) {
-                m_sliceRasterizeEdges[1].m_data[m_sliceRasterizeEdges[1].m_size - 1].y = m_sliceRasterizeEdges[0].m_data[m_sliceRasterizeEdges[0].m_size - 1].y;
+                m_sliceRasterizeEdges[LEFT_SIDE].m_data[m_sliceRasterizeEdges[LEFT_SIDE].m_size - 1].y = m_sliceRasterizeEdges[RIGHT_SIDE].m_data[m_sliceRasterizeEdges[RIGHT_SIDE].m_size - 1].y;
         }
 
         //setup the initial row
@@ -737,7 +741,7 @@ public:
         m_activeSliceEdgeIndex[LEFT_SIDE] = 0;
 
         //sets up the min vertical
-        int rowNum = gridDistance(m_sliceRasterizeEdges[0].m_data[0].y - m_spaceRange.m_min[secondaryDimension], secondaryDimension);      
+        int rowNum = gridDistance(m_sliceRasterizeEdges[RIGHT_SIDE].m_data[0].y - m_spaceRange.m_min[secondaryDimension], secondaryDimension);      
         m_currentPosition[secondaryDimension] = m_range.m_min[secondaryDimension] + rowNum * m_directionSign[secondaryDimension];
 
         m_debugger.m_sliceMin.y = m_currentPosition[secondaryDimension];
@@ -746,7 +750,7 @@ public:
         m_lineTop = m_lineBottom + m_directionSign[secondaryDimension] * m_cellDimensions[secondaryDimension];
 
         //sets up the max vertical
-        rowNum = gridDistance(m_sliceRasterizeEdges[0].m_data[m_sliceRasterizeEdges[0].m_size - 1].y - m_spaceRange.m_min[secondaryDimension], secondaryDimension);
+        rowNum = gridDistance(m_sliceRasterizeEdges[RIGHT_SIDE].m_data[m_sliceRasterizeEdges[RIGHT_SIDE].m_size - 1].y - m_spaceRange.m_min[secondaryDimension], secondaryDimension);
         m_sliceMax.y = m_range.m_min[secondaryDimension] + rowNum * m_directionSign[secondaryDimension];
 
         //sets up some initial horizontal
@@ -764,12 +768,12 @@ public:
     void advanceRow() {
         //advance row locations
         m_lineBottom = m_lineTop;
-        m_lineTop += m_directionSign[m_dimensionOrder[1]] * m_cellDimensions[m_dimensionOrder[1]];
+        m_lineTop += m_directionSign[m_dimensionOrder[Y_DIM]] * m_cellDimensions[m_dimensionOrder[Y_DIM]];
 
-        m_currentPosition[m_dimensionOrder[1]] += m_directionSign[m_dimensionOrder[1]];
+        m_currentPosition[m_dimensionOrder[Y_DIM]] += m_directionSign[m_dimensionOrder[Y_DIM]];
 
-        m_sliceMax.x = m_range.m_min[m_dimensionOrder[2]];
-        m_currentPosition[m_dimensionOrder[2]] = m_range.m_max[m_dimensionOrder[2]];
+        m_sliceMax.x = m_range.m_min[m_dimensionOrder[X_DIM]];
+        m_currentPosition[m_dimensionOrder[X_DIM]] = m_range.m_max[m_dimensionOrder[X_DIM]];
 
         //count down the active edges
         if(--m_activeSliceEdges[RIGHT_SIDE] == 0 && m_activeSliceEdgeIndex[RIGHT_SIDE] + 1 < m_sliceRasterizeEdges[RIGHT_SIDE].m_size - 1) {
@@ -796,21 +800,29 @@ public:
         assert(m_activeSliceEdgeIndex[LEFT_SIDE] + 1 < m_sliceRasterizeEdges[LEFT_SIDE].m_size);
 
         //set the right side
-        xIntercept = lineInterceptX(m_sliceRasterizeEdges[RIGHT_SIDE].m_data[m_activeSliceEdgeIndex[RIGHT_SIDE]], m_sliceRasterizeEdges[RIGHT_SIDE].m_data[m_activeSliceEdgeIndex[RIGHT_SIDE] + 1], m_acticeSliceEdgeOutward[RIGHT_SIDE] ? m_lineTop : m_lineBottom);
+        xIntercept = lineInterceptX(m_sliceRasterizeEdges[RIGHT_SIDE].m_data[m_activeSliceEdgeIndex[RIGHT_SIDE]], 
+            m_sliceRasterizeEdges[RIGHT_SIDE].m_data[m_activeSliceEdgeIndex[RIGHT_SIDE] + 1], 
+            m_acticeSliceEdgeOutward[RIGHT_SIDE] ? m_lineTop : m_lineBottom);
 
-        P column = m_range.m_min[m_dimensionOrder[2]] + gridDistance(xIntercept - m_spaceRange.m_min[m_dimensionOrder[2]], m_dimensionOrder[2]) * m_directionSign[m_dimensionOrder[2]];
+        P column = m_range.m_min[m_dimensionOrder[X_DIM]] 
+            + gridDistance(xIntercept - m_spaceRange.m_min[m_dimensionOrder[X_DIM]], m_dimensionOrder[X_DIM]) 
+            * m_directionSign[m_dimensionOrder[X_DIM]];
 
-        if(gt(column, m_sliceMax.x, m_directionSign[2])) {
+        if(gt(column, m_sliceMax.x, m_directionSign[X_DIM])) {
             m_sliceMax.x = column;
         }
 
         //set the left side
-        xIntercept = lineInterceptX(m_sliceRasterizeEdges[LEFT_SIDE].m_data[m_activeSliceEdgeIndex[LEFT_SIDE]], m_sliceRasterizeEdges[LEFT_SIDE].m_data[m_activeSliceEdgeIndex[LEFT_SIDE] + 1], m_acticeSliceEdgeOutward[LEFT_SIDE] ? m_lineTop : m_lineBottom);
+        xIntercept = lineInterceptX(m_sliceRasterizeEdges[LEFT_SIDE].m_data[m_activeSliceEdgeIndex[LEFT_SIDE]], 
+            m_sliceRasterizeEdges[LEFT_SIDE].m_data[m_activeSliceEdgeIndex[LEFT_SIDE] + 1], 
+            m_acticeSliceEdgeOutward[LEFT_SIDE] ? m_lineTop : m_lineBottom);
 
-        column = m_range.m_min[m_dimensionOrder[2]] + gridDistance(xIntercept - m_spaceRange.m_min[m_dimensionOrder[2]], m_dimensionOrder[2]) * m_directionSign[m_dimensionOrder[2]];
+        column = m_range.m_min[m_dimensionOrder[X_DIM]] 
+            + gridDistance(xIntercept - m_spaceRange.m_min[m_dimensionOrder[X_DIM]], m_dimensionOrder[X_DIM]) 
+            * m_directionSign[m_dimensionOrder[X_DIM]];
 
-        if(lt(column, m_currentPosition[m_dimensionOrder[2]], m_directionSign[2])) {
-            m_currentPosition[m_dimensionOrder[2]] = column;
+        if(lt(column, m_currentPosition[m_dimensionOrder[2]], m_directionSign[X_DIM])) {
+            m_currentPosition[m_dimensionOrder[X_DIM]] = column;
         }
 
         m_debugger.m_sliceMin.x = column;
