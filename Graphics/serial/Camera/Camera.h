@@ -38,7 +38,6 @@ public:
         m_canonical.m_dirty = true;
         m_modelView.m_dirty = true;
         m_projection.m_dirty = true;
-        m_normal.m_dirty = true;
 
         m_aspect = aspect;
         m_fov = fov;
@@ -102,16 +101,7 @@ public:
 
         return m_canonical.m_value;
     }
-
-    //only send this to the shader if not using an outside transformed model view matrix
-    inline const glm::mat3& getNormal() const {
-        if(m_normal.m_dirty) {
-            computeNormal();
-        }
-
-        return m_normal.m_value;
-    }
-
+    
 private:
     //these are marked as const so the getters can be "const"
     inline void computeFrustum() const {
@@ -145,11 +135,6 @@ private:
         m_canonical.m_dirty = false;
     }
 
-    inline void computeNormal() const {
-        m_normal.m_value = glm::mat3(getModelView());   
-        m_normal.m_dirty = false;
-    }
-
     CameraTransform m_transform;
 
     //TODO: take out these dirty bit container things, I've found this "optimization" is unnecessary
@@ -161,7 +146,6 @@ private:
     mutable DirtyBitContainer<glm::mat4> m_modelView;           ///<model view matrix
     mutable DirtyBitContainer<glm::mat4> m_projection;          ///<projection matrix in array form for sending down to OpenGL
     mutable DirtyBitContainer<glm::mat4> m_canonical;           ///<canonical matrix (AKA modelViewProjection)
-    mutable DirtyBitContainer<glm::mat3> m_normal;              ///<normal matrix in array form for sending down to OpenGL
 
     //TODO: these should go back into the camera transform so they can be animated
     glm::mediump_float m_aspect;        ///<aspect ratio
