@@ -61,7 +61,12 @@ public:
 
         std::list<glm::detail::tvec3<W> > m_rasterizedCells;  //cells that were rasterized so far in world coords for the renderer to render
 
+        W m_leftSlicePoint; //the point set by setLeftSlicePoint
+        W m_rightSlicePoint; //the point set by setLeftSlicePoint
+
         glm::detail::tvec2<P> m_sliceMin;
+
+        std::list<std::string> m_messages;
     };
 
     FrustumIterator() {
@@ -238,15 +243,215 @@ public:
     }
 
     /**
+    Sets the left side of the slice being rasterized.
+
+    @param worldX the x coordinate in the world to add
+    */
+    inline void setLeftSlicePoint(W worldX) {
+        //find which column that point is in
+        P column = m_range.m_min[m_dimensionOrder[X_DIM]] 
+            + gridDistance(worldX - m_spaceRange.m_min[m_dimensionOrder[X_DIM]], m_dimensionOrder[X_DIM]) 
+            * m_directionSign[m_dimensionOrder[X_DIM]];
+
+        //current position is now this left side column
+        m_currentPosition[m_dimensionOrder[X_DIM]] = column;
+                
+        //set up the debugger stuff
+        m_debugger.m_leftSlicePoint = worldX;
+        m_debugger.m_sliceMin.x = column;
+        m_debugger.m_rasterizedCells.push_back(m_cellDimensions * vec3cast<P, W>(m_currentPosition) + m_cellDimensions * 0.5f * vec3cast<int8_t, W>(m_directionSign));
+    }
+
+    /**
+    Sets the right side of the slice being rasterized.
+
+    @param worldX the x coordinate in the world to add
+    */
+    inline void setRightSlicePoint(W worldX) {
+        //find which column that point is in
+        P column = m_range.m_min[m_dimensionOrder[X_DIM]] 
+            + gridDistance(worldX - m_spaceRange.m_min[m_dimensionOrder[X_DIM]], m_dimensionOrder[X_DIM]) 
+            * m_directionSign[m_dimensionOrder[X_DIM]];
+
+        //row maximum is now this column
+        m_sliceMax.x = column;
+
+        //set up the debugger stuff
+        m_debugger.m_rightSlicePoint = worldX;
+    }
+
+    /**
     Adds a point from the slice being rasterized.
 
     @tparam isLeftSide Whether or not being called on the right side or the left side of the rasterizing polygon
+    @tparam isFirstRun Whether or not this is being called for the first time on a slice or if this is happening at later slices
     */
-    template <bool isLeftSide>
-    inline void addSlicePoint() {
+    template <bool isLeftSide, bool isFirstRun>
+    void addSlicePoint() {
+        if(m_activeSliceEdgeOutward[isLeftSide]) {      //if line is outward
+            m_debugger.m_messages.push_back(formatString("add %s outward", isLeftSide ? "left" : "right"));
+
+            //this is while the line is outward
+            //keep going until not in the same row anymore
+            while(true) {
+                //current line points
+                glm::detail::tvec2<W>& pointA = m_sliceRasterizeEdges[isLeftSide].m_data[m_activeSliceEdgeIndex[isLeftSide]];
+                glm::detail::tvec2<W>& pointB = m_sliceRasterizeEdges[isLeftSide].m_data[m_activeSliceEdgeIndex[isLeftSide] + 1];
+
+                //if is last line
+                if(m_activeSliceEdgeIndex[isLeftSide] == m_sliceRasterizeEdges[isLeftSide].m_size - 2) {
+                    m_debugger.m_messages.push_back(formatString("add %s outward last line set point B as farthest", isLeftSide ? "left" : "right"));
+
+                    //set point B as the farthest point
+                    if(isLeftSide) {
+                        setLeftSlicePoint(pointB.x);
+                    }
+                    else {
+                        setRightSlicePoint(pointB.x);
+                    }
+                    return;
+                }
+
+                //find which row the other point is in relative to this row
+                int rowNum = gridDistance((pointB.y - pointA.y) * m_directionSign[m_dimensionOrder[Y_DIM]], m_dimensionOrder[Y_DIM]);
+
+                m_debugger.m_messages.push_back(formatString("add %s %u rows until next point", isLeftSide ? "left" : "right", rowNum));
+
+                //once not in the same row
+                if(rowNum > 0) {
+                    m_activeSliceEdges[isLeftSide] = rowNum;
+                    break;
+                }
+
+                //advance to the next line
+
+                //check what direction next line is going in
+                m_activeSliceEdgeOutward[isLeftSide] = gt(m_sliceRasterizeEdges[isLeftSide].m_data[m_activeSliceEdgeIndex[isLeftSide] + 2].x, 
+                    pointB.x, isLeftSide ? -m_directionSign[m_dimensionOrder[X_DIM]] : m_directionSign[m_dimensionOrder[X_DIM]]);
+
+                m_activeSliceEdgeIndex[isLeftSide]++;
+
+                //if next edge is inward
+                if(!m_activeSliceEdgeOutward[isLeftSide]) {
+                    m_debugger.m_messages.push_back(formatString("add %s next edge inward, set this line's pointB as max", isLeftSide ? "left" : "right"));
+
+                    //set point B as the farthest point
+                    if(isLeftSide) {
+                        setLeftSlicePoint(pointB.x);
+                    }
+                    else {
+                        setRightSlicePoint(pointB.x);
+                    }
+
+                    break;
+                }
+            }
+
+            //if current line still outward after that loop
+            if(m_activeSliceEdgeOutward[isLeftSide]) {
+                m_debugger.m_messages.push_back(formatString("add %s outward line, find intersection against top", isLeftSide ? "left" : "right"));
+
+                //find intersection against row top
+                W xIntercept = lineInterceptX(m_sliceRasterizeEdges[isLeftSide].m_data[m_activeSliceEdgeIndex[isLeftSide]], 
+                    m_sliceRasterizeEdges[isLeftSide].m_data[m_activeSliceEdgeIndex[isLeftSide] + 1], m_lineTop);
+
+                //set this as the max point
+                if(isLeftSide) {
+                    setLeftSlicePoint(xIntercept);
+                }
+                else {
+                    setRightSlicePoint(xIntercept);
+                }
+
+                return;
+            }
+
+            //after all that, the current line is actually facing inwards now
+            //keep going until not in the same row anymore
+            while(true) {
+                //if is last line
+                if(m_activeSliceEdgeIndex[isLeftSide] == m_sliceRasterizeEdges[isLeftSide].m_size - 2) {                    
+                    return;
+                }
+
+                //find which row the other point is in relative to this row
+                int rowNum = gridDistance(
+                    (m_sliceRasterizeEdges[isLeftSide].m_data[m_activeSliceEdgeIndex[isLeftSide] + 1].y 
+                        - m_sliceRasterizeEdges[isLeftSide].m_data[m_activeSliceEdgeIndex[isLeftSide]].y) 
+                    * m_directionSign[m_dimensionOrder[Y_DIM]], m_dimensionOrder[Y_DIM]);
+
+                m_debugger.m_messages.push_back(formatString("add %s outward to inward %u rows until next point", isLeftSide ? "left" : "right", rowNum));
+
+                //once not in the same row
+                if(rowNum > 0) {
+                    m_activeSliceEdges[isLeftSide] = rowNum;
+                    return;
+                }
+
+                m_activeSliceEdgeIndex[isLeftSide]++;
+            }
+        }
+        else {                                          //if line is inward
+            m_debugger.m_messages.push_back(formatString("add %s inward", isLeftSide ? "left" : "right"));
+
+            //if this is the first line
+            if(isFirstRun) {
+                m_debugger.m_messages.push_back(formatString("add %s first run, set beginning of line as max point", isLeftSide ? "left" : "right"));
+
+                assert(m_activeSliceEdgeIndex[isLeftSide] == 0);
+
+                //set the beginning point of the line as the max point
+                if(isLeftSide) {
+                    setLeftSlicePoint(m_sliceRasterizeEdges[isLeftSide].m_data[m_activeSliceEdgeIndex[isLeftSide]].x);
+                }
+                else {
+                    setRightSlicePoint(m_sliceRasterizeEdges[isLeftSide].m_data[m_activeSliceEdgeIndex[isLeftSide]].x);
+                }
+            }
+            else {
+                m_debugger.m_messages.push_back(formatString("add %s find intersection against row bottom", isLeftSide ? "left" : "right"));
+
+                //find intersection against row bottom
+                W xIntercept = lineInterceptX(m_sliceRasterizeEdges[isLeftSide].m_data[m_activeSliceEdgeIndex[isLeftSide]], 
+                    m_sliceRasterizeEdges[isLeftSide].m_data[m_activeSliceEdgeIndex[isLeftSide] + 1], m_lineBottom);
+
+                //set this as the max point
+                if(isLeftSide) {
+                    setLeftSlicePoint(xIntercept);
+                }
+                else {
+                    setRightSlicePoint(xIntercept);
+                }
+            }
+
+            //keep going until not in the same row anymore
+            while(true) {
+                //if is last line
+                if(m_activeSliceEdgeIndex[isLeftSide] == m_sliceRasterizeEdges[isLeftSide].m_size - 2) {                    
+                    return;
+                }
+
+                //find which row the other point is in relative to this row
+                int rowNum = gridDistance(
+                    (m_sliceRasterizeEdges[isLeftSide].m_data[m_activeSliceEdgeIndex[isLeftSide] + 1].y 
+                        - m_sliceRasterizeEdges[isLeftSide].m_data[m_activeSliceEdgeIndex[isLeftSide]].y) 
+                    * m_directionSign[m_dimensionOrder[Y_DIM]], m_dimensionOrder[Y_DIM]);
+
+                m_debugger.m_messages.push_back(formatString("add %s %u rows until next point", isLeftSide ? "left" : "right", rowNum));
+
+                //once not in the same row
+                if(rowNum > 0) {
+                    m_activeSliceEdges[isLeftSide] = rowNum;
+                    return;
+                }
+
+                m_activeSliceEdgeIndex[isLeftSide]++;
+            }
+        }
+
         //TODO: rewriting this farthestColumn stuff
 
-        int farthestColumn = 0;
+        /*int farthestColumn = 0;
 
         bool foundThisRow = false;
 
@@ -275,14 +480,14 @@ public:
                     m_activeSliceEdgeIndex[isLeftSide]++;
                 }
                 else {
-                    m_acticeSliceEdgeOutward[isLeftSide] = gt(pointB.x, pointA.x, isLeftSide ? -m_directionSign[m_dimensionOrder[X_DIM]] : m_directionSign[m_dimensionOrder[X_DIM]]);
+                    m_activeSliceEdgeOutward[isLeftSide] = gt(pointB.x, pointA.x, isLeftSide ? -m_directionSign[m_dimensionOrder[X_DIM]] : m_directionSign[m_dimensionOrder[X_DIM]]);
                     m_activeSliceEdges[isLeftSide] = rowNum;
 
                     break;
                 }
             }
             else {
-                m_acticeSliceEdgeOutward[isLeftSide] = gt(pointB.x, pointA.x, isLeftSide ? -m_directionSign[m_dimensionOrder[X_DIM]] : m_directionSign[m_dimensionOrder[X_DIM]]);
+                m_activeSliceEdgeOutward[isLeftSide] = gt(pointB.x, pointA.x, isLeftSide ? -m_directionSign[m_dimensionOrder[X_DIM]] : m_directionSign[m_dimensionOrder[X_DIM]]);
                 m_activeSliceEdges[isLeftSide] = rowNum;
                 break;
             }
@@ -292,11 +497,12 @@ public:
             if(isLeftSide) {
                 m_currentPosition[m_dimensionOrder[X_DIM]] = m_range.m_max[m_dimensionOrder[X_DIM]] - farthestColumn * m_directionSign[m_dimensionOrder[X_DIM]];
                 m_debugger.m_sliceMin.x = m_currentPosition[m_dimensionOrder[X_DIM]];
+                m_debugger.m_rasterizedCells.push_back(m_cellDimensions * vec3cast<P, W>(m_currentPosition) + m_cellDimensions * 0.5f * vec3cast<int8_t, W>(m_directionSign));
             }
             else {
                 m_sliceMax.x = m_range.m_min[m_dimensionOrder[X_DIM]] + farthestColumn * m_directionSign[m_dimensionOrder[X_DIM]];
             }
-        }
+        }*/
     }
 
     struct PointComparator {
@@ -586,7 +792,7 @@ public:
             return true;
         }
 
-        m_currentPosition[m_dimensionOrder[Y_DIM]] += m_directionSign[Y_DIM];      
+        m_currentPosition[m_dimensionOrder[SLICE_DIM]] += m_directionSign[SLICE_DIM];      
 
         //advance slice planes
         m_slicePlane.m_distance -= m_cellDimensions[m_dimensionOrder[SLICE_DIM]];    //TODO: pretty sure this is going to fail if plane is in a negative quadrant
@@ -737,7 +943,6 @@ public:
         }
 
         //setup the initial row
-
         m_activeSliceEdgeIndex[RIGHT_SIDE] = 0;
         m_activeSliceEdgeIndex[LEFT_SIDE] = 0;
 
@@ -755,14 +960,23 @@ public:
         m_sliceMax.y = m_range.m_min[secondaryDimension] + rowNum * m_directionSign[secondaryDimension];
 
         //sets up some initial horizontal
-        m_sliceMax.x = m_range.m_min[tertiaryDimension];
-        m_currentPosition[tertiaryDimension] = m_range.m_max[tertiaryDimension];
+        //m_sliceMax.x = m_range.m_min[tertiaryDimension];
+        //m_currentPosition[tertiaryDimension] = m_range.m_max[tertiaryDimension];
 
-        addSlicePoint<RIGHT_SIDE>();
-        addSlicePoint<LEFT_SIDE>();
+        //sets up whether the current lines are inward or outward
+        assert(m_activeSliceEdgeIndex[LEFT_SIDE] + 1 < m_sliceRasterizeEdges[LEFT_SIDE].m_size);
+        m_activeSliceEdgeOutward[LEFT_SIDE] = gt(m_sliceRasterizeEdges[LEFT_SIDE].m_data[1].x, m_sliceRasterizeEdges[LEFT_SIDE].m_data[0].x, -m_directionSign[m_dimensionOrder[X_DIM]]);
 
-        setupRow();
+        m_debugger.m_messages.push_back(formatString("Left side initially %s", m_activeSliceEdgeOutward[LEFT_SIDE] ? "outward" : "inward"));
 
+        assert(m_activeSliceEdgeIndex[RIGHT_SIDE] + 1 < m_sliceRasterizeEdges[RIGHT_SIDE].m_size);
+        m_activeSliceEdgeOutward[RIGHT_SIDE] = gt(m_sliceRasterizeEdges[RIGHT_SIDE].m_data[1].x, m_sliceRasterizeEdges[RIGHT_SIDE].m_data[0].x, m_directionSign[m_dimensionOrder[X_DIM]]);
+
+        m_debugger.m_messages.push_back(formatString("right side initially %s", m_activeSliceEdgeOutward[RIGHT_SIDE] ? "outward" : "inward"));
+
+        addSlicePoint<RIGHT_SIDE, true>();
+        addSlicePoint<LEFT_SIDE, true>();
+        
         return true;
     }
 
@@ -773,64 +987,52 @@ public:
 
         m_currentPosition[m_dimensionOrder[Y_DIM]] += m_directionSign[m_dimensionOrder[Y_DIM]];
 
-        m_sliceMax.x = m_range.m_min[m_dimensionOrder[X_DIM]];
-        m_currentPosition[m_dimensionOrder[X_DIM]] = m_range.m_max[m_dimensionOrder[X_DIM]];
+        //m_sliceMax.x = m_range.m_min[m_dimensionOrder[X_DIM]];
+        //m_currentPosition[m_dimensionOrder[X_DIM]] = m_range.m_max[m_dimensionOrder[X_DIM]];
 
         //count down the active edges
-        if(--m_activeSliceEdges[RIGHT_SIDE] == 0 && m_activeSliceEdgeIndex[RIGHT_SIDE] + 1 < m_sliceRasterizeEdges[RIGHT_SIDE].m_size - 1) {
-            m_activeSliceEdgeIndex[RIGHT_SIDE] ++;
-            addSlicePoint<RIGHT_SIDE>();
+        if(--m_activeSliceEdges[RIGHT_SIDE] == 0 && m_activeSliceEdgeIndex[RIGHT_SIDE] < m_sliceRasterizeEdges[RIGHT_SIDE].m_size - 2) {
+            m_debugger.m_messages.push_back("Advance Row Right Side Add Slice Point");
+            
+            //m_activeSliceEdgeIndex[RIGHT_SIDE]++;
+            addSlicePoint<RIGHT_SIDE, false>();
+        }
+        else {
+            m_debugger.m_messages.push_back("Advance Row Right Side intersection");
+
+            //make sure the edge indexes are pointing to no more than the second to last point in each edge list 
+            assert(m_activeSliceEdgeIndex[RIGHT_SIDE] + 1 < m_sliceRasterizeEdges[RIGHT_SIDE].m_size);
+
+            //find intersection with either the top of the slice or the bottom depending on if the line is inward or outward
+            W xIntercept = lineInterceptX(m_sliceRasterizeEdges[RIGHT_SIDE].m_data[m_activeSliceEdgeIndex[RIGHT_SIDE]], 
+                m_sliceRasterizeEdges[RIGHT_SIDE].m_data[m_activeSliceEdgeIndex[RIGHT_SIDE] + 1], 
+                m_activeSliceEdgeOutward[RIGHT_SIDE] ? m_lineTop : m_lineBottom);
+
+            setRightSlicePoint(xIntercept);
         }
 
-        if(--m_activeSliceEdges[LEFT_SIDE] == 0 && m_activeSliceEdgeIndex[LEFT_SIDE] + 1 < m_sliceRasterizeEdges[LEFT_SIDE].m_size - 1) {
-            m_activeSliceEdgeIndex[LEFT_SIDE] ++;
-            addSlicePoint<LEFT_SIDE>();
-        }
+        if(--m_activeSliceEdges[LEFT_SIDE] == 0 && m_activeSliceEdgeIndex[LEFT_SIDE] < m_sliceRasterizeEdges[LEFT_SIDE].m_size - 2) {
+            m_debugger.m_messages.push_back("Advance Row Left Side Add Slice Point");
 
-        setupRow();
+            //m_activeSliceEdgeIndex[LEFT_SIDE]++;
+            addSlicePoint<LEFT_SIDE, false>();
+        }
+        else {
+            m_debugger.m_messages.push_back("Advance Row Left Side intersection");
+
+            //make sure the edge indexes are pointing to no more than the second to last point in each edge list 
+            assert(m_activeSliceEdgeIndex[LEFT_SIDE] + 1 < m_sliceRasterizeEdges[LEFT_SIDE].m_size);
+
+            //find intersection with either the top of the slice or the bottom depending on if the line is inward or outward
+            W xIntercept = lineInterceptX(m_sliceRasterizeEdges[LEFT_SIDE].m_data[m_activeSliceEdgeIndex[LEFT_SIDE]], 
+                m_sliceRasterizeEdges[LEFT_SIDE].m_data[m_activeSliceEdgeIndex[LEFT_SIDE] + 1], 
+                m_activeSliceEdgeOutward[LEFT_SIDE] ? m_lineTop : m_lineBottom);
+
+            setLeftSlicePoint(xIntercept);
+        }
     }
 
-    /**
-    Sets up the current slice row to be 2D rasterized
-    */
-    void setupRow() {
-        W xIntercept;
-
-        //make sure the edge indexes are pointing to no more than the second to last point in each edge list 
-        assert(m_activeSliceEdgeIndex[RIGHT_SIDE] + 1 < m_sliceRasterizeEdges[RIGHT_SIDE].m_size);
-        assert(m_activeSliceEdgeIndex[LEFT_SIDE] + 1 < m_sliceRasterizeEdges[LEFT_SIDE].m_size);
-
-        //set the right side
-        xIntercept = lineInterceptX(m_sliceRasterizeEdges[RIGHT_SIDE].m_data[m_activeSliceEdgeIndex[RIGHT_SIDE]], 
-            m_sliceRasterizeEdges[RIGHT_SIDE].m_data[m_activeSliceEdgeIndex[RIGHT_SIDE] + 1], 
-            m_acticeSliceEdgeOutward[RIGHT_SIDE] ? m_lineTop : m_lineBottom);
-
-        P column = m_range.m_min[m_dimensionOrder[X_DIM]] 
-            + gridDistance(xIntercept - m_spaceRange.m_min[m_dimensionOrder[X_DIM]], m_dimensionOrder[X_DIM]) 
-            * m_directionSign[m_dimensionOrder[X_DIM]];
-
-        if(gt(column, m_sliceMax.x, m_directionSign[X_DIM])) {
-            m_sliceMax.x = column;
-        }
-
-        //set the left side
-        xIntercept = lineInterceptX(m_sliceRasterizeEdges[LEFT_SIDE].m_data[m_activeSliceEdgeIndex[LEFT_SIDE]], 
-            m_sliceRasterizeEdges[LEFT_SIDE].m_data[m_activeSliceEdgeIndex[LEFT_SIDE] + 1], 
-            m_acticeSliceEdgeOutward[LEFT_SIDE] ? m_lineTop : m_lineBottom);
-
-        column = m_range.m_min[m_dimensionOrder[X_DIM]] 
-            + gridDistance(xIntercept - m_spaceRange.m_min[m_dimensionOrder[X_DIM]], m_dimensionOrder[X_DIM]) 
-            * m_directionSign[m_dimensionOrder[X_DIM]];
-
-        if(lt(column, m_currentPosition[m_dimensionOrder[2]], m_directionSign[X_DIM])) {
-            m_currentPosition[m_dimensionOrder[X_DIM]] = column;
-        }
-
-        m_debugger.m_sliceMin.x = column;
-
-        m_debugger.m_rasterizedCells.push_back(m_cellDimensions * vec3cast<P, W>(m_currentPosition) + m_cellDimensions * 0.5f * vec3cast<int8_t, W>(m_directionSign));
-    }
-
+    
     ///Range of 3D cells being rasterized
     Box<P> m_range;
 
@@ -889,7 +1091,7 @@ public:
     int m_activeSliceEdges[2];
 
     ///Whether or not the current active edge for each side is heading away from or towards the center of the polygon's middle vertical axis
-    bool m_acticeSliceEdgeOutward[2];
+    bool m_activeSliceEdgeOutward[2];
 
     ///For debugging, remove later
     Debugger m_debugger;
