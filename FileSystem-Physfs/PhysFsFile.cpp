@@ -36,6 +36,13 @@ void PhysFsFile::seek(size_t offset) {
     }
 }
 
+void PhysFsFile::seekAhead(size_t offset) {
+    seek(tell() + offset);
+}
+
+bool PhysFsFile::eof() {
+    return PHYSFS_eof(m_file);
+}
 
 
 void PhysFsFile::read(void* destination, size_t size) {

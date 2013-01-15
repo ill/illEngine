@@ -1,5 +1,5 @@
-#ifndef ILL_MESH_DATA_H__
-#define ILL_MESH_DATA_H__
+#ifndef __MESH_DATA_H__
+#define __MESH_DATA_H__
 
 #include <cstdint>
 #include <cassert>
@@ -76,8 +76,9 @@ TODO: It'd be nice to rewrite this to be a baseclass using variadic templates an
 then have a MeshData class that contains this.
 
 @tparam T The precision of the data inside.  By default it's float.
+@tparam I The precision of the index data.  By default it's unsigned int.
 */
-template <typename T = glm::mediump_float>
+template <typename T = glm::mediump_float, typename I = uint16_t>
 class MeshData {
 public:
     /**
@@ -137,16 +138,18 @@ public:
     Creates the mesh.
     @param numTri The number of triangles in the mesh.
     @param numVert The number of vertices in the mesh.  Not necessairly numTri multiplied by 3 since there can be shared vertices.
+    @param numGroups The number of triangle groups.  This would correspond to the number of materials in a multimaterial mesh for example.
     @param features Which features are stored in the verteces.
     By default it creates a mesh that stores positions, normals, tangents, and texture coordinates.
     @param allocate Whether or not the data for the mesh should be allocated on the CPU side.
     */
-    MeshData(uint32_t numTri, uint32_t numVert, FeaturesMask features = MF_POSITION | MF_NORMAL | MF_TANGENT | MF_TEX_COORD, bool allocate = true)
+    MeshData(uint32_t numTri, uint32_t numVert, /*uint8_t numGroups,*/ FeaturesMask features = MF_POSITION | MF_NORMAL | MF_TANGENT | MF_TEX_COORD, bool allocate = true)
         : m_numVert(numVert),
-          m_data(NULL),
-          m_numTri(numTri),
-          m_indeces(NULL),
-          m_features(features)
+        m_data(NULL),
+        m_numTri(numTri),
+        m_indeces(NULL),
+        //m_numGroups(numGroups),
+        m_features(features)
     {
         free();
 
@@ -206,7 +209,7 @@ public:
         free();
 
         m_data = new uint8_t[m_numVert * m_vertexSize];
-        m_indeces = new uint32_t[m_numTri * 3];      
+        m_indeces = new I[m_numTri * 3];
     }
 
     /**
@@ -356,7 +359,7 @@ public:
     Use this as a parameter for any functions that take stride of data between face.
     */
     inline size_t getFaceSize() const {
-        return getVertexSize() * 3;
+        return m_vertexSize * 3;
     }
 
     /**
@@ -608,7 +611,7 @@ public:
     Get a pointer to the indeces.
     This is useful for uploading the data to the GPU vertex buffer object.
     */
-    inline uint32_t * getIndeces() const {
+    inline I * getIndeces() const {
         return m_indeces;
     }
 
@@ -648,7 +651,7 @@ private:
     uint8_t * m_data;
 
     uint32_t m_numTri;
-    uint32_t * m_indeces;
+    I * m_indeces;
 
     //uint8_t m_numGroups;
     //TriangleGroup * m_triangleGroups;

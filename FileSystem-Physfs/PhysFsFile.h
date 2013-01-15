@@ -20,6 +20,8 @@ public:
     size_t tell();
 
     void seek(size_t offset);
+    void seekAhead(size_t offset);
+    bool eof();
     
     void read(void* destination, size_t size);
     

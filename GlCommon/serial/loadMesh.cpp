@@ -14,7 +14,7 @@ void GlRenderer::loadMesh(void** meshBackendData, const MeshData<>& meshFrontend
     glBindBuffer(GL_ARRAY_BUFFER, 0);
 
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, *((GLuint *)(*meshBackendData) + 1));
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, meshFrontendData.getNumTri() * 3 * sizeof(uint32_t), meshFrontendData.getIndeces(), GL_STATIC_DRAW);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, meshFrontendData.getNumTri() * 3 * sizeof(uint16_t), meshFrontendData.getIndeces(), GL_STATIC_DRAW);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 }
 

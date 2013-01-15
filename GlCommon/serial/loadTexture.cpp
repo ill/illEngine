@@ -10,6 +10,19 @@
 #include "FileSystem/FileSystem.h"
 #include "FileSystem/File.h"
 
+inline GLenum getTextureWrap(illGraphics::TextureLoadArgs::Wrap wrap) {
+    switch(wrap) {
+    case illGraphics::TextureLoadArgs::W_CLAMP_TO_EDGE:
+        return GL_CLAMP_TO_EDGE;
+
+    case illGraphics::TextureLoadArgs::W_REPEAT:
+        return GL_REPEAT;
+
+    default:
+        return 0;
+    }
+}
+
 namespace GlCommon {
 
 void GlRenderer::loadTexture(void ** textureData, const illGraphics::TextureLoadArgs& loadArgs) {
@@ -83,8 +96,8 @@ void GlRenderer::loadTexture(void ** textureData, const illGraphics::TextureLoad
     glActiveTexture(GL_TEXTURE0);
 
     glBindTexture(GL_TEXTURE_2D, texture);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, loadArgs.m_wrapS);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, loadArgs.m_wrapT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, getTextureWrap(loadArgs.m_wrapS));
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, getTextureWrap(loadArgs.m_wrapT));
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
 
@@ -112,6 +125,15 @@ void GlRenderer::unloadTexture(void ** textureData) {
     glDeleteTextures(1, (GLuint *)(*textureData));
     delete (GLuint *) *textureData;
     *textureData = NULL;
+}
+
+void initFont(void ** fontData, void ** charData, unsigned int charCount) {
+}
+
+void setFontData(void * fontData, void * charData, float left, float top, float width, float height) {
+}
+
+void unloadFont(void ** fontData, void ** charData, unsigned int charCount) {
 }
 
 }

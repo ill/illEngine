@@ -1,13 +1,17 @@
 #ifndef ILL_RENDERER_FRONTEND_H__
 #define ILL_RENDERER_FRONTEND_H__
 
+#include <glm/glm.hpp>
+
 namespace illGraphics {
 
 class RendererBackend;
+class BitmapFont;
+class Camera;
 
-class RendererFrontent {
+class RendererFrontend {
 private:
-    struct RenderArgsBase {
+    /*struct RenderArgsBase {
         RenderArgsBase()
             : m_camera(NULL),
             m_viewPortId(0),
@@ -29,10 +33,10 @@ private:
 
         ///The cull counter so nodes know which frames they were last occluded
         uint64_t m_cullCounter;
-    };
+    };*/
 
 public:
-    struct RenderArgs : public RenderArgsBase {
+    /*struct RenderArgs : public RenderArgsBase {
         RenderArgs()
             : RenderArgsBase()
         {}
@@ -54,9 +58,19 @@ public:
 
         ///Nodes that weren't visible last frame so occlusion query them with a simple bounding box
         //std::vector<Node *> m_occlusionTestNodes;
-   };
+    };
 
-    void render(const RenderArgs& renderArgs);
+    void render(const RenderArgs& renderArgs);*/
+
+    enum FontHorzAlign {
+        FN_H_LEFT, FN_H_CENTER, FN_H_RIGHT
+    };
+
+    enum FontVertAlign {
+        FN_V_TOP, FN_V_CENTER, FN_V_BOTTOM
+    };
+
+    void renderText(const char * text, const glm::mat4& transform, const BitmapFont& font, const Camera& camera, FontHorzAlign horzAlign = FN_H_LEFT, FontVertAlign vertAlign = FN_V_TOP);
 
 private:
 

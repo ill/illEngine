@@ -13,9 +13,9 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/quaternion.hpp>
 #include <glm/gtx/quaternion.hpp>
-#include "Box.h"
+#include "Util/Geometry/Box.h"
 
-#include "../util.h"
+#include "Util/util.h"
 
 /**
 Used by computePosition
@@ -430,7 +430,7 @@ template <typename T>
 inline glm::detail::tmat4x4<T> createTransform(const glm::detail::tvec3<T>& position,  
     const glm::detail::tmat3x3<T>& rotation) {
         glm::detail::tmat4x4<T> res = createTransform(position);
-        res = res * glm::mat4_cast(rotation);
+        res = res * glm::detail::tmat4x4<T>(rotation);
 
         return res;
 }

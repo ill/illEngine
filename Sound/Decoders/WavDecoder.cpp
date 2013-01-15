@@ -1,10 +1,6 @@
 #include "WavDecoder.h"
 #include "Logging/logging.h"
 
-inline void seekAhead(illFileSystem::File* soundFile, size_t seekSize) {
-    soundFile->seek(soundFile->tell() + seekSize);
-}
-
 const int32_t RIFF_CHUNK = 0x52494646;   //"RIFF" in big endian form
 const int32_t WAVE_CHUNK = 0x57415645;   //"WAVE" in big endian form
 const int32_t FMT_CHUNK = 0x666d7420;    //"fmt " in big endian form
@@ -28,7 +24,7 @@ WavDecoder::WavDecoder(const char * path)
         }
     }
 
-    seekAhead(m_file, 4);
+    m_file->seekAhead(4);
 
     /////////////////////////////
     //read the RIFF type
@@ -56,7 +52,7 @@ WavDecoder::WavDecoder(const char * path)
         }
     }
 
-    seekAhead(m_file, 4);
+    m_file->seekAhead(4);
 
     ////////////////////////////
     //audio format
@@ -94,7 +90,7 @@ WavDecoder::WavDecoder(const char * path)
         m_sampleRate = (unsigned int) sampleRate;
     }
 
-    seekAhead(m_file, 6);
+    m_file->seekAhead(6);
 
     ////////////////////////////
     //bits per sample

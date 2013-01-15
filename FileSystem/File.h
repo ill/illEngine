@@ -49,9 +49,19 @@ public:
     virtual size_t tell() = 0;
 
     /**
-    Seeks to an offset in the file.
+    Seeks to an offset in the file relative to the beginning of the file.
     */
     virtual void seek(size_t offset) = 0;
+
+    /**
+    Seeks to an offset in the file relative to the current position in the file.
+    */
+    virtual void seekAhead(size_t offset) = 0;
+
+    /**
+    Checks if at end of file
+    */
+    virtual bool eof() = 0;
 
     /**
     Gets the current state of the file.
