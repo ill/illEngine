@@ -257,9 +257,10 @@ public:
 
             int rowNum = gridDistance((pointB.y - pointA.y) * m_directionSign[m_dimensionOrder[Y_DIM]], m_dimensionOrder[Y_DIM]);
 
-            int column = gridDistance(isLeftSide
-                ? (m_spaceRange.m_max[m_dimensionOrder[X_DIM]] - pointB.x) * m_directionSign[m_dimensionOrder[X_DIM]]
-            : (pointB.x - m_spaceRange.m_min[m_dimensionOrder[X_DIM]]) * m_directionSign[m_dimensionOrder[X_DIM]], 
+            int column = gridDistance(
+                isLeftSide
+                    ? (m_spaceRange.m_max[m_dimensionOrder[X_DIM]] - pointB.x) * m_directionSign[m_dimensionOrder[X_DIM]]
+                    : (pointB.x - m_spaceRange.m_min[m_dimensionOrder[X_DIM]]) * m_directionSign[m_dimensionOrder[X_DIM]], 
                 m_dimensionOrder[X_DIM]);
 
             //if next point is in the same row, advance
