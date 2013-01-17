@@ -747,7 +747,7 @@ public:
         else {                                              //going inward
             m_debugger.m_messages.push_back("Set left side inward edge first line point");
             //set first point of line as farthest column
-            setLeftSliceRowPoint(m_sliceRasterizeEdges[RIGHT_SIDE].m_data[0].x);
+            setLeftSliceRowPoint(m_sliceRasterizeEdges[LEFT_SIDE].m_data[0].x);
 
             while(advanceInwardLine<LEFT_SIDE>()) {}
         }
