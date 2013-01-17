@@ -34,11 +34,6 @@ public:
     @param far The far plane of the camera viewing.  Determines the view frustum in the end.
     */
     inline void setTransform(const CameraTransform& transform, glm::mediump_float aspect = DEFAULT_ASPECT, glm::mediump_float fov = DEFAULT_FOV, glm::mediump_float nearVal = DEFAULT_NEAR, glm::mediump_float farVal = DEFAULT_FAR, bool ortho = false) {
-        m_frustum.m_dirty = true;
-        m_canonical.m_dirty = true;
-        m_modelView.m_dirty = true;
-        m_projection.m_dirty = true;
-
         m_aspect = aspect;
         m_fov = fov;
         m_near = nearVal;
@@ -46,6 +41,21 @@ public:
         m_ortho = ortho;      
 
         m_transform = transform;
+
+        m_modelView = glm::affineInverse(m_transform.m_transform);
+
+        if(m_ortho) {
+            m_projection = glm::ortho(-0.5f * m_aspect, 0.5f * m_aspect,
+                -0.5f, 0.5f,
+                m_near, m_far);
+        }
+        else {
+            m_projection = glm::perspective(m_fov, m_aspect, m_near, m_far);
+        }
+
+        m_canonical = getProjection() * getModelView();
+
+        m_frustum.set(getCanonical());
     }
 
     inline glm::mediump_float getAspect() const {
@@ -70,91 +80,48 @@ public:
 
     //get the view frustum 
     inline const Frustum<>& getViewFrustum() const {
-        if(m_frustum.m_dirty) {
-            computeFrustum();
-        }
-
-        return m_frustum.m_value;
+        return m_frustum;
     }
 
     //get this for outside transforming
     inline const glm::mat4& getModelView() const {
-        if(m_modelView.m_dirty) {
-            computeModelView();
-        }
-
-        return m_modelView.m_value;
+        return m_modelView;
     }
 
     inline const glm::mat4& getProjection() const {
-        if(m_projection.m_dirty) {
-            computeProjection();
-        }
-
-        return m_projection.m_value;
+        return m_projection;
     }
 
     inline const glm::mat4& getCanonical() const {
-        if(m_canonical.m_dirty) {
-            computeCanonical();
-        }
+        return m_canonical;
+    }
 
-        return m_canonical.m_value;
+    /**
+    Returns a line segment that can be used for 3D picking of objects based on 2D window coordinates.
+    You can use the segment to create a ray if needed.
+
+    @param windowCoords The 2D window coordinates
+    @param viewportCorner Usually just (0,0) unless you modified the viewport
+    @param viewportDimensions Usually the dimensions of the window unless you modified the viewport
+    @param ptADestination Destination where point A of the line segment will go
+    @param ptBDestination Destination where point B of the line segment will go
+    */
+    inline void getPickSegment(const glm::vec2& windowCoords, const glm::ivec2& viewportCorner, const glm::ivec2& viewportDimensions,
+            glm::vec3& ptADestination, glm::vec3& ptBDestination) const {
+        ptADestination = glm::unProject(glm::vec3(windowCoords, 0.0f), m_modelView, m_projection, glm::ivec4(viewportCorner, viewportDimensions));
+        ptBDestination = glm::unProject(glm::vec3(windowCoords, 1.0f), m_modelView, m_projection, glm::ivec4(viewportCorner, viewportDimensions));
     }
     
 private:
-    //these are marked as const so the getters can be "const"
-    inline void computeFrustum() const {
-        //multiply modelView * projection to get canonical matrix   
-        m_frustum.m_value.set(getCanonical());
-
-        m_frustum.m_dirty = false;
-    }
-
-    inline void computeModelView() const {
-        m_modelView.m_value = glm::affineInverse(m_transform.m_transform);
-        m_modelView.m_dirty = false;
-    }
-
-    inline void computeProjection() const {
-        if(m_ortho) {
-            //taken from the glm::perspective code to figure out left right bottom top
-
-            //TODO: this is just plain wrong, I'm trying to get an effect similar to switching between ortho and perspective in 3DS max
-            glm::mediump_float range = tan(glm::radians(m_fov * 0.5f)) * m_far;	
-            glm::mediump_float left = -range * m_aspect;
-            glm::mediump_float right = range * m_aspect;
-            glm::mediump_float bottom = -range;
-            glm::mediump_float top = range;
-
-            m_projection.m_value = glm::ortho(left, right,
-                bottom, top,
-                m_near, m_far);
-        }
-        else {
-            m_projection.m_value = glm::perspective(m_fov, m_aspect, m_near, m_far);
-        }   
-
-        m_projection.m_dirty = false;
-    }
-
-    inline void computeCanonical() const {
-        m_canonical.m_value = getProjection() * getModelView();
-
-        m_canonical.m_dirty = false;
-    }
 
     CameraTransform m_transform;
+    
+    Frustum<> m_frustum;                ///<view frustum
+    bool m_ortho;                       ///<if the view is in orthographic or perspective projection
 
-    //TODO: take out these dirty bit container things, I've found this "optimization" is unnecessary
-
-    //these are marked as mutable so the "const" getters can remain const since they only get computed on read
-    mutable DirtyBitContainer<Frustum<> > m_frustum;            ///<view frustum
-    mutable bool m_ortho;                                       ///<if the view is in orthographic or perspective projection
-
-    mutable DirtyBitContainer<glm::mat4> m_modelView;           ///<model view matrix
-    mutable DirtyBitContainer<glm::mat4> m_projection;          ///<projection matrix in array form for sending down to OpenGL
-    mutable DirtyBitContainer<glm::mat4> m_canonical;           ///<canonical matrix (AKA modelViewProjection)
+    glm::mat4 m_modelView;              ///<model view matrix
+    glm::mat4 m_projection;             ///<projection matrix in array form for sending down to OpenGL
+    glm::mat4 m_canonical;              ///<canonical matrix (AKA modelViewProjection)
 
     //TODO: these should go back into the camera transform so they can be animated
     glm::mediump_float m_aspect;        ///<aspect ratio
