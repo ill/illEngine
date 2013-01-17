@@ -7,63 +7,81 @@
 template <typename T, typename ID = size_t>
 class VectorManager {
 public:
-   inline VectorManager() {}
-   
-   inline VectorManager(UidGenerator<ID>& idGenerator) {
-      m_idGenerator = idGenerator;
-   }
+    inline VectorManager() {}
 
-   inline ~VectorManager() {}
+    inline VectorManager(UidGenerator<ID>& idGenerator) {
+        m_idGenerator = idGenerator;
+    }
 
-   /**
-   
-   */
-   inline ID add(T element) {
-      bool isReusing;
-      ID newId = m_idGenerator.generateId(isReusing);
-      
-      if(isReusing) {
-         m_vector[(size_t) newId] = element;
-      }
-      else {
-         m_vector.push_back(element);
-      }
+    inline ~VectorManager() {}
 
-      return newId;
-   }
+    /**
+    */
+    inline ID add(T element) {
+        bool isReusing;
+        ID newId = m_idGenerator.generateId(isReusing);
 
-   inline ID reserveId() {
-      bool isReusing;
-      ID newId = m_idGenerator.generateId(isReusing);
+        if(isReusing) {
+            m_vector[(size_t) newId] = element;
+        }
+        else {
+            m_vector.push_back(element);
+        }
 
-      if(!isReusing) {
-         m_vector.resize(m_vector.size() + 1);   //reserve space in the vector for a reserved id
-      }
+        return newId;
+    }
 
-      return newId;
-   }
+    inline ID reserveId() {
+        bool isReusing;
+        ID newId = m_idGenerator.generateId(isReusing);
 
-   inline void replace(ID elementId, T element) {
-      m_vector[elementId] = element;
-   }
+        if(!isReusing) {
+            m_vector.resize(m_vector.size() + 1);   //reserve space in the vector for a reserved id
+        }
 
-   inline void remove(ID id) {
-      m_idGenerator.releaseId(id);
-   }
-   
-   inline T get(ID id) const {
-      //TODO: make sure id is valid, at least in debug build
+        return newId;
+    }
 
-      return (m_vector[(size_t) id]);
-   }
+    /**
+    Makes the vector allocate enough space for some size.
+    */
+    inline void reserveSpace(size_t size) {
+        if(m_vector.size() < size) {
+            size_t originalSize = m_vector.size();
 
-   inline const std::vector<T>& getVector() const {
-      return m_vector;
-   }
+            m_vector.resize(size);
+
+            //push all new ids, I hope this isn't too inefficient
+            for(size_t elem = originalSize - 1; elem < size; elem++) {
+                forceAddId();
+            }
+        }
+    }
+
+    inline void replace(ID elementId, T element) {
+        m_vector[elementId] = element;
+    }
+    
+    inline void remove(ID id) {
+        m_idGenerator.releaseId(id);
+    }
+
+    inline void clear() {
+        m_idGenerator.releaseAllIds();
+    }
+    
+    inline T get(ID id) const {
+        //TODO: make sure id is valid, at least in debug build
+        return (m_vector[(size_t) id]);
+    }
+
+    inline const std::vector<T>& getVector() const {
+        return m_vector;
+    }
 
 private:
-   UidGenerator<ID> m_idGenerator;
-   std::vector<T> m_vector;
+    UidGenerator<ID> m_idGenerator;
+    std::vector<T> m_vector;
 };
 
 #endif

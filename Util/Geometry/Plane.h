@@ -47,6 +47,24 @@ struct Plane {
     }
 
     /**
+    Returns the distance from from the plane to a point.
+    */
+    inline T distance(const glm::detail::tvec3<T>& point) const {
+        return glm::dot(m_normal, point) + m_distance;
+    }
+
+    /**
+    Finds which side of the plane a point is on.
+    @param point The point
+
+    @return true if On the plane or on the side of the plane the normal is pointing,
+        false if On the other side.
+    */
+    inline bool pointOnSide(const glm::detail::tvec3<T>& point) const {
+        return distance(point) >= (T) 0;
+    }
+
+    /**
     Finds the intersection of a line segment and a plane.
     @param ptA One end of the line segment.
     @param ptB The other end of the line segment.

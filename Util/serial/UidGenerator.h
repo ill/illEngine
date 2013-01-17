@@ -2,11 +2,7 @@
 #define ILL_UIDGENERATOR_H__
 
 #include <stdexcept>
-#include <queue>
-
-#ifndef NDEBUG
-#include <set>
-#endif
+#include <unordered_set>
 
 /**
 A class that generates unique id's of type T.
@@ -20,7 +16,7 @@ public:
     Create the id generator
     */
     inline UidGenerator()
-        : m_currentId(0)
+        : m_currentId((T) 0)
     {}
 
     /**
@@ -42,6 +38,11 @@ public:
     #endif
     }*/
 
+    inline void reset() {
+        m_currentId = (T) 0;
+        m_releasedIds.clear();
+    }
+
     /**
     Call this to get a new unique id.
     */
@@ -53,16 +54,32 @@ public:
             return m_currentId++;
         }
         else {
-            retVal = m_releasedIds.front();
-            m_releasedIds.pop();
+            std::unordered_set<T>::iterator iter = m_releasedIds.first();
+
+            retVal = *iter;
+            m_releasedIds.remove(iter);
 
             isReusing = true;
-
-#ifndef NDEBUG
-            m_releaseIdSet.erase(retVal);
-#endif
-
+            
             return retVal;
+        }
+    }
+
+    /**
+    Forces a new released id to be added to the uid generator.
+    */
+    inline T forceAddId() {
+        m_releasedIds.insert(m_currentId++);
+
+        return m_currentId - (T)1;
+    }
+
+    /**
+    Releases all ids.
+    */
+    inline void releaseAllIds() {
+        for(T id = (T) 0; id < m_currentId; id++) {
+            m_releasedIds.insert(id);
         }
     }
 
@@ -70,38 +87,26 @@ public:
     Call this to release a previously returned id from use.  This means the id is safe to reuse later. 
     */
     inline void releaseId(T id) {
-#ifndef NDEBUG
         if(id >= m_currentId) {
             throw new std::runtime_error("Attempting to release an id that was never in use before.");
         }
-
         checkReleased(id);
-#endif
 
-        m_releasedIds.push(id);
+        m_releasedIds.insert(id);
     }
 
-#ifndef NDEBUG
     /**
     Checks if the id has been released already.  Used only in the debug build so release build is faster.
     */
     inline void checkReleased(T id) {
-        if(m_releaseIdSet.find(id) != m_releaseIdSet.end()) {
+        if(m_releasedIds.find(id) != m_releasedIds.end()) {
             throw new std::runtime_error("Attempting to release an id that was already released before.");
         }
-
-        m_releaseIdSet.insert(id);
     }
-#endif
 
 private:
     T m_currentId; ///< The next id that will be ruturned when generateId() is called.
-    std::queue<T> m_releasedIds;   ///< Ids that are safe to reuse, I use a queue and not a set because sets don't allow for safe concurrent removal
-
-    //For debugging
-#ifndef NDEBUG
-    std::set<T> m_releaseIdSet;
-#endif
+    std::unordered_set<T> m_releasedIds;   ///< Ids that are safe to reuse
 };
 
 #endif
