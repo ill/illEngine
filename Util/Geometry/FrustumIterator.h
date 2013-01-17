@@ -145,7 +145,7 @@ public:
             && geq(m_currentPosition[m_dimensionOrder[SLICE_DIM]], m_range.m_max[m_dimensionOrder[SLICE_DIM]], m_directionSign[SLICE_DIM]);
     }
 
-    inline bool forward() {      
+    inline bool forward() {
         if(m_currentPosition[m_dimensionOrder[X_DIM]] == m_sliceMax.x) {
             if(m_currentPosition[m_dimensionOrder[Y_DIM]] == m_sliceMax.y) {
                 while(!advanceSlice()) {
@@ -223,8 +223,23 @@ public:
     @param worldLocation The location in the world so it can be snapped to the grid.
     @param dimension The x, y, or z dimension.  Use 0, 1, 2 to index into it.
     */
-    inline P gridLocation(W worldLocation, uint8_t dimension) {
-        return (P) glm::floor(worldLocation / m_cellDimensions[dimension]);
+    inline P gridLocation(W worldLocation, uint8_t dimension) {        
+        P res = (P) glm::floor(worldLocation / m_cellDimensions[dimension]);
+
+        //if a world location is RIGHT at the edge of positive bounds this will actually set it to the next grid cell and be off by 1
+        //this is a BIT of a hack, just a bit
+        if(m_directionSign[dimension] > 0) {    //if positive
+            if(worldLocation == m_spaceRange.m_max[dimension]) {
+                res--;
+            }
+        }
+        else {                                  //if negative
+            if(worldLocation == m_spaceRange.m_min[dimension]) {
+                res--;
+            }
+        }
+
+        return res;
     }
 
     /**
