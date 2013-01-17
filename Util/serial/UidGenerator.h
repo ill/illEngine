@@ -54,10 +54,10 @@ public:
             return m_currentId++;
         }
         else {
-            std::unordered_set<T>::iterator iter = m_releasedIds.first();
+            std::unordered_set<T>::iterator iter = m_releasedIds.begin();
 
             retVal = *iter;
-            m_releasedIds.remove(iter);
+            m_releasedIds.erase(iter);
 
             isReusing = true;
             
