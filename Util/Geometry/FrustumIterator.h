@@ -104,7 +104,7 @@ public:
         m_currentPosition = m_range.m_min;
 
         uint8_t sliceDimension = m_dimensionOrder[SLICE_DIM];
-
+        
         m_sliceStart = m_spaceRange.m_min[sliceDimension];
         W sliceEnd = m_sliceStart + m_directionSign[sliceDimension] * m_cellDimensions[sliceDimension];
 
@@ -116,20 +116,21 @@ public:
         m_currentPointList = false;
 
         //find points within first slice
-        bool debugFoundPoints = false;   //TODO: remove this, normally points will always be found once I'm done developing
+        //bool debugFoundPoints = false;   //TODO: remove this, normally points will always be found once I'm done developing
+
+        //TODO: find first slice
 
         for(uint8_t point = 0; point < FRUSTUM_NUM_POINTS; point++) {
             if((m_directionSign[sliceDimension] > 0 && m_frustum->m_points[point][sliceDimension] < sliceEnd)
-                || (m_directionSign[sliceDimension] < 0 && m_frustum->m_points[point][sliceDimension] >= sliceEnd)) {
-
-                    debugFoundPoints = true;         //TODO: remove this, normally points will always be found once I'm done developing
-                    addPoint(point, m_activeEdges);
+                    || (m_directionSign[sliceDimension] < 0 && m_frustum->m_points[point][sliceDimension] >= sliceEnd)) {
+                //debugFoundPoints = true;         //TODO: remove this, normally points will always be found once I'm done developing
+                addPoint(point, m_activeEdges);
             }
         }
 
-        if(!debugFoundPoints) { //TODO: remove this, normally points will always be found once I'm done developing
+        /*if(!debugFoundPoints) { //TODO: remove this, normally points will always be found once I'm done developing
             return;
-        }
+        }*/
 
         if(!setupSlice()) {
             while(!advanceSlice()) {}
@@ -142,7 +143,7 @@ public:
     inline bool atEnd() const {
         return m_currentPosition[m_dimensionOrder[X_DIM]] == m_sliceMax.x 
             && m_currentPosition[m_dimensionOrder[Y_DIM]] == m_sliceMax.y 
-            && geq(m_currentPosition[m_dimensionOrder[SLICE_DIM]], m_range.m_max[m_dimensionOrder[SLICE_DIM]], m_directionSign[SLICE_DIM]);
+            && m_currentPosition[m_dimensionOrder[SLICE_DIM]] == m_range.m_max[m_dimensionOrder[SLICE_DIM]];
     }
 
     inline bool forward() {
@@ -224,7 +225,7 @@ public:
     @param dimension The x, y, or z dimension.  Use 0, 1, 2 to index into it.
     */
     inline P gridLocation(W worldLocation, uint8_t dimension) {        
-        P res = (P) glm::floor(worldLocation / m_cellDimensions[dimension]);
+        P res = grid<W, P>(worldLocation, m_cellDimensions[dimension]);
 
         //if a world location is RIGHT at the edge of positive bounds this will actually set it to the next grid cell and be off by 1
         //this is a BIT of a hack, just a bit

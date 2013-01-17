@@ -118,8 +118,17 @@ private:
 
     inline void computeProjection() const {
         if(m_ortho) {
-            m_projection.m_value = glm::ortho(-0.5f * m_aspect, 0.5f * m_aspect,
-                -0.5f, 0.5f,
+            //taken from the glm::perspective code to figure out left right bottom top
+
+            //TODO: this is just plain wrong, I'm trying to get an effect similar to switching between ortho and perspective in 3DS max
+            glm::mediump_float range = tan(glm::radians(m_fov * 0.5f)) * m_far;	
+            glm::mediump_float left = -range * m_aspect;
+            glm::mediump_float right = range * m_aspect;
+            glm::mediump_float bottom = -range;
+            glm::mediump_float top = range;
+
+            m_projection.m_value = glm::ortho(left, right,
+                bottom, top,
                 m_near, m_far);
         }
         else {

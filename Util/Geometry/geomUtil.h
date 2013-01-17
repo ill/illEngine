@@ -496,6 +496,20 @@ inline glm::detail::tquat<T> dampenQuat(glm::detail::tquat<T> value, const glm::
     return value;
 }
 
+/**
+Read docs for grid under util.h.  Only this works on the components of a vector.
+*/
+template <typename T, typename R>
+inline glm::detail::tvec3<R> gridVec(const glm::detail::tvec3<T>& value, const glm::detail::tvec3<T>& dimensions) {
+    glm::detail::tvec3<R> res;
+    
+    for(int i = 0; i < 3; i++) {
+        res[i] = grid<T, R>(value[i], dimensions[i]);
+    }
+
+    return res;
+}
+
 template <typename T>
 inline glm::detail::tvec3<T> parseVector(std::istream& openFile) {
     glm::detail::tvec3<T> res;

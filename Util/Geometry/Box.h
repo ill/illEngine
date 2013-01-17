@@ -53,6 +53,7 @@ struct Box {
 
     @return self
     */
+    //TODO: have this return a new copy of the box, due to return value optimization, this will be nice and efficient
     inline Box& normalize() {
         for(unsigned int coord = 0; coord < 3; coord++) {
             if(m_min[coord] > m_max[coord]) {
@@ -67,6 +68,14 @@ struct Box {
 
     inline glm::detail::tvec3<T> getDimensions() const {
         return m_max - m_min;
+    }
+
+    /**
+    Returns which grid coordinates the coordinates of the box snap to given dimensions.
+    */
+    template <typename R>
+    inline Box<R> grid(const glm::detail::tvec3<T>& dimensions) const {
+        return Box<R>(gridVec<T, R>(m_min, dimensions), gridVec<T, R>(m_max, dimensions));
     }
 
     /**
