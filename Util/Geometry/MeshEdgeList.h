@@ -209,9 +209,15 @@ struct MeshEdgeList {
 
             inline bool operator() (size_t ptA, size_t ptB) {
                 //sort points by reverse order of magnitude of normal vector in plane to ensure best sorting
-                for(uint8_t dimension = 2; dimension < 3; dimension--) {
-                    if(m_points[ptA][dimension] < m_points[ptB][dimension]) {
+                for(uint8_t dimension = 2; dimension < 3; dimension--) {                    
+                    T a = m_points[ptA][m_normalDimensionOrder[dimension]];
+                    T b = m_points[ptB][m_normalDimensionOrder[dimension]];
+                    
+                    if(a < b) {
                         return true;
+                    }
+                    else if(a > b) {
+                        return false;
                     }
                 }
 

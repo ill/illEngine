@@ -209,7 +209,7 @@ public:
     /**
     Adds a point from the 3D polygon being rasterized.
     */
-    void addPoint(size_t point, std::unordered_map<size_t, size_t>& activeEdgesDestination) {
+    void addPoint(size_t point, std::unordered_map<size_t, unsigned int>& activeEdgesDestination) {
         m_pointList[m_currentPointList].push_back(glm::detail::tvec2<W>(m_meshEdgeList->m_points[point][m_dimensionOrder[X_DIM]], m_meshEdgeList->m_points[point][m_dimensionOrder[Y_DIM]]));
         m_debugger.m_pointListMissingDim[m_currentPointList].push_back(m_meshEdgeList->m_points[point][m_dimensionOrder[SLICE_DIM]]);
 
@@ -337,14 +337,23 @@ public:
 
             inline bool operator() (glm::detail::tvec2<W>* ptA, glm::detail::tvec2<W>* ptB) {
                 for(uint8_t dimension = 1; dimension != 0; dimension = 0) {
+                    W a = (*ptA)[dimension];
+                    W b = (*ptB)[dimension];
+                    
                     if(m_convexMeshIterator.m_directionSign[m_convexMeshIterator.m_dimensionOrder[dimension]] > 0) {
-                        if((*ptA)[dimension] < (*ptB)[dimension]) {
+                        if(a < b) {
                             return true;
+                        }
+                        else if(a > b) {
+                            return false;
                         }
                     }
                     else {
-                        if((*ptA)[dimension] > (*ptB)[dimension]) {
+                        if(a > b) {
                             return true;
+                        }
+                        else if(a < b) {
+                            return false;
                         }
                     }
                 }
