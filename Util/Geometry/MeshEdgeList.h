@@ -17,7 +17,7 @@ struct MeshEdgeList {
     typedef std::unordered_multimap<size_t, size_t> PointEdgeMap;
     typedef PointEdgeMap::const_iterator PointEdgeMapIterator;
     typedef std::pair<PointEdgeMapIterator, PointEdgeMapIterator> PointEdgeMapIterators;
-
+    
     struct Edge {
         Edge() {}
 
@@ -158,7 +158,8 @@ struct MeshEdgeList {
         }
 
         //go through clipped edges and add them, while also setting up the convex hull algorithm to create new joining edges
-        std::vector<size_t> newPoints(clippedEdges.size());
+        std::vector<size_t> newPoints;
+        newPoints.reserve(clippedEdges.size());
 
         for(std::unordered_map<size_t, ClippedEdge>::const_iterator clippedEdgeIter = clippedEdges.begin(); clippedEdgeIter != clippedEdges.end(); clippedEdgeIter++) {
             size_t clippedEdgeIndex = clippedEdgeIter->first;
@@ -211,8 +212,11 @@ struct MeshEdgeList {
         std::sort(newPoints.begin(), newPoints.end(), PointComparator(normalDimensionOrder, m_points));
 
         //now do monotone chain on the points to find the convex polygon forming the clipped portion
+        //TODO: this is known to not work on some cases when the plane isn't just an x, y, or z plane
+        //At the moment I don't need to handle planes like this so I'm not fixing this yet
         {
-            std::vector<size_t> newEdgeList(newPoints.size());
+            std::vector<size_t> newEdgeList;
+            newEdgeList.reserve(newPoints.size());
 
             //do one side
             convexHull(newPoints.begin(), newPoints.end(), normalDimensionOrder, newEdgeList);
