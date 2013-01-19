@@ -70,37 +70,37 @@ struct Frustum {
                                                     canonicalMatrix[1][3] + canonicalMatrix[1][0], 
                                                     canonicalMatrix[2][3] + canonicalMatrix[2][0]);
         m_left.m_distance =                         canonicalMatrix[3][3] + canonicalMatrix[3][0];
-        m_left.normalize();
+        m_left = m_left.normalize();
 
         m_right.m_normal = glm::detail::tvec3<T>(   canonicalMatrix[0][3] - canonicalMatrix[0][0],
                                                     canonicalMatrix[1][3] - canonicalMatrix[1][0],
                                                     canonicalMatrix[2][3] - canonicalMatrix[2][0]);
         m_right.m_distance =                        canonicalMatrix[3][3] - canonicalMatrix[3][0];
-        m_right.normalize();
+        m_right = m_right.normalize();
 
         m_bottom.m_normal = glm::detail::tvec3<T>(  canonicalMatrix[0][3] + canonicalMatrix[0][1],
                                                     canonicalMatrix[1][3] + canonicalMatrix[1][1],
                                                     canonicalMatrix[2][3] + canonicalMatrix[2][1]);
         m_bottom.m_distance =                       canonicalMatrix[3][3] + canonicalMatrix[3][1];
-        m_bottom.normalize();
+        m_bottom = m_bottom.normalize();
 
         m_top.m_normal = glm::detail::tvec3<T>(     canonicalMatrix[0][3] - canonicalMatrix[0][1],
                                                     canonicalMatrix[1][3] - canonicalMatrix[1][1],
                                                     canonicalMatrix[2][3] - canonicalMatrix[2][1]);
         m_top.m_distance =                          canonicalMatrix[3][3] - canonicalMatrix[3][1];
-        m_top.normalize();
+        m_top = m_top.normalize();
 
         m_near.m_normal = glm::detail::tvec3<T>(    canonicalMatrix[0][3] + canonicalMatrix[0][2],
                                                     canonicalMatrix[1][3] + canonicalMatrix[1][2],
                                                     canonicalMatrix[2][3] + canonicalMatrix[2][2]);
         m_near.m_distance =                         canonicalMatrix[3][3] + canonicalMatrix[3][2];
-        m_near.normalize();
+        m_near = m_near.normalize();
 
         m_far.m_normal = glm::detail::tvec3<T>(     canonicalMatrix[0][3] - canonicalMatrix[0][2],
                                                     canonicalMatrix[1][3] - canonicalMatrix[1][2],
                                                     canonicalMatrix[2][3] - canonicalMatrix[2][2]);
         m_far.m_distance =                          canonicalMatrix[3][3] - canonicalMatrix[3][2];
-        m_far.normalize();
+        m_far = m_far.normalize();
 
         //compute frustum corners which are pretty useful sometimes
         m_points[FRUSTUM_NBL] = planeIntersection(m_near, m_bottom, m_left);

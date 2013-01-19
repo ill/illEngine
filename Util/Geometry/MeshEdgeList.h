@@ -231,13 +231,7 @@ struct MeshEdgeList {
         //sort the new points so convex hull monotone chain can run on them in a bit
         std::sort(newPoints.begin(), newPoints.end(), PointComparator(normalDimensionOrder, m_points));
 
-        //now do monotone chain on the points to find the convex polygon forming the clipped portion
-        /*
-        TODO: this is known to not work on some cases when the plane isn't just an x, y, or z plane
-        At the moment I don't need to handle planes like this so I'm not fixing this yet
-        To handle all possible planes correctly, you need to take the 3D points and project them onto the
-        2D clipping plane, then do the convex hull algorithm in true 2D.
-        */
+        //now do monotone chain on the points to find the convex polygon forming the clipped portion        
         {
             std::vector<size_t> newEdgeList;
             newEdgeList.reserve(newPoints.size());

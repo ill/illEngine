@@ -393,6 +393,8 @@ public:
         m_activeSliceEdgeIndex[RIGHT_SIDE] = 0;
         m_activeSliceEdgeIndex[LEFT_SIDE] = 0;
 
+        return true;
+
         //sets up the min vertical
         int rowNum = gridDistance(m_spaceRange.m_min[secondaryDimension], m_sliceRasterizeEdges[RIGHT_SIDE][0]->y, secondaryDimension);      
         m_currentPosition[secondaryDimension] = m_range.m_min[secondaryDimension] + rowNum * m_directionSign[secondaryDimension];

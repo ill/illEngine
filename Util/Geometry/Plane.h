@@ -39,11 +39,15 @@ struct Plane {
     Normalizes the plane.
     Just don't let the normal vector have a length of zero.
     */
-    inline void normalize() {
+    inline Plane normalize() {
+        Plane res;
+
         T denom = 1 / glm::length(m_normal);
 
-        m_normal *= denom;
-        m_distance *= denom;
+        res.m_normal *= denom;
+        res.m_distance *= denom;
+
+        return res;
     }
 
     /**

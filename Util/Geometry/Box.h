@@ -51,19 +51,23 @@ struct Box {
     /**
     Fixes the box so all coordinate components of m_min are less than m_max
 
-    @return self
+    @return a normalized box
     */
-    //TODO: have this return a new copy of the box, due to return value optimization, this will be nice and efficient
-    inline Box& normalize() {
+    inline Box normalize() const {
+        Box res;
+
         for(unsigned int coord = 0; coord < 3; coord++) {
             if(m_min[coord] > m_max[coord]) {
-                T temp = m_min[coord];
-                m_min[coord] = m_max[coord];
-                m_max[coord] = temp;
+                res.m_min[coord] = m_max[coord];
+                res.m_max[coord] = m_min[coord];
+            }
+            else {
+                res.m_min[coord] = m_min[coord];
+                res.m_max[coord] = m_max[coord];
             }
         }
 
-        return *this;
+        return res;
     }
 
     inline glm::detail::tvec3<T> getDimensions() const {
