@@ -14,10 +14,10 @@ Used for storing the points and edges joining the points in a 3D mesh.
 */
 template<typename T = glm::mediump_float>
 struct MeshEdgeList {
-    typedef std::unordered_multimap<size_t, size_t> PointEdgeMap;
-    typedef PointEdgeMap::const_iterator PointEdgeMapIterator;
-    typedef std::pair<PointEdgeMapIterator, PointEdgeMapIterator> PointEdgeMapIterators;
-    
+    typedef typename std::unordered_multimap<size_t, size_t> PointEdgeMap;
+    typedef typename PointEdgeMap::const_iterator PointEdgeMapIterator;
+    typedef typename std::pair<PointEdgeMapIterator, PointEdgeMapIterator> PointEdgeMapIterators;
+        
     struct Edge {
         Edge() {}
 
@@ -45,6 +45,20 @@ struct MeshEdgeList {
         for(size_t edgeIndex = 0; edgeIndex < m_edges.size(); edgeIndex++) {
             m_pointEdgeMap.insert(std::pair<size_t, size_t>(m_edges[edgeIndex].m_point[0], edgeIndex));
             m_pointEdgeMap.insert(std::pair<size_t, size_t>(m_edges[edgeIndex].m_point[1], edgeIndex));
+        }
+    }
+
+    /**
+    Computes the bounding box.
+    Does nothing if there are no points.
+    */
+    inline void computeBounds() {
+        if(!m_points.empty()) {
+            m_bounds = Box<T>(m_points[0]);
+
+            for(size_t point = 1; point < m_points.size(); point++) {
+                m_bounds.addPoint(m_points[point]);
+            }
         }
     }
 
@@ -98,8 +112,8 @@ struct MeshEdgeList {
 
         //now either clip lines that intersect the plane, or completely remove them
         struct ClippedEdge {            
-            bool m_modifiedPointIndex;      //which point in the line is clipped off, 0 or 1
-            glm::detail::tvec3<T> m_coords;    //the new coordinates replacing the clipped off point
+            bool m_modifiedPointIndex;          //which point in the line is clipped off, 0 or 1
+            glm::detail::tvec3<T> m_coords;     //the new coordinates replacing the clipped off point
         };
                 
         bool * isEdgeModified = new bool[edges.size()];                                 //whether or not an edge for an index was modified
@@ -212,8 +226,12 @@ struct MeshEdgeList {
         std::sort(newPoints.begin(), newPoints.end(), PointComparator(normalDimensionOrder, m_points));
 
         //now do monotone chain on the points to find the convex polygon forming the clipped portion
-        //TODO: this is known to not work on some cases when the plane isn't just an x, y, or z plane
-        //At the moment I don't need to handle planes like this so I'm not fixing this yet
+        /*
+        TODO: this is known to not work on some cases when the plane isn't just an x, y, or z plane
+        At the moment I don't need to handle planes like this so I'm not fixing this yet
+        To handle all possible planes correctly, you need to take the 3D points and project them onto the
+        2D clipping plane, then do the convex hull algorithm in true 2D.
+        */
         {
             std::vector<size_t> newEdgeList;
             newEdgeList.reserve(newPoints.size());
@@ -291,10 +309,11 @@ public:
     std::vector<glm::detail::tvec3<T> > m_points;
     std::vector<Edge> m_edges;
 
-    /**
-    Fast point to edge lookup map.
-    */
+    ///Fast point to edge lookup map.
     PointEdgeMap m_pointEdgeMap;
+
+    ///The bounding box
+    Box<T> m_bounds;
 };
 
 #endif
