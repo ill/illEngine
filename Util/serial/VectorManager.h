@@ -70,9 +70,18 @@ public:
         m_idGenerator.releaseAllIds();
     }
     
-    inline T get(ID id) const {
+    inline const T& get(ID id) const {
         //TODO: make sure id is valid, at least in debug build
         return (m_vector[(size_t) id]);
+    }
+
+    inline T& get(ID id) {
+        //TODO: make sure id is valid, at least in debug build
+        return (m_vector[(size_t) id]);
+    }
+
+    inline bool isIdReleased(ID id) const {
+        return m_idGenerator.isIdReleased(id);
     }
 
     inline const std::vector<T>& getVector() const {

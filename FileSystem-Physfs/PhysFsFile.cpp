@@ -41,7 +41,7 @@ void PhysFsFile::seekAhead(size_t offset) {
 }
 
 bool PhysFsFile::eof() {
-    return PHYSFS_eof(m_file);
+    return PHYSFS_eof(m_file) != 0;
 }
 
 

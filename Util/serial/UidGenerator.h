@@ -90,18 +90,19 @@ public:
         if(id >= m_currentId) {
             throw new std::runtime_error("Attempting to release an id that was never in use before.");
         }
-        checkReleased(id);
+
+        if(isIdReleased(id)) {
+            throw new std::runtime_error("Attempting to release an id that was already released before.");
+        }
 
         m_releasedIds.insert(id);
     }
 
     /**
-    Checks if the id has been released already.  Used only in the debug build so release build is faster.
+    Checks if the id has been released already.
     */
-    inline void checkReleased(T id) {
-        if(m_releasedIds.find(id) != m_releasedIds.end()) {
-            throw new std::runtime_error("Attempting to release an id that was already released before.");
-        }
+    inline bool isIdReleased(T id) {
+        return m_releasedIds.find(id) != m_releasedIds.end();
     }
 
 private:

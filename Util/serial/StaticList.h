@@ -15,6 +15,8 @@ This is statically allocated and can't be resized.
    the maximum elements in the list.  If passing in an S below 256, just use the default unsigned byte.
    If you need more than 256 elements use the next highest type which would normally be an unsigned short allowing 65536 elements.
 */
+
+//TODO: this isn't needed anymore.  C++11 now has the array container that does exactly this.
 template<typename T, unsigned int S, typename ST = uint8_t>
 struct StaticList {
    inline StaticList()
