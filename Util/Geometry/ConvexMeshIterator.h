@@ -60,8 +60,9 @@ public:
         std::list<std::string> m_messages;
     };
 
-    ConvexMeshIterator() {
-    }
+    ConvexMeshIterator()
+        : m_isEdgeChecked(NULL) 
+    {}
 
     ConvexMeshIterator(const MeshEdgeList<W>* meshEdgeList, const glm::detail::tvec3<W>& direction, const Box<P>& range, const glm::detail::tvec3<W>& cellDimensions)
         : m_meshEdgeList(meshEdgeList),
@@ -69,7 +70,8 @@ public:
         m_cellDimensions(cellDimensions)
     {
         //initialize edges lists
-        m_inactiveEdges = meshEdgeList->m_pointEdgeMap;
+        m_isEdgeChecked = new bool[meshEdgeList->m_edges.size()];
+        memset(m_isEdgeChecked, 0, sizeof(bool) * meshEdgeList->m_edges.size());
 
         //initialize a bunch of things
         m_dimensionOrder = sortDimensions(direction);
@@ -120,6 +122,7 @@ public:
     }
 
     ~ConvexMeshIterator() {
+        delete[] m_isEdgeChecked;
     }
 
     inline bool atEnd() const {
@@ -214,25 +217,31 @@ public:
         m_debugger.m_pointListMissingDim[m_currentPointList].push_back(m_meshEdgeList->m_points[point][m_dimensionOrder[SLICE_DIM]]);
 
         //find all inactive edges for a point
-        MeshEdgeList<W>::PointEdgeMapIterators edgeIters = m_inactiveEdges.equal_range(point);
+        MeshEdgeList<W>::PointEdgeMapIterators edgeIters = m_meshEdgeList->m_pointEdgeMap.equal_range(point);
 
         for(MeshEdgeList<W>::PointEdgeMapIterator edgeIter = edgeIters.first; edgeIter != edgeIters.second; edgeIter++) {
             size_t edgeIndex = edgeIter->second;
-            const MeshEdgeList<W>::Edge& edge = m_meshEdgeList->m_edges[edgeIndex];
 
-            size_t otherPoint = edge.m_point[point == edge.m_point[1]];
+            //check if the edge is already checked
+            if(!m_isEdgeChecked[edgeIndex]) {
+                m_isEdgeChecked[edgeIndex] = true;
 
-            //find which slice the other point is in relative to this slice
-            int sliceNum = gridDistance(m_sliceStart, m_meshEdgeList->m_points[m_meshEdgeList->m_edges[edgeIndex].m_point[otherPoint]][m_dimensionOrder[SLICE_DIM]], m_dimensionOrder[SLICE_DIM]);
+                const MeshEdgeList<W>::Edge& edge = m_meshEdgeList->m_edges[edgeIndex];
 
-            //discard edge if also in this slice
-            if(sliceNum <= 0) {
-                m_debugger.m_discarededEdges.insert(edgeIndex);
-            }
-            else {
-                //add edge to active edges
-                activeEdgesDestination[edgeIndex] = sliceNum;
-                m_activeEdgeDestPoint[edgeIndex] = otherPoint;
+                size_t otherPoint = edge.m_point[point == edge.m_point[0]];
+                        
+                //find which slice the other point is in relative to this slice
+                int sliceNum = gridDistance(m_sliceStart, m_meshEdgeList->m_points[otherPoint][m_dimensionOrder[SLICE_DIM]], m_dimensionOrder[SLICE_DIM]);
+
+                //discard edge if also in this slice
+                if(sliceNum <= 0) {
+                    m_debugger.m_discarededEdges.insert(edgeIndex);
+                }
+                else {
+                    //add edge to active edges
+                    activeEdgesDestination[edgeIndex] = sliceNum;
+                    m_activeEdgeDestPoint[edgeIndex] = otherPoint;
+                }
             }
         }
     }
@@ -343,7 +352,7 @@ public:
                     if(m_convexMeshIterator.m_directionSign[m_convexMeshIterator.m_dimensionOrder[dimension]] > 0) {
                         if(a < b) {
                             return true;
-                        }
+                        } 
                         else if(a > b) {
                             return false;
                         }
@@ -392,8 +401,6 @@ public:
         //setup the initial row
         m_activeSliceEdgeIndex[RIGHT_SIDE] = 0;
         m_activeSliceEdgeIndex[LEFT_SIDE] = 0;
-
-        return true;
 
         //sets up the min vertical
         int rowNum = gridDistance(m_spaceRange.m_min[secondaryDimension], m_sliceRasterizeEdges[RIGHT_SIDE][0]->y, secondaryDimension);      
@@ -733,9 +740,9 @@ public:
     glm::detail::tvec3<uint8_t> m_dimensionOrder;
     ///Sign of each dimension in the direction vector the view frustum faces
     glm::detail::tvec3<int8_t> m_directionSign;
-
-    ///Edges that have yet to be processed by the rasterizing algorithm, map of point to edge
-    typename MeshEdgeList<W>::PointEdgeMap m_inactiveEdges;
+    
+    ///Edges that have already been processed by the rasterizing algorithm and are either discarded or active
+    bool * m_isEdgeChecked;
 
     ///Edges that are currently being processed by the rasterizing algorithm, mapping of edge to how many slices until the other edge end
     std::unordered_map<size_t, unsigned int> m_activeEdges;

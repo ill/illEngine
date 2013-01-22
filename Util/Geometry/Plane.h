@@ -44,8 +44,8 @@ struct Plane {
 
         T denom = 1 / glm::length(m_normal);
 
-        res.m_normal *= denom;
-        res.m_distance *= denom;
+        res.m_normal = m_normal * denom;
+        res.m_distance = m_distance * denom;
 
         return res;
     }
