@@ -248,18 +248,27 @@ public:
 
     template <typename Iter>
     static void convexHull(Iter& iter, Iter& end, std::vector<glm::detail::tvec2<W>* >& destination, int8_t sign) {
-        //TODO: remove redundant edges
-
         if(iter != end) {
             //init some things first
-            glm::detail::tvec2<W>* point = *iter;            
+            glm::detail::tvec2<W>* point;
+            
+            //find first point whose y isn't the same as the next point's y to remove the first redundant edge
+            //points are also sorted by x
+            //do {
+                point = *iter;
+                iter++;
+            //} while(iter != end && point->y == (*iter)->y);
+
             destination.push_back(point);
-            iter++;
+
+            while(iter != end && point->y == (*iter)->y) {
+                iter++;
+            }
 
             if(iter != end) {
                 point = *iter;
-                destination.push_back(point);
                 iter++;
+                destination.push_back(point);
 
                 //now do the actual loop
                 for(; iter != end; iter++) {
@@ -272,6 +281,11 @@ public:
                     destination.push_back(point);
                 }
             }
+        }
+
+        //remove last redundant edges
+        while(destination.size() >= 2 && destination[destination.size() - 2]->y == destination[destination.size() - 1]->y) {
+            destination.pop_back();
         }
     }
 
@@ -345,7 +359,7 @@ public:
             {}
 
             inline bool operator() (glm::detail::tvec2<W>* ptA, glm::detail::tvec2<W>* ptB) {
-                for(uint8_t dimension = 1; dimension != 0; dimension = 0) {
+                for(uint8_t dimension = 1; dimension <= 1; dimension--) {
                     W a = (*ptA)[dimension];
                     W b = (*ptB)[dimension];
                     
@@ -383,6 +397,7 @@ public:
 
         std::sort(sortedPoints.begin(), sortedPoints.end(), PointComparator(*this));
         m_debugger.m_sortedSlicePoints = sortedPoints;
+
 
         //find the convex hull and split it into lists of edges for 1 side and the other
         uint8_t secondaryDimension = m_dimensionOrder[Y_DIM];
