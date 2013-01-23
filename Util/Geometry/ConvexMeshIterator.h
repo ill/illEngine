@@ -377,8 +377,17 @@ public:
 
             glm::detail::tvec3<W> dest;
 
-            bool intersection = m_slicePlane.lineIntersection(m_meshEdgeList->m_points[m_meshEdgeList->m_edges[activeEdge].m_point[0]], m_meshEdgeList->m_points[m_meshEdgeList->m_edges[activeEdge].m_point[1]], dest);
-            assert(intersection);   //this assert definitely helps find some nasty bugs
+            //bool intersection = m_slicePlane.lineIntersection(m_meshEdgeList->m_points[m_meshEdgeList->m_edges[activeEdge].m_point[0]], m_meshEdgeList->m_points[m_meshEdgeList->m_edges[activeEdge].m_point[1]], dest);
+            //assert(intersection);   //this assert definitely helps find some nasty bugs
+
+            //if not intersection, this point must be right against the plane
+            if(!m_slicePlane.lineIntersection(m_meshEdgeList->m_points[m_meshEdgeList->m_edges[activeEdge].m_point[0]], 
+                    m_meshEdgeList->m_points[m_meshEdgeList->m_edges[activeEdge].m_point[1]], dest)) {
+                dest = m_meshEdgeList->m_points[m_activeEdgeDestPoint.at(activeEdge)];
+
+                //assert the point is right against the plane
+                //assert(dest[m_dimensionOrder[SLICE_DIM]] == m_sliceStart + m_directionSign[SLICE_DIM] * m_cellDimensions[SLICE_DIM]);
+            }
 
             m_pointList[!m_currentPointList].push_back(glm::detail::tvec2<W>(dest[m_dimensionOrder[X_DIM]], dest[m_dimensionOrder[Y_DIM]]));
             m_debugger.m_pointListMissingDim[!m_currentPointList].push_back(dest[m_dimensionOrder[SLICE_DIM]]);
