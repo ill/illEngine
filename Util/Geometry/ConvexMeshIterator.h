@@ -246,47 +246,84 @@ public:
         }
     }
 
-    template <typename Iter>
+    template <bool isLeftSide, typename Iter>
     static void convexHull(Iter& iter, Iter& end, std::vector<glm::detail::tvec2<W>* >& destination, int8_t sign) {
-        if(iter != end) {
-            //init some things first
-            glm::detail::tvec2<W>* point;
-            
-            //find first point whose y isn't the same as the next point's y to remove the first redundant edge
-            //points are also sorted by x
-            //do {
-                point = *iter;
-                iter++;
-            //} while(iter != end && point->y == (*iter)->y);
+        //omit first redundant edge
+        
 
-            destination.push_back(point);
+        for(; iter != end; iter++) {
+            glm::detail::tvec2<W>* point = *iter;
 
-            while(iter != end && point->y == (*iter)->y) {
-                iter++;
-            }
+            if(destination.size() >= 1) {
+                glm::detail::tvec2<W>* prevPoint = destination.back();
 
-            if(iter != end) {
-                point = *iter;
-                iter++;
-                destination.push_back(point);
+                //omit point if same point as previous
+                if(point->x == prevPoint->x && point->y == prevPoint->y) {
+                    continue;
+                }
 
-                //now do the actual loop
-                for(; iter != end; iter++) {
-                    point = *iter;
-
-                    while(destination.size() >= 2 && leq(cross(*destination[destination.size() - 2] - *point, *destination[destination.size() - 1] - * point), (W) 0, sign)) {
-                        destination.pop_back();
-                    }
-
-                    destination.push_back(point);
+                while(destination.size() >= 2 && leq(cross(*destination[destination.size() - 2] - *point, *destination[destination.size() - 1] - * point), (W) 0, sign)) {
+                    destination.pop_back();
                 }
             }
+
+            destination.push_back(point);
+        }
+
+        //omit first redundant edge
+        if(destination.size() >= 2 && destination[0]->y == destination[1]->y) {
+            destination.erase(destination.begin());
+        }
+
+        //omit last redundant edge
+        if(destination.size() >= 2 && destination[destination.size() - 2]->y == destination[destination.size() - 1]->y) {
+            destination.pop_back();
         }
 
         //remove last redundant edges
-        while(destination.size() >= 2 && destination[destination.size() - 2]->y == destination[destination.size() - 1]->y) {
+        /*while(destination.size() >= 2 && destination[destination.size() - 2]->y == destination[destination.size() - 1]->y) {
             destination.pop_back();
-        }
+        }*/
+        
+        //if(iter != end) {
+        //    //init some things first
+        //    glm::detail::tvec2<W>* point;
+        //    
+        //    //find first point whose y isn't the same as the next point's y to remove the first redundant edge
+        //    //points are also sorted by x
+        //    //do {
+        //        point = *iter;
+        //        iter++;
+        //    //} while(iter != end && point->y == (*iter)->y);
+
+        //    destination.push_back(point);
+
+        //    /*while(iter != end && point->y == (*iter)->y) {
+        //        iter++;
+        //    }*/
+
+        //    if(iter != end) {
+        //        point = *iter;
+        //        iter++;
+        //        destination.push_back(point);
+
+        //        //now do the actual loop
+        //        for(; iter != end; iter++) {
+        //            point = *iter;
+
+        //            while(destination.size() >= 2 && leq(cross(*destination[destination.size() - 2] - *point, *destination[destination.size() - 1] - * point), (W) 0, sign)) {
+        //                destination.pop_back();
+        //            }
+
+        //            destination.push_back(point);
+        //        }
+        //    }
+        //}
+
+        //remove last redundant edges
+        /*while(destination.size() >= 2 && destination[destination.size() - 2]->y == destination[destination.size() - 1]->y) {
+            destination.pop_back();
+        }*/
     }
 
     bool advanceSlice() {
@@ -403,16 +440,19 @@ public:
         uint8_t secondaryDimension = m_dimensionOrder[Y_DIM];
         uint8_t tertiaryDimension = m_dimensionOrder[X_DIM];
 
+        m_sliceRasterizeEdges[RIGHT_SIDE].clear();
+        m_sliceRasterizeEdges[LEFT_SIDE].clear();
+
         {
             int8_t convexSign = m_directionSign[secondaryDimension] * m_directionSign[tertiaryDimension];
 
             //"right" edge
-            convexHull(sortedPoints.begin(), sortedPoints.end(), m_sliceRasterizeEdges[RIGHT_SIDE], convexSign);
+            convexHull<RIGHT_SIDE>(sortedPoints.begin(), sortedPoints.end(), m_sliceRasterizeEdges[RIGHT_SIDE], convexSign);
 
             //"left" edge
-            convexHull(sortedPoints.rbegin(), sortedPoints.rend(), m_sliceRasterizeEdges[LEFT_SIDE], convexSign);
+            convexHull<LEFT_SIDE>(sortedPoints.rbegin(), sortedPoints.rend(), m_sliceRasterizeEdges[LEFT_SIDE], convexSign);
         }
-
+        
         //setup the initial row
         m_activeSliceEdgeIndex[RIGHT_SIDE] = 0;
         m_activeSliceEdgeIndex[LEFT_SIDE] = 0;
