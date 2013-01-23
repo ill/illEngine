@@ -61,13 +61,15 @@ public:
     };
 
     ConvexMeshIterator()
-        : m_isEdgeChecked(NULL) 
+        : m_isEdgeChecked(NULL),
+        m_atEnd(true)
     {}
 
     ConvexMeshIterator(const MeshEdgeList<W>* meshEdgeList, const glm::detail::tvec3<W>& direction, const Box<P>& range, const glm::detail::tvec3<W>& cellDimensions)
         : m_meshEdgeList(meshEdgeList),
         m_range(range),
-        m_cellDimensions(cellDimensions)
+        m_cellDimensions(cellDimensions),
+        m_atEnd(false)
     {
         //initialize edges lists
         m_isEdgeChecked = new bool[meshEdgeList->m_edges.size()];
@@ -116,9 +118,7 @@ public:
             }
         }
         
-        if(!setupSlice()) {
-            while(!advanceSlice()) {}
-        }
+        setupSlice();
     }
 
     ~ConvexMeshIterator() {
@@ -126,17 +126,22 @@ public:
     }
 
     inline bool atEnd() const {
-        return m_currentPosition[m_dimensionOrder[X_DIM]] == m_sliceMax.x 
-            && m_currentPosition[m_dimensionOrder[Y_DIM]] == m_sliceMax.y 
-            && m_currentPosition[m_dimensionOrder[SLICE_DIM]] == m_range.m_max[m_dimensionOrder[SLICE_DIM]];
+        return m_atEnd;
     }
 
     inline bool forward() {
+        if(atEnd()) {
+            throw std::runtime_error("calling forward() on mesh iterator when at end");
+        }
+
         if(m_currentPosition[m_dimensionOrder[X_DIM]] == m_sliceMax.x) {
             if(m_currentPosition[m_dimensionOrder[Y_DIM]] == m_sliceMax.y) {
-                while(!advanceSlice()) {
-                    return atEnd();
+                if(m_currentPosition[m_dimensionOrder[SLICE_DIM]] == m_range.m_max[m_dimensionOrder[SLICE_DIM]]) {
+                    m_atEnd = true;
+                    return false;
                 }
+
+                advanceSlice();
             }
             else {
                 advanceRow();
@@ -249,7 +254,6 @@ public:
     template <bool isLeftSide, typename Iter>
     static void convexHull(Iter& iter, Iter& end, std::vector<glm::detail::tvec2<W>* >& destination, int8_t sign) {
         //omit first redundant edge
-        
 
         for(; iter != end; iter++) {
             glm::detail::tvec2<W>* point = *iter;
@@ -270,13 +274,13 @@ public:
             destination.push_back(point);
         }
 
-        //omit first redundant edge
-        if(destination.size() >= 2 && destination[0]->y == destination[1]->y) {
+        //omit first redundant edge (TODO: removing from beginning of vector isn't the most efficient thing ever, is it worth using a dequeue?)
+        while(destination.size() >= 2 && destination[0]->y == destination[1]->y) {
             destination.erase(destination.begin());
         }
 
         //omit last redundant edge
-        if(destination.size() >= 2 && destination[destination.size() - 2]->y == destination[destination.size() - 1]->y) {
+        while(destination.size() >= 2 && destination[destination.size() - 2]->y == destination[destination.size() - 1]->y) {
             destination.pop_back();
         }
 
@@ -326,11 +330,7 @@ public:
         }*/
     }
 
-    bool advanceSlice() {
-        if(atEnd()) {
-            return true;
-        }
-
+    void advanceSlice() {
         m_currentPosition[m_dimensionOrder[SLICE_DIM]] += m_directionSign[SLICE_DIM];      
 
         //advance slice planes
@@ -360,13 +360,13 @@ public:
 
         m_activeEdges.swap(activeEdgesCopy);
 
-        return setupSlice();
+        setupSlice();
     }
 
     /**
     Sets up the current slice to be 2D rasterized
     */
-    bool setupSlice() {
+    void setupSlice() {
         //clear other side point buffer
         m_pointList[!m_currentPointList].clear();
         m_debugger.m_pointListMissingDim[!m_currentPointList].clear();
@@ -450,13 +450,13 @@ public:
             convexHull<RIGHT_SIDE>(sortedPoints.begin(), sortedPoints.end(), m_sliceRasterizeEdges[RIGHT_SIDE], convexSign);
 
             //"left" edge
-            convexHull<LEFT_SIDE>(sortedPoints.rbegin(), sortedPoints.rend(), m_sliceRasterizeEdges[LEFT_SIDE], convexSign);
+            convexHull<LEFT_SIDE>(sortedPoints.begin(), sortedPoints.end(), m_sliceRasterizeEdges[LEFT_SIDE], -convexSign);
         }
         
         //setup the initial row
         m_activeSliceEdgeIndex[RIGHT_SIDE] = 0;
         m_activeSliceEdgeIndex[LEFT_SIDE] = 0;
-
+        
         //sets up the min vertical
         int rowNum = gridDistance(m_spaceRange.m_min[secondaryDimension], m_sliceRasterizeEdges[RIGHT_SIDE][0]->y, secondaryDimension);      
         m_currentPosition[secondaryDimension] = m_range.m_min[secondaryDimension] + rowNum * m_directionSign[secondaryDimension];
@@ -478,8 +478,6 @@ public:
 
         m_debugger.m_messages.push_back(" ");
         m_debugger.m_messages.push_back(" ");
-                
-        return true;
     }
 
     template <bool isLeftSide>
@@ -839,6 +837,8 @@ public:
 
     ///Whether or not the current active edge for each side is heading away from or towards the center of the polygon's middle vertical axis
     bool m_activeSliceEdgeOutward[2];
+
+    bool m_atEnd;
 
     ///For debugging, remove later
     Debugger m_debugger;
