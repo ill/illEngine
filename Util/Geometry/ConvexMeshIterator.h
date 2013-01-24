@@ -105,6 +105,24 @@ public:
         //TODO: take thsi out
         m_meshEdgeList = &m_debugger.m_meshEdgeList;
         
+        LOG_INFO("\n\nAbout to rasterize convex mesh. %u edges", m_meshEdgeList->m_edges.size());
+
+        for(size_t edge = 0; edge < m_meshEdgeList->m_edges.size(); edge++) {
+            LOG_INFO("Edge %u.", edge);
+
+            LOG_INFO("\tPtA %u (%f, %f, %f)", 
+                m_meshEdgeList->m_edges[edge].m_point[0], 
+                m_meshEdgeList->m_points[m_meshEdgeList->m_edges[edge].m_point[0]].x,
+                m_meshEdgeList->m_points[m_meshEdgeList->m_edges[edge].m_point[0]].y,
+                m_meshEdgeList->m_points[m_meshEdgeList->m_edges[edge].m_point[0]].z);
+
+            LOG_INFO("\tPtB %u (%f, %f, %f)", 
+                m_meshEdgeList->m_edges[edge].m_point[1], 
+                m_meshEdgeList->m_points[m_meshEdgeList->m_edges[edge].m_point[1]].x,
+                m_meshEdgeList->m_points[m_meshEdgeList->m_edges[edge].m_point[1]].y,
+                m_meshEdgeList->m_points[m_meshEdgeList->m_edges[edge].m_point[1]].z);
+        }
+
         m_currentPosition = m_range.m_min;
 
         uint8_t sliceDimension = m_dimensionOrder[SLICE_DIM];
@@ -392,25 +410,26 @@ public:
                 m_sliceStart + m_directionSign[SLICE_DIM] * m_cellDimensions[SLICE_DIM],
                 (unsigned int) m_dimensionOrder[SLICE_DIM]);
 
-            bool intersection = m_slicePlane.lineIntersection(m_meshEdgeList->m_points[m_meshEdgeList->m_edges[activeEdge].m_point[0]], m_meshEdgeList->m_points[m_meshEdgeList->m_edges[activeEdge].m_point[1]], dest);
+            /*bool intersection = m_slicePlane.lineIntersection(m_meshEdgeList->m_points[m_meshEdgeList->m_edges[activeEdge].m_point[0]], m_meshEdgeList->m_points[m_meshEdgeList->m_edges[activeEdge].m_point[1]], dest);
             
             if(!intersection) {
                 int x = 5;
             }
             
-            assert(intersection);   //this assert definitely helps find some nasty bugs
+            assert(intersection);*/   //this assert definitely helps find some nasty bugs
 
             //if not intersection, this point must be right against the plane
-            /*if(!m_slicePlane.lineIntersection(m_meshEdgeList->m_points[m_meshEdgeList->m_edges[activeEdge].m_point[0]], 
+            if(!m_slicePlane.lineIntersection(m_meshEdgeList->m_points[m_meshEdgeList->m_edges[activeEdge].m_point[0]], 
                     m_meshEdgeList->m_points[m_meshEdgeList->m_edges[activeEdge].m_point[1]], dest)) {
                 dest = m_meshEdgeList->m_points[m_activeEdgeDestPoint.at(activeEdge)];
 
                 LOG_DEBUG("Intersection failed, but: activeDestPtInd: %u dest pt (%f, %f, %f)", m_activeEdgeDestPoint.at(activeEdge), dest.x, dest.y, dest.z);
 
                 //assert the point is within slice
-                assert(geq(dest[m_dimensionOrder[SLICE_DIM]], m_sliceStart, m_directionSign[SLICE_DIM]));
-                assert(leq(dest[m_dimensionOrder[SLICE_DIM]], m_sliceStart + m_directionSign[SLICE_DIM] * m_cellDimensions[SLICE_DIM], m_directionSign[SLICE_DIM]));
-            }*/
+                //assert(geq(dest[m_dimensionOrder[SLICE_DIM]], m_sliceStart, m_directionSign[SLICE_DIM]));
+                //assert(leq(dest[m_dimensionOrder[SLICE_DIM]], m_sliceStart + m_directionSign[SLICE_DIM] * m_cellDimensions[SLICE_DIM], m_directionSign[SLICE_DIM]));
+                assert(eq(dest[m_dimensionOrder[SLICE_DIM]], m_sliceStart + m_directionSign[SLICE_DIM] * m_cellDimensions[SLICE_DIM]));
+            }
 
             m_pointList[!m_currentPointList].push_back(fixRasterPointPrecision(glm::detail::tvec2<W>(dest[m_dimensionOrder[X_DIM]], dest[m_dimensionOrder[Y_DIM]])));
             m_debugger.m_pointListMissingDim[!m_currentPointList].push_back(dest[m_dimensionOrder[SLICE_DIM]]);

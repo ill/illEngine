@@ -66,7 +66,10 @@ struct MeshEdgeList {
     Clips the mesh edge list against a plane.
     This only works if this is a convex mesh.
     */
+    //TODO: for some readon Release build doesn't properly build new edges.
     void convexClip(const Plane<T>& clipPlane) {
+        LOG_INFO("\n\nStarting clipping: There are %u edges.", m_edges.size());
+
         //find which side of the plane points are on
         std::unordered_set<size_t> offsidePoints(m_points.size());
 
@@ -230,6 +233,8 @@ struct MeshEdgeList {
 
         //sort the new points so convex hull monotone chain can run on them in a bit
         std::sort(newPoints.begin(), newPoints.end(), PointComparator(normalDimensionOrder, m_points));
+        
+        LOG_INFO("About to create new edges. %u new points. Currently %u edges.", newPoints.size(), m_edges.size());
 
         //now do monotone chain on the points to find the convex polygon forming the clipped portion        
         {
@@ -239,22 +244,32 @@ struct MeshEdgeList {
             //do one side
             convexHull(newPoints.begin(), newPoints.end(), normalDimensionOrder, newEdgeList);
 
+            LOG_INFO("One Side New Edges size: %u.", newEdgeList.size());
+
             //create edges from that
             for(unsigned int newPointIndex = 0; newPointIndex < newEdgeList.size() - 1;) {
                 m_edges.push_back(Edge(newEdgeList[newPointIndex], newEdgeList[newPointIndex++]));
             }
+
+            LOG_INFO("Real Edges size: %u.", m_edges.size());
 
             //then the other
             newEdgeList.clear();
             convexHull(newPoints.rbegin(), newPoints.rend(), normalDimensionOrder, newEdgeList);
 
+            LOG_INFO("Other Side New Edges size: %u.", newEdgeList.size());
+
             //create edges from that
             for(unsigned int newPointIndex = 0; newPointIndex < newEdgeList.size() - 1;) {
                 m_edges.push_back(Edge(newEdgeList[newPointIndex], newEdgeList[newPointIndex++]));
             }
+
+            LOG_INFO("Real Edges size: %u.", m_edges.size());
         }
 
         computePointEdgeMap();
+
+        LOG_INFO("Done clipping: There are %u edges.", m_edges.size());
     }
 
 private:
