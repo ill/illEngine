@@ -91,7 +91,7 @@ struct Plane {
         vec = m_normal * ptA;
         T dist = (vec.x + vec.y + vec.z + m_distance) / denom;
 
-        if(dist >= 0 && dist <= 1) {
+        if(dist >= (T)0 && dist <= (T)1) {
             resultDestination = ptA + (ptB - ptA) * dist;
             return true;
         }

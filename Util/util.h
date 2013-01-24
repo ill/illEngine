@@ -164,6 +164,14 @@ inline bool leq(T num1, T num2, int8_t sign) {
 }
 
 /**
+
+*/
+template<typename T>
+inline bool eq(T num1, T num2, T delta = (T)0.0001) {
+    return glm::abs(num1 - num2) <= delta;
+}
+
+/**
 Outputs a formatted string similar to printf.
 @param formatString The format string, like "Hello %f"
 @param followed by a variable argument list with all the variables to add into the formatted string

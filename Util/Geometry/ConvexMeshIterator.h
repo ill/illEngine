@@ -79,12 +79,23 @@ public:
         m_dimensionOrder = sortDimensions(direction);
         m_directionSign = glm::sign(direction);
 
+        m_worldRange.m_min = vec3cast<P, W>(m_range.m_min) * cellDimensions;
+        m_worldRange.m_max = vec3cast<P, W>(m_range.m_max + glm::detail::tvec3<P>((P) 1)) * cellDimensions - (W)0.01;
+
         //reorder the bounds box according to the direction sign
         for(uint8_t dimension = 0; dimension < 3; dimension++) {
             if(m_directionSign[dimension] < 0) {
-                P temp = m_range.m_min[dimension];
-                m_range.m_min[dimension] = m_range.m_max[dimension];
-                m_range.m_max[dimension] = temp;
+                {
+                    P temp = m_range.m_min[dimension];
+                    m_range.m_min[dimension] = m_range.m_max[dimension];
+                    m_range.m_max[dimension] = temp;
+                }
+
+                {
+                    W temp = m_worldRange.m_min[dimension];
+                    m_worldRange.m_min[dimension] = m_worldRange.m_max[dimension];
+                    m_worldRange.m_max[dimension] = temp;
+                }
             }
         }
 
@@ -93,14 +104,12 @@ public:
         //make iterator itself refer to debugger copy so as I'm looking around it doesn't change
         //TODO: take thsi out
         m_meshEdgeList = &m_debugger.m_meshEdgeList;
-
-        m_spaceRange = Box<W>(m_cellDimensions * vec3cast<P, W>(m_range.m_min), m_cellDimensions * vec3cast<P, W>(m_range.m_max));
-
+        
         m_currentPosition = m_range.m_min;
 
         uint8_t sliceDimension = m_dimensionOrder[SLICE_DIM];
         
-        m_sliceStart = m_spaceRange.m_min[sliceDimension];
+        m_sliceStart = m_worldRange.m_min[sliceDimension];
         W sliceEnd = m_sliceStart + m_directionSign[sliceDimension] * m_cellDimensions[sliceDimension];
 
         //set up the slice plane, it's normal is in the direction of the slice dimension
@@ -150,7 +159,7 @@ public:
         else {
             m_currentPosition[m_dimensionOrder[X_DIM]] += m_directionSign[m_dimensionOrder[X_DIM]];
 
-            m_debugger.m_rasterizedCells.push_back(m_cellDimensions * vec3cast<P, W>(m_currentPosition) + m_cellDimensions * 0.5f * vec3cast<int8_t, W>(m_directionSign));
+            m_debugger.m_rasterizedCells.push_back(m_cellDimensions * vec3cast<P, W>(m_currentPosition) + m_cellDimensions * 0.5f/* * vec3cast<int8_t, W>(m_directionSign)*/);
         }
 
         return true;
@@ -191,16 +200,16 @@ public:
 
         //if a world location is RIGHT at the edge of positive bounds this will actually set it to the next grid cell and be off by 1
         //this is a BIT of a hack, just a bit
-        if(m_directionSign[dimension] > 0) {    //if positive
-            if(worldLocation == m_spaceRange.m_max[dimension]) {
+        /*if(m_directionSign[dimension] > 0) {    //if positive
+            if(worldLocation == m_worldRange.m_max[dimension]) {
                 res--;
             }
         }
         else {                                  //if negative
-            if(worldLocation == m_spaceRange.m_min[dimension]) {
+            if(worldLocation == m_worldRange.m_min[dimension]) {
                 res--;
             }
-        }
+        }*/
 
         return res;
     }
@@ -218,7 +227,7 @@ public:
     Adds a point from the 3D polygon being rasterized.
     */
     void addPoint(size_t point, std::unordered_map<size_t, unsigned int>& activeEdgesDestination) {
-        m_pointList[m_currentPointList].push_back(glm::detail::tvec2<W>(m_meshEdgeList->m_points[point][m_dimensionOrder[X_DIM]], m_meshEdgeList->m_points[point][m_dimensionOrder[Y_DIM]]));
+        m_pointList[m_currentPointList].push_back(fixRasterPointPrecision(glm::detail::tvec2<W>(m_meshEdgeList->m_points[point][m_dimensionOrder[X_DIM]], m_meshEdgeList->m_points[point][m_dimensionOrder[Y_DIM]])));
         m_debugger.m_pointListMissingDim[m_currentPointList].push_back(m_meshEdgeList->m_points[point][m_dimensionOrder[SLICE_DIM]]);
 
         //find all inactive edges for a point
@@ -238,11 +247,19 @@ public:
                 //find which slice the other point is in relative to this slice
                 int sliceNum = gridDistance(m_sliceStart, m_meshEdgeList->m_points[otherPoint][m_dimensionOrder[SLICE_DIM]], m_dimensionOrder[SLICE_DIM]);
 
+                LOG_DEBUG("\nSliceNum %d Edge %u SliceStart %f Point %f Dimension Order %d Full Point (%f, %f, %f)", 
+                    sliceNum, edgeIndex, m_sliceStart, m_meshEdgeList->m_points[otherPoint][m_dimensionOrder[SLICE_DIM]], m_dimensionOrder[SLICE_DIM],
+                    m_meshEdgeList->m_points[otherPoint].x, m_meshEdgeList->m_points[otherPoint].y, m_meshEdgeList->m_points[otherPoint].z);
+
                 //discard edge if also in this slice
                 if(sliceNum <= 0) {
+                    LOG_DEBUG("\nDiscard %u", edgeIndex);
+
                     m_debugger.m_discarededEdges.insert(edgeIndex);
                 }
                 else {
+                    LOG_DEBUG("\nAdd to active %u", edgeIndex);
+
                     //add edge to active edges
                     activeEdgesDestination[edgeIndex] = sliceNum;
                     m_activeEdgeDestPoint[edgeIndex] = otherPoint;
@@ -251,18 +268,21 @@ public:
         }
     }
 
-    template <bool isLeftSide, typename Iter>
-    static void convexHull(Iter& iter, Iter& end, std::vector<glm::detail::tvec2<W>* >& destination, int8_t sign) {
-        //omit first redundant edge
+    template <bool isLeftSide>
+    void convexHull(const std::vector<glm::detail::tvec2<W>*>& sortedPoints, int8_t sign) {
+        std::vector<glm::detail::tvec2<W>* >& destination = m_sliceRasterizeEdges[isLeftSide];
+
+        std::vector<glm::detail::tvec2<W>*>::const_iterator iter = sortedPoints.begin();
+        std::vector<glm::detail::tvec2<W>*>::const_iterator end = sortedPoints.end();
 
         for(; iter != end; iter++) {
             glm::detail::tvec2<W>* point = *iter;
 
-            if(destination.size() >= 1) {
+            if(m_sliceRasterizeEdges[isLeftSide].size() >= 1) {
                 glm::detail::tvec2<W>* prevPoint = destination.back();
 
                 //omit point if same point as previous
-                if(point->x == prevPoint->x && point->y == prevPoint->y) {
+                if(eq(point->x, prevPoint->x) && eq(point->y, prevPoint->y)) {
                     continue;
                 }
 
@@ -275,62 +295,19 @@ public:
         }
 
         //omit first redundant edge (TODO: removing from beginning of vector isn't the most efficient thing ever, is it worth using a dequeue?)
-        while(destination.size() >= 2 && destination[0]->y == destination[1]->y) {
+        while(destination.size() >= 2 && eq(destination[0]->y, destination[1]->y)) {
             destination.erase(destination.begin());
         }
 
         //omit last redundant edge
-        while(destination.size() >= 2 && destination[destination.size() - 2]->y == destination[destination.size() - 1]->y) {
+        while(destination.size() >= 2 && eq(destination[destination.size() - 2]->y, destination[destination.size() - 1]->y)) {
             destination.pop_back();
         }
-
-        //remove last redundant edges
-        /*while(destination.size() >= 2 && destination[destination.size() - 2]->y == destination[destination.size() - 1]->y) {
-            destination.pop_back();
-        }*/
-        
-        //if(iter != end) {
-        //    //init some things first
-        //    glm::detail::tvec2<W>* point;
-        //    
-        //    //find first point whose y isn't the same as the next point's y to remove the first redundant edge
-        //    //points are also sorted by x
-        //    //do {
-        //        point = *iter;
-        //        iter++;
-        //    //} while(iter != end && point->y == (*iter)->y);
-
-        //    destination.push_back(point);
-
-        //    /*while(iter != end && point->y == (*iter)->y) {
-        //        iter++;
-        //    }*/
-
-        //    if(iter != end) {
-        //        point = *iter;
-        //        iter++;
-        //        destination.push_back(point);
-
-        //        //now do the actual loop
-        //        for(; iter != end; iter++) {
-        //            point = *iter;
-
-        //            while(destination.size() >= 2 && leq(cross(*destination[destination.size() - 2] - *point, *destination[destination.size() - 1] - * point), (W) 0, sign)) {
-        //                destination.pop_back();
-        //            }
-
-        //            destination.push_back(point);
-        //        }
-        //    }
-        //}
-
-        //remove last redundant edges
-        /*while(destination.size() >= 2 && destination[destination.size() - 2]->y == destination[destination.size() - 1]->y) {
-            destination.pop_back();
-        }*/
     }
 
     void advanceSlice() {
+        LOG_DEBUG("\n\nAdvance Slice Begin\n\n");
+
         m_currentPosition[m_dimensionOrder[SLICE_DIM]] += m_directionSign[SLICE_DIM];      
 
         //advance slice planes
@@ -364,9 +341,33 @@ public:
     }
 
     /**
+    Due to floating point imprecision, things get pretty messed up sometimes.
+    This makes sure to at least constrain edges that are at points to the world bounds being rasterized.
+    */
+    inline glm::detail::tvec2<W> fixRasterPointPrecision(glm::detail::tvec2<W>& point) {
+        if(eq(point.x, m_worldRange.m_min[m_dimensionOrder[X_DIM]])) {
+            point.x = m_worldRange.m_min[m_dimensionOrder[X_DIM]];
+        }
+        else if(eq(point.x, m_worldRange.m_max[m_dimensionOrder[X_DIM]])) {
+            point.x = m_worldRange.m_max[m_dimensionOrder[X_DIM]];
+        }
+
+        if(eq(point.y, m_worldRange.m_min[m_dimensionOrder[Y_DIM]])) {
+            point.y = m_worldRange.m_min[m_dimensionOrder[Y_DIM]];
+        }
+        else if(eq(point.y, m_worldRange.m_max[m_dimensionOrder[Y_DIM]])) {
+            point.y = m_worldRange.m_max[m_dimensionOrder[Y_DIM]];
+        }
+
+        return point;
+    }
+
+    /**
     Sets up the current slice to be 2D rasterized
     */
     void setupSlice() {
+        LOG_DEBUG("\n\nSetup Slice Begin\n\n");
+
         //clear other side point buffer
         m_pointList[!m_currentPointList].clear();
         m_debugger.m_pointListMissingDim[!m_currentPointList].clear();
@@ -377,19 +378,41 @@ public:
 
             glm::detail::tvec3<W> dest;
 
-            //bool intersection = m_slicePlane.lineIntersection(m_meshEdgeList->m_points[m_meshEdgeList->m_edges[activeEdge].m_point[0]], m_meshEdgeList->m_points[m_meshEdgeList->m_edges[activeEdge].m_point[1]], dest);
-            //assert(intersection);   //this assert definitely helps find some nasty bugs
+            LOG_DEBUG("\nAbout to do intersection Edge %u Countdown %u Pt0 %u (%f, %f, %f) Pt1 %u (%f, %f, %f) SliceEnd %f Dim Order %u", 
+                activeEdge,
+                m_activeEdges.at(activeEdge),
+                m_meshEdgeList->m_edges[activeEdge].m_point[0], 
+                    m_meshEdgeList->m_points[m_meshEdgeList->m_edges[activeEdge].m_point[0]].x,
+                    m_meshEdgeList->m_points[m_meshEdgeList->m_edges[activeEdge].m_point[0]].y,
+                    m_meshEdgeList->m_points[m_meshEdgeList->m_edges[activeEdge].m_point[0]].z,
+                m_meshEdgeList->m_edges[activeEdge].m_point[1], 
+                    m_meshEdgeList->m_points[m_meshEdgeList->m_edges[activeEdge].m_point[1]].x,
+                    m_meshEdgeList->m_points[m_meshEdgeList->m_edges[activeEdge].m_point[1]].y,
+                    m_meshEdgeList->m_points[m_meshEdgeList->m_edges[activeEdge].m_point[1]].z,
+                m_sliceStart + m_directionSign[SLICE_DIM] * m_cellDimensions[SLICE_DIM],
+                (unsigned int) m_dimensionOrder[SLICE_DIM]);
+
+            bool intersection = m_slicePlane.lineIntersection(m_meshEdgeList->m_points[m_meshEdgeList->m_edges[activeEdge].m_point[0]], m_meshEdgeList->m_points[m_meshEdgeList->m_edges[activeEdge].m_point[1]], dest);
+            
+            if(!intersection) {
+                int x = 5;
+            }
+            
+            assert(intersection);   //this assert definitely helps find some nasty bugs
 
             //if not intersection, this point must be right against the plane
-            if(!m_slicePlane.lineIntersection(m_meshEdgeList->m_points[m_meshEdgeList->m_edges[activeEdge].m_point[0]], 
+            /*if(!m_slicePlane.lineIntersection(m_meshEdgeList->m_points[m_meshEdgeList->m_edges[activeEdge].m_point[0]], 
                     m_meshEdgeList->m_points[m_meshEdgeList->m_edges[activeEdge].m_point[1]], dest)) {
                 dest = m_meshEdgeList->m_points[m_activeEdgeDestPoint.at(activeEdge)];
 
-                //assert the point is right against the plane
-                //assert(dest[m_dimensionOrder[SLICE_DIM]] == m_sliceStart + m_directionSign[SLICE_DIM] * m_cellDimensions[SLICE_DIM]);
-            }
+                LOG_DEBUG("Intersection failed, but: activeDestPtInd: %u dest pt (%f, %f, %f)", m_activeEdgeDestPoint.at(activeEdge), dest.x, dest.y, dest.z);
 
-            m_pointList[!m_currentPointList].push_back(glm::detail::tvec2<W>(dest[m_dimensionOrder[X_DIM]], dest[m_dimensionOrder[Y_DIM]]));
+                //assert the point is within slice
+                assert(geq(dest[m_dimensionOrder[SLICE_DIM]], m_sliceStart, m_directionSign[SLICE_DIM]));
+                assert(leq(dest[m_dimensionOrder[SLICE_DIM]], m_sliceStart + m_directionSign[SLICE_DIM] * m_cellDimensions[SLICE_DIM], m_directionSign[SLICE_DIM]));
+            }*/
+
+            m_pointList[!m_currentPointList].push_back(fixRasterPointPrecision(glm::detail::tvec2<W>(dest[m_dimensionOrder[X_DIM]], dest[m_dimensionOrder[Y_DIM]])));
             m_debugger.m_pointListMissingDim[!m_currentPointList].push_back(dest[m_dimensionOrder[SLICE_DIM]]);
         }
 
@@ -435,11 +458,15 @@ public:
 
         std::vector<glm::detail::tvec2<W>*> sortedPoints;
 
+        assert(m_pointList[0].size() + m_pointList[1].size() >= 3);
+
         for(uint8_t list = 0; list < 2; list++) {
             for(uint8_t point = 0; point < m_pointList[list].size(); point++) {
                 sortedPoints.push_back(&m_pointList[list][point]);
             }
         }
+
+        assert(sortedPoints.size() >= 3);
 
         std::sort(sortedPoints.begin(), sortedPoints.end(), PointComparator(*this));
         m_debugger.m_sortedSlicePoints = sortedPoints;
@@ -455,35 +482,51 @@ public:
         {
             int8_t convexSign = m_directionSign[secondaryDimension] * m_directionSign[tertiaryDimension];
 
+            //TODO: rewrite convex hull function to be less retarded now that this is the right way to do it, just look at the args it's taking
+
             //"right" edge
-            convexHull<RIGHT_SIDE>(sortedPoints.begin(), sortedPoints.end(), m_sliceRasterizeEdges[RIGHT_SIDE], convexSign);
+            convexHull<RIGHT_SIDE>(sortedPoints, convexSign);
 
             //"left" edge
-            convexHull<LEFT_SIDE>(sortedPoints.begin(), sortedPoints.end(), m_sliceRasterizeEdges[LEFT_SIDE], -convexSign);
+            convexHull<LEFT_SIDE>(sortedPoints, -convexSign);
         }
         
+        assert(m_sliceRasterizeEdges[LEFT_SIDE].size() >= 2);
+        assert(m_sliceRasterizeEdges[RIGHT_SIDE].size() >= 2);
+
         //setup the initial row
         m_activeSliceEdgeIndex[RIGHT_SIDE] = 0;
         m_activeSliceEdgeIndex[LEFT_SIDE] = 0;
         
         //sets up the min vertical
-        int rowNum = gridDistance(m_spaceRange.m_min[secondaryDimension], m_sliceRasterizeEdges[RIGHT_SIDE][0]->y, secondaryDimension);      
+        int rowNum = gridDistance(m_worldRange.m_min[secondaryDimension], m_sliceRasterizeEdges[RIGHT_SIDE][0]->y, secondaryDimension);      
         m_currentPosition[secondaryDimension] = m_range.m_min[secondaryDimension] + rowNum * m_directionSign[secondaryDimension];
 
         m_debugger.m_sliceMin.y = m_currentPosition[secondaryDimension];
 
-        m_lineBottom = m_spaceRange.m_min[secondaryDimension] + rowNum * m_directionSign[secondaryDimension] * m_cellDimensions[secondaryDimension];
+        m_lineBottom = m_worldRange.m_min[secondaryDimension] + rowNum * m_directionSign[secondaryDimension] * m_cellDimensions[secondaryDimension];
         m_lineTop = m_lineBottom + m_directionSign[secondaryDimension] * m_cellDimensions[secondaryDimension];
 
         //sets up the max vertical
-        rowNum = gridDistance(m_spaceRange.m_min[secondaryDimension], m_sliceRasterizeEdges[RIGHT_SIDE][m_sliceRasterizeEdges[RIGHT_SIDE].size() - 1]->y, secondaryDimension);
+        rowNum = gridDistance(m_worldRange.m_min[secondaryDimension], m_sliceRasterizeEdges[RIGHT_SIDE][m_sliceRasterizeEdges[RIGHT_SIDE].size() - 1]->y, secondaryDimension);
         m_sliceMax.y = m_range.m_min[secondaryDimension] + rowNum * m_directionSign[secondaryDimension];
         
+        assert(geq(m_currentPosition[secondaryDimension], m_range.m_min[secondaryDimension], m_directionSign[secondaryDimension]));
+        assert(leq(m_sliceMax.y, m_range.m_max[secondaryDimension], m_directionSign[secondaryDimension]));
+
         setupSliceHelper<LEFT_SIDE>();
+
+        assert(geq(m_currentPosition[tertiaryDimension], m_range.m_min[tertiaryDimension], m_directionSign[tertiaryDimension]));
 
         m_debugger.m_messages.push_back(" ");
 
         setupSliceHelper<RIGHT_SIDE>();
+
+        assert(leq(m_sliceMax.x, m_range.m_max[tertiaryDimension], m_directionSign[tertiaryDimension]));
+
+        LOG_DEBUG("Slice is set up: CurrPos: (%d, %d, %d), Max (%d, %d)", 
+            m_currentPosition[tertiaryDimension], m_currentPosition[secondaryDimension], m_currentPosition[m_dimensionOrder[SLICE_DIM]],
+            m_sliceMax.x, m_sliceMax.y);
 
         m_debugger.m_messages.push_back(" ");
         m_debugger.m_messages.push_back(" ");
@@ -522,6 +565,10 @@ public:
 
         m_debugger.m_messages.push_back(" ");
         m_debugger.m_messages.push_back(" ");
+
+        LOG_DEBUG("Row is advanced: CurrPos: (%d, %d, %d), Max (%d, %d)", 
+            m_currentPosition[m_dimensionOrder[X_DIM]], m_currentPosition[m_dimensionOrder[Y_DIM]], m_currentPosition[m_dimensionOrder[SLICE_DIM]],
+            m_sliceMax.x, m_sliceMax.y);
     }
 
     template <bool isLeftSide>
@@ -590,7 +637,7 @@ public:
     inline void setSliceRowPoint(W worldX) {
         //find which column that point is in
         P column = m_range.m_min[m_dimensionOrder[X_DIM]] 
-            + gridDistance(m_spaceRange.m_min[m_dimensionOrder[X_DIM]], worldX, m_dimensionOrder[X_DIM]) 
+            + gridDistance(m_worldRange.m_min[m_dimensionOrder[X_DIM]], worldX, m_dimensionOrder[X_DIM]) 
             * m_directionSign[m_dimensionOrder[X_DIM]];
                 
         if(isLeftSide) {
@@ -606,7 +653,7 @@ public:
         if(isLeftSide) {
             m_debugger.m_leftSlicePoint = worldX;
             m_debugger.m_sliceMin.x = column;
-            m_debugger.m_rasterizedCells.push_back(m_cellDimensions * vec3cast<P, W>(m_currentPosition) + m_cellDimensions * 0.5f * vec3cast<int8_t, W>(m_directionSign));
+            m_debugger.m_rasterizedCells.push_back(m_cellDimensions * vec3cast<P, W>(m_currentPosition) + m_cellDimensions * 0.5f/* * vec3cast<int8_t, W>(m_directionSign)*/);
         }
         else {
             m_debugger.m_rightSlicePoint = worldX;
@@ -793,7 +840,7 @@ public:
     glm::detail::tvec3<P> m_currentPosition;
 
     ///The range in physical space, derived from m_range * m_cellDimensions
-    Box<W> m_spaceRange;
+    Box<W> m_worldRange;
 
     ///Dimensions of the cells 
     glm::detail::tvec3<W> m_cellDimensions;
