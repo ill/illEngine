@@ -308,7 +308,7 @@ public:
     void advanceSlice() {
         LOG_DEBUG("\n\nAdvance Slice Begin\n\n");
 
-        m_currentPosition[m_dimensionOrder[SLICE_DIM]] += m_directionSign[SLICE_DIM];      
+        m_currentPosition[m_dimensionOrder[SLICE_DIM]] += m_directionSign[m_dimensionOrder[SLICE_DIM]];      
 
         //advance slice planes
         m_slicePlane.m_distance -= m_cellDimensions[m_dimensionOrder[SLICE_DIM]];    //TODO: pretty sure this is going to fail if plane is in a negative quadrant
