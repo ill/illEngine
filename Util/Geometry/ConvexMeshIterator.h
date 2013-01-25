@@ -105,24 +105,6 @@ public:
         //TODO: take thsi out
         m_meshEdgeList = &m_debugger.m_meshEdgeList;
         
-        LOG_INFO("\n\nAbout to rasterize convex mesh. %u edges", m_meshEdgeList->m_edges.size());
-
-        for(size_t edge = 0; edge < m_meshEdgeList->m_edges.size(); edge++) {
-            LOG_INFO("Edge %u.", edge);
-
-            LOG_INFO("\tPtA %u (%f, %f, %f)", 
-                m_meshEdgeList->m_edges[edge].m_point[0], 
-                m_meshEdgeList->m_points[m_meshEdgeList->m_edges[edge].m_point[0]].x,
-                m_meshEdgeList->m_points[m_meshEdgeList->m_edges[edge].m_point[0]].y,
-                m_meshEdgeList->m_points[m_meshEdgeList->m_edges[edge].m_point[0]].z);
-
-            LOG_INFO("\tPtB %u (%f, %f, %f)", 
-                m_meshEdgeList->m_edges[edge].m_point[1], 
-                m_meshEdgeList->m_points[m_meshEdgeList->m_edges[edge].m_point[1]].x,
-                m_meshEdgeList->m_points[m_meshEdgeList->m_edges[edge].m_point[1]].y,
-                m_meshEdgeList->m_points[m_meshEdgeList->m_edges[edge].m_point[1]].z);
-        }
-
         m_currentPosition = m_range.m_min;
 
         uint8_t sliceDimension = m_dimensionOrder[SLICE_DIM];
