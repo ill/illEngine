@@ -314,6 +314,48 @@ inline T lineInterceptX(const glm::detail::tvec2<T>& pt1, const glm::detail::tve
 }
 
 /**
+TODO: document
+Finds xy intercept of a 3D line
+*/
+template <typename T>
+inline glm::detail::tvec3<T> lineInterceptXY(const glm::detail::tvec3<T>& pt1, const glm::detail::tvec3<T>& pt2, T z) {
+    glm::detail::tvec3<T> dir = pt2 - pt1;
+
+    //find t at the z
+    T t = (z - pt1.z) / dir.z;
+
+    return glm::detail::tvec3<T>(pt1.x + dir.x * t, pt1.y + dir.y * t, z);
+}
+
+/**
+TODO: document
+Finds xz intercept of a 3D line
+*/
+template <typename T>
+inline glm::detail::tvec3<T> lineInterceptXZ(const glm::detail::tvec3<T>& pt1, const glm::detail::tvec3<T>& pt2, T y) {
+    glm::detail::tvec3<T> dir = pt2 - pt1;
+
+    //find t at the y
+    T t = (y - pt1.y) / dir.y;
+
+    return glm::detail::tvec3(pt1.x + dir.x * t, y, pt1.z + dir.z * t);
+}
+
+/**
+TODO: document
+Finds yz intercept of a 3D line
+*/
+template <typename T>
+inline glm::detail::tvec3<T> lineInterceptYZ(const glm::detail::tvec3<T>& pt1, const glm::detail::tvec3<T>& pt2, T x) {
+    glm::detail::tvec3<T> dir = pt2 - pt1;
+
+    //find t at the x
+    T t = (x - pt1.x) / dir.x;
+
+    return glm::detail::tvec3(x, pt1.y + dir.y * t, pt1.z + dir.z * t);
+}
+
+/**
 Returns a vector of dimensions sorted by magnitude in the given vector.
 X is dimension 0, Y is dimension 1, Z is dimension 2.
 Good for use in for loops to index into other vectors.
@@ -322,7 +364,7 @@ For example, given vector (5, 9, -2) it returns (2, 0, 1).
 */
 template <typename T>
 inline glm::detail::tvec3<uint8_t> sortDimensions(glm::detail::tvec3<T> vec) {
-    //I'd probably find a much more generic way to do this if this was arbitrary dimensional
+    //I'd probably find a much more generic way to do this if this was arbitrary dimensional, this may be highly optimized or something
 
     glm::detail::tvec3<uint8_t> res;
     vec = glm::abs(vec);
@@ -330,31 +372,31 @@ inline glm::detail::tvec3<uint8_t> sortDimensions(glm::detail::tvec3<T> vec) {
     T maxMagnitude;
     T secMagnitude;
 
-    res[2] = 2;
+    res[0] = 0;
 
-    if(vec.x > vec.y) {
-        res[0] = 0;
+    if(vec.z > vec.y) {
         res[1] = 1;
+        res[2] = 2;
 
-        maxMagnitude = vec.x;
+        maxMagnitude = vec.z;
         secMagnitude = vec.y;
     }
     else {
-        res[0] = 1;
-        res[1] = 0;
+        res[1] = 2;
+        res[2] = 1;
 
         maxMagnitude = vec.y;
-        secMagnitude = vec.x;
+        secMagnitude = vec.z;
     }
 
-    if(vec.z > maxMagnitude) {
-        res[2] = res[1];
-        res[1] = res[0];
-        res[0] = 2;
+    if(vec.x > maxMagnitude) {
+        res[0] = res[1];
+        res[1] = res[2];
+        res[2] = 0;
     }
-    else if(vec.z > secMagnitude) {
-        res[2] = res[1];
-        res[1] = 2;
+    else if(vec.x > secMagnitude) {
+        res[0] = res[1];
+        res[1] = 0;
     }
 
     return res;

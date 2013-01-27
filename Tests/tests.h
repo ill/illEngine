@@ -10,4 +10,6 @@ void testVectorManager();
 
 void testEndian();
 
+void testSortDimensions();
+
 #endif

@@ -11,6 +11,11 @@
 
 /**
 Used for storing the points and edges joining the points in a 3D mesh.
+Similar to if there was a MeshData object that supported primitives other than triangles, but with a few additional
+data structures to make fast lookup of edges by points.
+
+I might redesign MeshData to support primitives other than triangles in a bit, and make this a wrapper around the MeshData object
+with additional useful datastructures.
 */
 template<typename T = glm::mediump_float>
 struct MeshEdgeList {
@@ -210,7 +215,7 @@ struct MeshEdgeList {
 
             inline bool operator() (size_t ptA, size_t ptB) {
                 //sort points by reverse order of magnitude of normal vector in plane to ensure best sorting
-                for(uint8_t dimension = 2; dimension < 3; dimension--) {                    
+                for(uint8_t dimension = 0; dimension < 2; dimension++) {                    
                     T a = m_points[ptA][m_normalDimensionOrder[dimension]];
                     T b = m_points[ptB][m_normalDimensionOrder[dimension]];
                     
@@ -262,7 +267,7 @@ private:
     inline glm::detail::tvec2<T> get2dPoint(size_t pointIndex, const glm::detail::tvec3<uint8_t>& dimensionOrder) const {
         const glm::detail::tvec3<T>& point = m_points[pointIndex];
 
-        return glm::detail::tvec2<T>(point[dimensionOrder[2]], point[dimensionOrder[1]]);
+        return glm::detail::tvec2<T>(point[dimensionOrder[0]], point[dimensionOrder[1]]);
     }
 
     template <typename Iter>
