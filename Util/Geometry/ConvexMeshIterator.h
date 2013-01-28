@@ -46,6 +46,8 @@ public:
 
         glm::detail::tvec2<P> m_sliceMin;
 
+        glm::detail::tvec3<W> m_direction;
+
         std::list<std::string> m_messages;
     };
 
@@ -69,7 +71,7 @@ public:
 
         //initialize remapping of world to algorithm space
         m_dimensionOrder = sortDimensions(direction);
-        m_directionSign = glm::sign(direction);
+        m_directionSign = vec3cast<glm::mediump_float, int8_t>(signO(direction));
 
         //initialize the inverse dimension mapping
         for(uint8_t inverseDim = 0; inverseDim < 3; inverseDim++) {
@@ -84,11 +86,11 @@ public:
         for(uint8_t dim = 0; dim < 3; dim++) {
             uint8_t mappedDim = m_dimensionOrder[dim];
 
-            m_algorithmBounds[dim] = m_bounds.m_max[mappedDim] - m_bounds.m_min[mappedDim];
-            m_algorithmWorldBounds[dim] = m_worldBounds.m_max[mappedDim] - m_worldBounds.m_min[mappedDim];
-            m_cellDimensions[dim] = cellDimensions[mappedDim];
+            m_algorithmBounds[mappedDim] = m_bounds.m_max[dim] - m_bounds.m_min[dim];
+            m_algorithmWorldBounds[mappedDim] = m_worldBounds.m_max[dim] - m_worldBounds.m_min[dim];
+            m_cellDimensions[mappedDim] = cellDimensions[dim];
         }
-        
+                
         //remap meshEdgeList into algorithm space
         for(size_t point = 0; point < m_meshEdgeList->m_points.size(); point++) {
             m_meshEdgeList->m_points[point] = worldToAlgorithmPoint(m_meshEdgeList->m_points[point]);
@@ -102,6 +104,8 @@ public:
         //make iterator itself refer to debugger copy so as I'm looking around it doesn't change
         //TODO: take this out
         m_meshEdgeList = &m_debugger.m_meshEdgeList;
+
+        m_debugger.m_direction = direction;
         
         //start at the origin in algorithm space
         m_currentPosition = glm::detail::tvec3<P>((P) 0);
@@ -178,7 +182,7 @@ public:
         for(uint8_t dim = 0; dim < 3; ++dim) {
             uint8_t mappedDimension = m_dimensionOrder[dim];
 
-            res[mappedDimension] = m_directionSign[mappedDimension] > 0
+            res[mappedDimension] = m_directionSign[dim] > 0
                 ? (worldPoint[dim] - m_worldBounds.m_min[dim])
                 : (m_worldBounds.m_max[dim] - worldPoint[dim]);
         }
@@ -197,7 +201,7 @@ public:
         for(uint8_t dim = 0; dim < 3; ++dim) {
             uint8_t mappedDimension = m_dimensionOrderInverse[dim];
 
-            res[mappedDimension] = m_directionSign[dim] > 0
+            res[mappedDimension] = m_directionSign[mappedDimension] > 0
                 ? (m_worldBounds.m_min[mappedDimension] + algorithmPoint[dim])
                 : (m_worldBounds.m_max[mappedDimension] - algorithmPoint[dim]);
         }
@@ -216,7 +220,7 @@ public:
         for(uint8_t dim = 0; dim < 3; ++dim) {
             uint8_t mappedDimension = m_dimensionOrder[dim];
 
-            res[mappedDimension] = m_directionSign[mappedDimension] > 0
+            res[mappedDimension] = m_directionSign[dim] > 0
                 ? (worldCell[dim] - m_bounds.m_min[dim])
                 : (m_bounds.m_max[dim] - worldCell[dim]);
         }
@@ -235,7 +239,7 @@ public:
         for(uint8_t dim = 0; dim < 3; ++dim) {
             uint8_t mappedDimension = m_dimensionOrderInverse[dim];
 
-            res[mappedDimension] = m_directionSign[dim] > 0
+            res[mappedDimension] = m_directionSign[mappedDimension] > 0
                 ? (m_bounds.m_min[mappedDimension] + algorithmCell[dim])
                 : (m_bounds.m_max[mappedDimension] - algorithmCell[dim]);
         }
