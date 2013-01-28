@@ -84,11 +84,11 @@ public:
         
         //remap things into algorithm space
         for(uint8_t dim = 0; dim < 3; dim++) {
-            uint8_t mappedDim = m_dimensionOrder[dim];
+            uint8_t mappedDimension = m_dimensionOrder[dim];
 
-            m_algorithmBounds[mappedDim] = m_bounds.m_max[dim] - m_bounds.m_min[dim];
-            m_algorithmWorldBounds[mappedDim] = m_worldBounds.m_max[dim] - m_worldBounds.m_min[dim];
-            m_cellDimensions[mappedDim] = cellDimensions[dim];
+            m_algorithmBounds[dim] = m_bounds.m_max[mappedDimension] - m_bounds.m_min[mappedDimension];
+            m_algorithmWorldBounds[dim] = m_worldBounds.m_max[mappedDimension] - m_worldBounds.m_min[mappedDimension];
+            m_cellDimensions[dim] = cellDimensions[mappedDimension];
         }
                 
         //remap meshEdgeList into algorithm space
@@ -182,9 +182,9 @@ public:
         for(uint8_t dim = 0; dim < 3; ++dim) {
             uint8_t mappedDimension = m_dimensionOrder[dim];
 
-            res[mappedDimension] = m_directionSign[dim] > 0
-                ? (worldPoint[dim] - m_worldBounds.m_min[dim])
-                : (m_worldBounds.m_max[dim] - worldPoint[dim]);
+            res[dim] = m_directionSign[mappedDimension] > 0
+                ? (worldPoint[mappedDimension] - m_worldBounds.m_min[mappedDimension])
+                : (m_worldBounds.m_max[mappedDimension] - worldPoint[mappedDimension]);
         }
 
         return res;
@@ -201,9 +201,9 @@ public:
         for(uint8_t dim = 0; dim < 3; ++dim) {
             uint8_t mappedDimension = m_dimensionOrderInverse[dim];
 
-            res[mappedDimension] = m_directionSign[mappedDimension] > 0
-                ? (m_worldBounds.m_min[mappedDimension] + algorithmPoint[dim])
-                : (m_worldBounds.m_max[mappedDimension] - algorithmPoint[dim]);
+            res[dim] = m_directionSign[dim] > 0
+                ? (m_worldBounds.m_min[dim] + algorithmPoint[mappedDimension])
+                : (m_worldBounds.m_max[dim] - algorithmPoint[mappedDimension]);
         }
 
         return res;
@@ -220,9 +220,9 @@ public:
         for(uint8_t dim = 0; dim < 3; ++dim) {
             uint8_t mappedDimension = m_dimensionOrder[dim];
 
-            res[mappedDimension] = m_directionSign[dim] > 0
-                ? (worldCell[dim] - m_bounds.m_min[dim])
-                : (m_bounds.m_max[dim] - worldCell[dim]);
+            res[dim] = m_directionSign[mappedDimension] > 0
+                ? (worldCell[mappedDimension] - m_bounds.m_min[mappedDimension])
+                : (m_bounds.m_max[mappedDimension] - worldCell[mappedDimension]);
         }
 
         return res;
@@ -239,16 +239,16 @@ public:
         for(uint8_t dim = 0; dim < 3; ++dim) {
             uint8_t mappedDimension = m_dimensionOrderInverse[dim];
 
-            res[mappedDimension] = m_directionSign[mappedDimension] > 0
-                ? (m_bounds.m_min[mappedDimension] + algorithmCell[dim])
-                : (m_bounds.m_max[mappedDimension] - algorithmCell[dim]);
+            res[dim] = m_directionSign[dim] > 0
+                ? (m_bounds.m_min[dim] + algorithmCell[mappedDimension])
+                : (m_bounds.m_max[dim] - algorithmCell[mappedDimension]);
         }
 
         return res;
     }
     
     /**
-    Shoudl be called only from within addPoint()
+    Should be called only from within addPoint()
     */
     void addPointRecursive(size_t point, std::unordered_map<size_t, P>& activeEdgesDestination) {
         //find all inactive edges for a point
