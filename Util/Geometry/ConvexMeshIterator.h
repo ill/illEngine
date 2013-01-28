@@ -248,12 +248,9 @@ public:
     }
     
     /**
-    Adds a point from the 3D polygon being rasterized.
+    Shoudl be called only from within addPoint()
     */
-    void addPoint(size_t point, std::unordered_map<size_t, P>& activeEdgesDestination) {
-        m_pointList[m_currentPointList].push_back(fixRasterPointPrecision(glm::detail::tvec2<W>(m_meshEdgeList->m_points[point].x, m_meshEdgeList->m_points[point].y)));
-        m_debugger.m_pointListMissingDim[m_currentPointList].push_back(m_meshEdgeList->m_points[point].z);
-
+    void addPointRecursive(size_t point, std::unordered_map<size_t, P>& activeEdgesDestination) {
         //find all inactive edges for a point
         MeshEdgeList<W>::PointEdgeMapIterators edgeIters = m_meshEdgeList->m_pointEdgeMap.equal_range(point);
 
@@ -280,6 +277,9 @@ public:
                     LOG_DEBUG("\nDiscard %u", edgeIndex);
 
                     m_debugger.m_discarededEdges.insert(edgeIndex);
+
+                    //keep recursively adding other points eminating from this edge
+                    addPointRecursive(otherPoint, activeEdgesDestination);
                 }
                 else {
                     LOG_DEBUG("\nAdd to active %u", edgeIndex);
@@ -290,6 +290,16 @@ public:
                 }
             }
         }
+    }
+
+    /**
+    Adds a point from the 3D polygon being rasterized.
+    */
+    void addPoint(size_t point, std::unordered_map<size_t, P>& activeEdgesDestination) {
+        m_pointList[m_currentPointList].push_back(fixRasterPointPrecision(glm::detail::tvec2<W>(m_meshEdgeList->m_points[point].x, m_meshEdgeList->m_points[point].y)));
+        m_debugger.m_pointListMissingDim[m_currentPointList].push_back(m_meshEdgeList->m_points[point].z);
+
+        addPointRecursive(point, activeEdgesDestination);
     }
 
     template <bool isLeftSide>
@@ -555,7 +565,7 @@ public:
             //set first point of line as farthest column
             setSliceRowPoint<isLeftSide>(m_sliceRasterizeEdges[isLeftSide][0]->x);
 
-            while(advanceInwardLine<isLeftSide>()) {}
+            while(advanceInwardLine<isLeftSide, true>()) {}
         }
     }
     
@@ -618,7 +628,7 @@ public:
                     m_activeSliceEdges[isLeftSide] = 1;
                 }
                 else {
-                    while(advanceInwardLine<isLeftSide>()) {}
+                    while(advanceInwardLine<isLeftSide, false>()) {}
                 }
             }
         }
@@ -736,7 +746,7 @@ public:
             //if inward, just loop the inward advance code here
             if(!m_activeSliceEdgeOutward[isLeftSide]) {
                 m_debugger.m_messages.push_back("transitioned from outward to inward advance loop");
-                while(advanceInwardLine<isLeftSide>()) {}
+                while(advanceInwardLine<isLeftSide, false>()) {}
                 return false;
             }
             else {
@@ -794,9 +804,11 @@ public:
     Initializes the row bounds of the slice being rasterized.
 
     @tparam isLeftSide Whether or not being called on the right side or the left side of the polygon beign rasterized
+    @tparam isFirstTime Whether or not this is happening when the slice is first being set up
+
     @return Whether or not advancing needs to continue if the next line segment's second point is still within the same row.
     */
-    template <bool isLeftSide>
+    template <bool isLeftSide, bool isFirstTime>
     inline bool advanceInwardLine() {
         m_debugger.m_messages.push_back(formatString("advance %s inward line start edge index %u", isLeftSide ? "left" : "right", m_activeSliceEdgeIndex[isLeftSide]));
 
@@ -808,7 +820,9 @@ public:
         }
 
         //advance to the next line
-        m_activeSliceEdgeIndex[isLeftSide]++;
+        if(!isFirstTime) {
+            m_activeSliceEdgeIndex[isLeftSide]++;
+        }
 
         m_debugger.m_messages.push_back(formatString("incremented edge index now %u", m_activeSliceEdgeIndex[isLeftSide]));
                 
