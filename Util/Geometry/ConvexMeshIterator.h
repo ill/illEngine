@@ -392,6 +392,8 @@ public:
         m_pointList[!m_currentPointList].clear();
         m_debugger.m_pointListMissingDim[!m_currentPointList].clear();
 
+        LOG_DEBUG("Number of active edges: %u", m_activeEdges.size());
+
         //find intersection of active edges against other side of slice and add it to the other points list
         for(std::unordered_map<size_t, P>::const_iterator activeEdgeIter = m_activeEdges.begin(); activeEdgeIter != m_activeEdges.end(); activeEdgeIter++) {
             size_t activeEdge = activeEdgeIter->first;
