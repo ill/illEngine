@@ -165,7 +165,7 @@ public:
             throw std::runtime_error("calling getCurrentPosition() on mesh iterator when at end");
         }
 
-        return m_currentPosition;
+        return algorithmToWorldCell(m_currentPosition);
     }
 
     //TODO: temporarily public while developing
@@ -295,7 +295,7 @@ public:
     /**
     Adds a point from the 3D polygon being rasterized.
     */
-    void addPoint(size_t point, std::unordered_map<size_t, P>& activeEdgesDestination) {
+    inline void addPoint(size_t point, std::unordered_map<size_t, P>& activeEdgesDestination) {
         m_pointList[m_currentPointList].push_back(fixRasterPointPrecision(glm::detail::tvec2<W>(m_meshEdgeList->m_points[point].x, m_meshEdgeList->m_points[point].y)));
         m_debugger.m_pointListMissingDim[m_currentPointList].push_back(m_meshEdgeList->m_points[point].z);
 
