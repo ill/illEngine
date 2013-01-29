@@ -173,7 +173,7 @@ struct Frustum {
         }
 
         res.computePointEdgeMap();
-        res.computeBounds();
+        res.computeBounds(m_bounds);
 
         //TODO: I sure hope compilers in 2013 are smart enough to do return value optimization here, if not, optimize later
         return res;

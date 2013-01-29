@@ -325,19 +325,11 @@ private:
     This makes sure to at least constrain points that are being rasterized to the world bounds.
     */
     inline glm::detail::tvec2<W> fixRasterPointPrecision(glm::detail::tvec2<W>& point) {
-        if(eq(point.x, (W) 0)) {
-            point.x = (W) 0;
-        }
-        else if(eq(point.x, m_algorithmWorldBounds.x)) {
-            point.x = m_algorithmWorldBounds.x;
-        }
+        point.x = fixPrecision(point.x, (W) 0);
+        point.x = fixPrecision(point.x, m_algorithmWorldBounds.x);
 
-        if(eq(point.y, (W) 0)) {
-            point.y = (W) 0;
-        }
-        else if(eq(point.y, m_algorithmWorldBounds.y)) {
-            point.y = m_algorithmWorldBounds.y;
-        }
+        point.y = fixPrecision(point.y, (W) 0);
+        point.y = fixPrecision(point.y, m_algorithmWorldBounds.y);
 
         return point;
     }

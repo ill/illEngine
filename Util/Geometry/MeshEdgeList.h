@@ -56,12 +56,20 @@ struct MeshEdgeList {
     /**
     Computes the bounding box.
     Does nothing if there are no points.
+
+    @param outerBounds Due to precision issues after clipping, this really makes sure some of the points don't extend past some bounds
     */
-    inline void computeBounds() {
+    inline void computeBounds(const Box<T>& outerBounds) {
         if(!m_points.empty()) {
+            m_points[0] = fixPrecisionVec(m_points[0], outerBounds.m_min);
+            m_points[0] = fixPrecisionVec(m_points[0], outerBounds.m_max);
+
             m_bounds = Box<T>(m_points[0]);
 
             for(size_t point = 1; point < m_points.size(); point++) {
+                m_points[point] = fixPrecisionVec(m_points[point], outerBounds.m_min);
+                m_points[point] = fixPrecisionVec(m_points[point], outerBounds.m_max);
+
                 m_bounds.addPoint(m_points[point]);
             }
         }

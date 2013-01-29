@@ -552,6 +552,20 @@ inline glm::detail::tvec3<R> gridVec(const glm::detail::tvec3<T>& value, const g
     return res;
 }
 
+/**
+Read docs for fixPrecision under util.h.  Only this works on the components of a vector. 
+*/
+template<typename T>
+inline glm::detail::tvec3<T> fixPrecisionVec(const glm::detail::tvec3<T>& value, const glm::detail::tvec3<T>& other, const T& delta = (T)0.001) {
+    glm::detail::tvec3<T> res;
+    
+    for(int i = 0; i < 3; i++) {
+        res[i] = fixPrecision(value[i], other[i], delta);
+    }
+
+    return res;
+}
+
 template <typename T>
 inline glm::detail::tvec3<T> parseVector(std::istream& openFile) {
     glm::detail::tvec3<T> res;

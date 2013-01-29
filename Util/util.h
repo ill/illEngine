@@ -94,7 +94,7 @@ If a negative number, actually flips and checks if num1 < num2
 @return The result of the inequality
 */
 template <typename T>
-inline bool gt(T num1, T num2, int8_t sign) {
+inline bool gt(const T& num1, const T& num2, int8_t sign) {
     if(sign >= 0) {
         return num1 > num2;
     }
@@ -114,7 +114,7 @@ If a negative number, actually flips and checks if num1 <= num2
 @return The result of the inequality
 */
 template <typename T>
-inline bool geq(T num1, T num2, int8_t sign) {
+inline bool geq(const T& num1, const T& num2, int8_t sign) {
     if(sign >= 0) {
         return num1 >= num2;
     }
@@ -134,7 +134,7 @@ If a negative number, actually flips and checks if num1 > num2
 @return The result of the inequality
 */
 template <typename T>
-inline bool lt(T num1, T num2, int8_t sign) {
+inline bool lt(const T& num1, const T& num2, int8_t sign) {
     if(sign >= 0) {
         return num1 < num2;
     }
@@ -154,7 +154,7 @@ If a negative number, actually flips and checks if num1 >= num2
 @return The result of the inequality
 */
 template <typename T>
-inline bool leq(T num1, T num2, int8_t sign) {
+inline bool leq(const T& num1, const T& num2, int8_t sign) {
     if(sign >= 0) {
         return num1 <= num2;
     }
@@ -164,11 +164,22 @@ inline bool leq(T num1, T num2, int8_t sign) {
 }
 
 /**
-
+Checks if a value is equal with some tolerance.
 */
 template<typename T>
-inline bool eq(T num1, T num2, T delta = (T)0.0001) {
+inline bool eq(const T& num1, const T& num2, const T& delta = (T)0.001) {    
     return glm::abs(num1 - num2) <= delta;
+}
+
+/**
+If a value is close enough to another value, force the value to be the other value.
+This is for helping to fixing floating precision problems.
+*/
+template<typename T>
+inline T fixPrecision(const T& value, const T& other, const T& delta = (T)0.001) {
+    return eq(value, other, delta) 
+        ? other 
+        : value;
 }
 
 /**
