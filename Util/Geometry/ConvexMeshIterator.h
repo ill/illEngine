@@ -84,7 +84,7 @@ public:
                 addPoint(point, m_activeEdges);
             }
         }
-        
+                
         setupSlice();
     }
 
@@ -107,7 +107,7 @@ public:
                     m_atEnd = true;
                     return false;
                 }
-
+                
                 advanceSlice();
             }
             else {
@@ -299,7 +299,7 @@ private:
         //count down all active edge counts
         //a copy is needed because addPoint can't be modifying the same list that's being updated, horrible bugs happen
         std::unordered_map<size_t, P> activeEdgesCopy(m_activeEdges.size());
-        
+
         for(std::unordered_map<size_t, P>::iterator activeEdgeIter = m_activeEdges.begin(); activeEdgeIter != m_activeEdges.end(); activeEdgeIter++) {
             size_t edgeIndex = activeEdgeIter->first;
             P& activeEdgeCountdown = activeEdgeIter->second;
@@ -311,9 +311,9 @@ private:
                 activeEdgesCopy[edgeIndex] = activeEdgeCountdown; //keep this edge countdown
             }
         }
-
+        
         m_activeEdges.swap(activeEdgesCopy);
-
+        
         setupSlice();
     }
 
@@ -345,7 +345,7 @@ private:
     void setupSlice() {
         //clear other side point buffer
         m_pointList[!m_currentPointList].clear();
-
+        
         //find intersection of active edges against other side of slice and add it to the other points list
         for(std::unordered_map<size_t, P>::const_iterator activeEdgeIter = m_activeEdges.begin(); activeEdgeIter != m_activeEdges.end(); activeEdgeIter++) {
             size_t activeEdge = activeEdgeIter->first;
@@ -356,7 +356,7 @@ private:
                         
             m_pointList[!m_currentPointList].push_back(fixRasterPointPrecision(glm::detail::tvec2<W>(intersection.x, intersection.y)));
         }
-
+        
         /////
         //find convex hull of 2D projected slice points using modified monotone chain algorithm
         //this algorithm is nice because I also have the 2 sides of the polygon I'm about to rasterize in 2D
@@ -665,7 +665,15 @@ private:
             return false;
         }
         else {
-            return true;
+            //if is first run just keep going
+            if(isFirstTime) {
+                while(advanceInwardLine<isLeftSide, false>()) {}
+
+                return false;
+            }
+            else {
+                return true;
+            }
         }
     }
     

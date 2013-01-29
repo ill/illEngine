@@ -842,7 +842,16 @@ public:
         }
         else {
             m_debugger.m_messages.push_back("continuing inward advance");
-            return true;
+
+            //if is first run just keep going
+            if(isFirstTime) {
+                while(advanceInwardLine<isLeftSide, false>()) {}
+
+                return false;
+            }
+            else {
+                return true;
+            }
         }
     }
     
