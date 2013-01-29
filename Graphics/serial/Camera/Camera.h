@@ -33,48 +33,23 @@ public:
     @param near The near plane of the camera viewing.  Determines the view frustum in the end.
     @param far The far plane of the camera viewing.  Determines the view frustum in the end.
     */
-    inline void setTransform(const CameraTransform& transform, glm::mediump_float aspect = DEFAULT_ASPECT, glm::mediump_float fov = DEFAULT_FOV, glm::mediump_float nearVal = DEFAULT_NEAR, glm::mediump_float farVal = DEFAULT_FAR, bool ortho = false) {
-        m_aspect = aspect;
-        m_fov = fov;
-        m_near = nearVal;
-        m_far = farVal;
-        m_ortho = ortho;      
-
+    inline void setPerspectiveTransform(const glm::mat4& transform, glm::mediump_float aspect = DEFAULT_ASPECT, glm::mediump_float fov = DEFAULT_FOV, glm::mediump_float nearVal = DEFAULT_NEAR, glm::mediump_float farVal = DEFAULT_FAR) {
         m_transform = transform;
-
-        m_modelView = glm::affineInverse(m_transform.m_transform);
-
-        if(m_ortho) {
-            m_projection = glm::ortho(-0.5f * m_aspect, 0.5f * m_aspect,
-                -0.5f, 0.5f,
-                m_near, m_far);
-        }
-        else {
-            m_projection = glm::perspective(m_fov, m_aspect, m_near, m_far);
-        }
-
+        m_modelView = glm::affineInverse(m_transform);
+        m_projection = glm::perspective(fov, aspect, nearVal, farVal);
         m_canonical = getProjection() * getModelView();
-
         m_frustum.set(getCanonical());
     }
 
-    inline glm::mediump_float getAspect() const {
-        return m_aspect;
+    inline void setOrthoTransform(const glm::mat4& transform, glm::mediump_float left, glm::mediump_float right, glm::mediump_float bottom, glm::mediump_float top, glm::mediump_float nearVal = 0.0f, glm::mediump_float farVal = 1.0f) {
+        m_transform = transform;
+        m_modelView = glm::affineInverse(m_transform);
+        m_projection = glm::ortho(left, right, bottom, top, nearVal, farVal);
+        m_canonical = getProjection() * getModelView();
+        m_frustum.set(getCanonical());
     }
-
-    inline glm::mediump_float getNear() const {
-        return m_near;
-    }
-
-    inline glm::mediump_float getFar() const {
-        return m_far;
-    }
-
-    inline bool getOrtho() const {
-        return m_ortho;
-    }
-
-    inline const CameraTransform& getTransform() const {
+    
+    inline const glm::mat4& getTransform() const {
         return m_transform;
     }
 
@@ -113,21 +88,13 @@ public:
     }
     
 private:
-
-    CameraTransform m_transform;
+    glm::mat4 m_transform;              ///<the rotation, position, scale that defines the camera position and orientation
     
     Frustum<> m_frustum;                ///<view frustum
-    bool m_ortho;                       ///<if the view is in orthographic or perspective projection
 
     glm::mat4 m_modelView;              ///<model view matrix
     glm::mat4 m_projection;             ///<projection matrix in array form for sending down to OpenGL
     glm::mat4 m_canonical;              ///<canonical matrix (AKA modelViewProjection)
-
-    //TODO: these should go back into the camera transform so they can be animated
-    glm::mediump_float m_aspect;        ///<aspect ratio
-    glm::mediump_float m_near;          ///<near plane
-    glm::mediump_float m_far;           ///<far plane
-    glm::mediump_float m_fov;           ///<field of view
 };
 
 }
