@@ -1,5 +1,5 @@
-#ifndef ILL_CONVEX_MESH_ITERATOR_H_
-#define ILL_CONVEX_MESH_ITERATOR_H_
+#ifndef ILL_CONVEX_MESH_ITERATOR_DEBUG_H__
+#define ILL_CONVEX_MESH_ITERATOR_DEBUG_H__
 
 #include <algorithm>
 #include <stdexcept>
@@ -12,6 +12,9 @@
 #include "Util/geometry/MeshEdgeList.h"
 #include "Util/geometry/geomUtil.h"
 
+const bool LEFT_SIDE = true;
+const bool RIGHT_SIDE = false;
+
 /**
 Traverses front to back in the a convex mesh edge list that intersects a GridVolume3D.
 
@@ -19,22 +22,45 @@ Traverses front to back in the a convex mesh edge list that intersects a GridVol
 @param P The precision of the 3d grid volume cell subdivision
 */
 template <typename W = glm::mediump_float, typename P = int>
-class ConvexMeshIterator {
-private:
-    const static bool LEFT_SIDE = true;
-    const static bool RIGHT_SIDE = false;
-
+class ConvexMeshIteratorDebug {
 public:
-    ConvexMeshIterator()
+    struct Debugger {
+        inline glm::detail::tvec3<W> getPoint(glm::detail::tvec3<W> point, bool mapToWorld) const {
+            return mapToWorld 
+                ? m_iterator->algorithmToWorldPoint(point)
+                : point;
+        }
+
+        ConvexMeshIteratorDebug * m_iterator;
+        MeshEdgeList<W> m_meshEdgeList;
+
+        std::unordered_set<size_t> m_discarededEdges;
+
+        std::vector<W> m_pointListMissingDim[2];  //the missing 3rd dimension from the point after clipping edge against plane, used in the debug draw
+
+        std::vector<glm::detail::tvec2<W>*> m_sortedSlicePoints;
+        std::vector<glm::detail::tvec3<W> > m_rasterizedCells;  //cells that were rasterized so far in world coords for the renderer to render
+
+        W m_leftSlicePoint; //the point set by setLeftSlicePoint
+        W m_rightSlicePoint; //the point set by setLeftSlicePoint
+
+        glm::detail::tvec2<P> m_sliceMin;
+
+        glm::detail::tvec3<W> m_direction;
+
+        std::list<std::string> m_messages;
+    };
+
+    ConvexMeshIteratorDebug()
         : m_isEdgeChecked(NULL),
         m_atEnd(true)
     {}
 
-    void initialize(MeshEdgeList<W>* meshEdgeList, const glm::detail::tvec3<W>& direction, const Box<P>& bounds, const glm::detail::tvec3<W>& cellDimensions) {
-        m_meshEdgeList = meshEdgeList;
-        m_bounds = bounds;
-        m_atEnd = false;
-
+    ConvexMeshIteratorDebug(MeshEdgeList<W>* meshEdgeList, const glm::detail::tvec3<W>& direction, const Box<P>& bounds, const glm::detail::tvec3<W>& cellDimensions)
+        : m_meshEdgeList(meshEdgeList),
+        m_bounds(bounds),
+        m_atEnd(false)
+    {
         //initialize edges lists
         m_isEdgeChecked = new bool[meshEdgeList->m_edges.size()];
         memset(m_isEdgeChecked, 0, sizeof(bool) * meshEdgeList->m_edges.size());
@@ -69,7 +95,18 @@ public:
         for(size_t point = 0; point < m_meshEdgeList->m_points.size(); point++) {
             m_meshEdgeList->m_points[point] = worldToAlgorithmPoint(m_meshEdgeList->m_points[point]);
         }
-                
+
+        //TODO: only for debug
+        m_meshEdgeList->computeBounds();
+
+        m_debugger.m_iterator = this;
+        m_debugger.m_meshEdgeList = MeshEdgeList<W>(*m_meshEdgeList);
+        //make iterator itself refer to debugger copy so as I'm looking around it doesn't change
+        //TODO: take this out
+        m_meshEdgeList = &m_debugger.m_meshEdgeList;
+
+        m_debugger.m_direction = direction;
+        
         //start at the origin in algorithm space
         m_currentPosition = glm::detail::tvec3<P>((P) 0);
                 
@@ -88,7 +125,7 @@ public:
         setupSlice();
     }
 
-    ~ConvexMeshIterator() {
+    ~ConvexMeshIteratorDebug() {
         delete[] m_isEdgeChecked;
     }
 
@@ -116,12 +153,14 @@ public:
         }
         else {
             m_currentPosition.x++;
+
+            m_debugger.m_rasterizedCells.push_back(m_cellDimensions * vec3cast<P, W>(m_currentPosition) + m_cellDimensions * 0.5f);
         }
 
         return true;
     }
 
-    inline glm::detail::tvec3<P> getCurrentPosition() const {
+    inline const glm::detail::tvec3<P>& getCurrentPosition() const {
         if(atEnd()) {
             throw std::runtime_error("calling getCurrentPosition() on mesh iterator when at end");
         }
@@ -129,7 +168,9 @@ public:
         return algorithmToWorldCell(m_currentPosition);
     }
 
-private:
+    //TODO: temporarily public while developing
+    //private:   
+        
     /**
     Maps a point in world space to algorithm space.
     @param worldPoint The point in world space
@@ -226,13 +267,23 @@ private:
                         
                 //find which slice the other point is in relative to this slice
                 P sliceNum = grid<W, P>(m_meshEdgeList->m_points[otherPoint].z, m_cellDimensions.z) - grid<W, P>(m_sliceStart, m_cellDimensions.z);
-                
+
+                LOG_DEBUG("\nSliceNum %d Edge %u SliceStart %f Full Point (%f, %f, %f)", 
+                    sliceNum, edgeIndex, m_sliceStart,
+                    m_meshEdgeList->m_points[otherPoint].x, m_meshEdgeList->m_points[otherPoint].y, m_meshEdgeList->m_points[otherPoint].z);
+
                 //discard edge if also in this slice
                 if(sliceNum <= 0) {
+                    LOG_DEBUG("\nDiscard %u", edgeIndex);
+
+                    m_debugger.m_discarededEdges.insert(edgeIndex);
+
                     //keep recursively adding other points eminating from this edge
                     addPointRecursive(otherPoint, activeEdgesDestination);
                 }
                 else {
+                    LOG_DEBUG("\nAdd to active %u", edgeIndex);
+
                     //add edge to active edges
                     activeEdgesDestination[edgeIndex] = sliceNum;
                     m_activeEdgeDestPoint[edgeIndex] = otherPoint;
@@ -246,6 +297,8 @@ private:
     */
     inline void addPoint(size_t point, std::unordered_map<size_t, P>& activeEdgesDestination) {
         m_pointList[m_currentPointList].push_back(fixRasterPointPrecision(glm::detail::tvec2<W>(m_meshEdgeList->m_points[point].x, m_meshEdgeList->m_points[point].y)));
+        m_debugger.m_pointListMissingDim[m_currentPointList].push_back(m_meshEdgeList->m_points[point].z);
+
         addPointRecursive(point, activeEdgesDestination);
     }
 
@@ -287,6 +340,8 @@ private:
     }
 
     void advanceSlice() {
+        LOG_DEBUG("\n\nAdvance Slice Begin\n\n");
+
         ++m_currentPosition.z;      
 
         //advance slice planes
@@ -305,6 +360,8 @@ private:
             P& activeEdgeCountdown = activeEdgeIter->second;
             
             if(--activeEdgeCountdown == 0) {    //discard this edge, and add its destination point
+                m_debugger.m_discarededEdges.insert(edgeIndex);
+
                 addPoint(m_activeEdgeDestPoint.at(edgeIndex), activeEdgesCopy);
             }
             else {
@@ -343,18 +400,59 @@ private:
     Sets up the current slice to be 2D rasterized
     */
     void setupSlice() {
+        LOG_DEBUG("\n\nSetup Slice Begin\n\n");
+
         //clear other side point buffer
         m_pointList[!m_currentPointList].clear();
+        m_debugger.m_pointListMissingDim[!m_currentPointList].clear();
+
+        LOG_DEBUG("Number of active edges: %u", m_activeEdges.size());
 
         //find intersection of active edges against other side of slice and add it to the other points list
         for(std::unordered_map<size_t, P>::const_iterator activeEdgeIter = m_activeEdges.begin(); activeEdgeIter != m_activeEdges.end(); activeEdgeIter++) {
             size_t activeEdge = activeEdgeIter->first;
-                        
+
+            /*LOG_DEBUG("\nAbout to do intersection Edge %u Countdown %u Pt0 %u (%f, %f, %f) Pt1 %u (%f, %f, %f) SliceEnd %f Dim Order %u", 
+                activeEdge,
+                m_activeEdges.at(activeEdge),
+                m_meshEdgeList->m_edges[activeEdge].m_point[0], 
+                    m_meshEdgeList->m_points[m_meshEdgeList->m_edges[activeEdge].m_point[0]].x,
+                    m_meshEdgeList->m_points[m_meshEdgeList->m_edges[activeEdge].m_point[0]].y,
+                    m_meshEdgeList->m_points[m_meshEdgeList->m_edges[activeEdge].m_point[0]].z,
+                m_meshEdgeList->m_edges[activeEdge].m_point[1], 
+                    m_meshEdgeList->m_points[m_meshEdgeList->m_edges[activeEdge].m_point[1]].x,
+                    m_meshEdgeList->m_points[m_meshEdgeList->m_edges[activeEdge].m_point[1]].y,
+                    m_meshEdgeList->m_points[m_meshEdgeList->m_edges[activeEdge].m_point[1]].z,
+                m_sliceStart + m_directionSign[SLICE_DIM] * m_cellDimensions[SLICE_DIM],
+                (unsigned int) m_dimensionOrder[SLICE_DIM]);*/
+            
             assert(m_meshEdgeList->m_points[m_meshEdgeList->m_edges[activeEdge].m_point[0]].z != m_meshEdgeList->m_points[m_meshEdgeList->m_edges[activeEdge].m_point[1]].z);
 
             glm::detail::tvec3<W> intersection = lineInterceptXY(m_meshEdgeList->m_points[m_meshEdgeList->m_edges[activeEdge].m_point[0]], m_meshEdgeList->m_points[m_meshEdgeList->m_edges[activeEdge].m_point[1]], m_sliceEnd);
-                        
+
+            /*bool intersection = m_slicePlane.lineIntersection(m_meshEdgeList->m_points[m_meshEdgeList->m_edges[activeEdge].m_point[0]], m_meshEdgeList->m_points[m_meshEdgeList->m_edges[activeEdge].m_point[1]], dest);
+            
+            if(!intersection) {
+                int x = 5;
+            }
+            
+            assert(intersection);*/   //this assert definitely helps find some nasty bugs
+
+            //if not intersection, this point must be right against the plane
+            /*if(!m_slicePlane.lineIntersection(m_meshEdgeList->m_points[m_meshEdgeList->m_edges[activeEdge].m_point[0]], 
+                    m_meshEdgeList->m_points[m_meshEdgeList->m_edges[activeEdge].m_point[1]], dest)) {
+                dest = m_meshEdgeList->m_points[m_activeEdgeDestPoint.at(activeEdge)];
+
+                LOG_DEBUG("Intersection failed, but: activeDestPtInd: %u dest pt (%f, %f, %f)", m_activeEdgeDestPoint.at(activeEdge), dest.x, dest.y, dest.z);
+
+                //assert the point is within slice
+                //assert(geq(dest[m_dimensionOrder[SLICE_DIM]], m_sliceStart, m_directionSign[SLICE_DIM]));
+                //assert(leq(dest[m_dimensionOrder[SLICE_DIM]], m_sliceStart + m_directionSign[SLICE_DIM] * m_cellDimensions[SLICE_DIM], m_directionSign[SLICE_DIM]));
+                assert(eq(dest[m_dimensionOrder[SLICE_DIM]], m_sliceStart + m_directionSign[SLICE_DIM] * m_cellDimensions[SLICE_DIM]));
+            }*/
+
             m_pointList[!m_currentPointList].push_back(fixRasterPointPrecision(glm::detail::tvec2<W>(intersection.x, intersection.y)));
+            m_debugger.m_pointListMissingDim[!m_currentPointList].push_back(intersection.z);
         }
 
         /////
@@ -394,6 +492,8 @@ private:
         assert(sortedPoints.size() >= 3);
 
         std::sort(sortedPoints.begin(), sortedPoints.end(), PointComparator());
+        m_debugger.m_sortedSlicePoints = sortedPoints;
+
 
         //find the convex hull and split it into lists of edges for 1 side and the other
         m_sliceRasterizeEdges[RIGHT_SIDE].clear();
@@ -417,7 +517,9 @@ private:
         //sets up the min vertical
         P rowNum = grid<W, P>(m_sliceRasterizeEdges[RIGHT_SIDE][0]->y, m_cellDimensions.y);
         m_currentPosition.y = rowNum;
-        
+
+        m_debugger.m_sliceMin.y = m_currentPosition.y;
+
         m_lineBottom = rowNum * m_cellDimensions.y;
         m_lineTop = m_lineBottom + m_cellDimensions.y;
 
@@ -431,23 +533,35 @@ private:
         setupSliceHelper<LEFT_SIDE>();
 
         assert(m_currentPosition.x >= (P) 0);
-        
+
+        m_debugger.m_messages.push_back(" ");
+
         setupSliceHelper<RIGHT_SIDE>();
 
         assert(m_sliceMax.x <= m_algorithmBounds.x);
+
+        LOG_DEBUG("Slice is set up: CurrPos: (%d, %d, %d), Max (%d, %d)", 
+            m_currentPosition.x, m_currentPosition.y, m_currentPosition.z,
+            m_sliceMax.x, m_sliceMax.y);
+
+        m_debugger.m_messages.push_back(" ");
+        m_debugger.m_messages.push_back(" ");
     }
 
     template <bool isLeftSide>
     inline void setupSliceHelper() {
         assert(m_activeSliceEdgeIndex[isLeftSide] + 1 < m_sliceRasterizeEdges[isLeftSide].size());
         m_activeSliceEdgeOutward[isLeftSide] = geq(m_sliceRasterizeEdges[isLeftSide][1]->x, m_sliceRasterizeEdges[isLeftSide][0]->x, isLeftSide ? -1 : 1);
-        
+
+        m_debugger.m_messages.push_back(formatString("%s side initially %s", isLeftSide ? "left" : "right", m_activeSliceEdgeOutward[isLeftSide] ? "outward" : "inward"));
+
         if(m_activeSliceEdgeOutward[isLeftSide]) {           //going outward
             if(preAdvanceOutwardLine<isLeftSide>()) {
                 while(advanceOutwardLine<isLeftSide>()) {}
             }
         }
         else {                                              //going inward
+            m_debugger.m_messages.push_back(formatString("Set %s side inward edge first line point", isLeftSide ? "left" : "right"));
             //set first point of line as farthest column
             setSliceRowPoint<isLeftSide>(m_sliceRasterizeEdges[isLeftSide][0]->x);
 
@@ -464,18 +578,31 @@ private:
         
         advanceRowHelper<RIGHT_SIDE>();
         advanceRowHelper<LEFT_SIDE>();
+
+        m_debugger.m_messages.push_back(" ");
+        m_debugger.m_messages.push_back(" ");
+
+        LOG_DEBUG("Row is advanced: CurrPos: (%d, %d, %d), Max (%d, %d)", 
+            m_currentPosition.x, m_currentPosition.y, m_currentPosition.z,
+            m_sliceMax.x, m_sliceMax.y);
     }
 
     template <bool isLeftSide>
     inline void advanceRowHelper() {
+        m_debugger.m_messages.push_back(formatString("Advance row helper %s side", isLeftSide ? "left" : "right"));
+
         //count down the active edges
         --m_activeSliceEdges[isLeftSide];
+        m_debugger.m_messages.push_back(formatString("%u more rows until add slice point", m_activeSliceEdges[RIGHT_SIDE]));
 
         //if reached the end of the current edge being rasterized
         if(m_activeSliceEdges[isLeftSide] == 0) {
+            m_debugger.m_messages.push_back("Advance Row Add Slice Point");            
             if(m_activeSliceEdgeOutward[isLeftSide]) {          //if outward
                 //if last line
                 if(m_activeSliceEdgeIndex[isLeftSide] == m_sliceRasterizeEdges[isLeftSide].size() - 2) {
+                    m_debugger.m_messages.push_back("Advance outer Row last line, so setting other point as intersection");
+
                     m_activeSliceEdges[isLeftSide] = 1;
 
                     setSliceRowPoint<isLeftSide>(m_sliceRasterizeEdges[isLeftSide][m_activeSliceEdgeIndex[isLeftSide] + 1]->x);
@@ -497,6 +624,7 @@ private:
 
                 //if last line
                 if(m_activeSliceEdgeIndex[isLeftSide] == m_sliceRasterizeEdges[isLeftSide].size() - 2) {
+                    m_debugger.m_messages.push_back("Advance inner Row last line, so setting other point as intersection");
                     m_activeSliceEdges[isLeftSide] = 1;
                 }
                 else {
@@ -505,6 +633,8 @@ private:
             }
         }
         else {
+            m_debugger.m_messages.push_back(formatString("Advance Side intersection %u more rows until add slice point", m_activeSliceEdges[isLeftSide]));
+
             //make sure the edge indexes are pointing to no more than the second to last point in each edge list 
             assert(m_activeSliceEdgeIndex[isLeftSide] + 1 < m_sliceRasterizeEdges[isLeftSide].size());
 
@@ -515,6 +645,8 @@ private:
 
             setSliceRowPoint<isLeftSide>(xIntercept);
         }
+
+        m_debugger.m_messages.push_back(" ");
     }
 
     template <bool isLeftSide>
@@ -530,6 +662,16 @@ private:
             //row maximum is now this column
             m_sliceMax.x = column;
         }
+                
+        //set up the debugger stuff
+        if(isLeftSide) {
+            m_debugger.m_leftSlicePoint = worldX;
+            m_debugger.m_sliceMin.x = column;
+            m_debugger.m_rasterizedCells.push_back(m_cellDimensions * vec3cast<P, W>(m_currentPosition) + m_cellDimensions * 0.5f);
+        }
+        else {
+            m_debugger.m_rightSlicePoint = worldX;
+        }
     }
     
     /**
@@ -541,9 +683,13 @@ private:
     @return Whether or not advancing needs to continue if the next line segment's second point is still within the same row.
     */
     template <bool isLeftSide>
-    inline bool advanceOutwardLine() {        
+    inline bool advanceOutwardLine() {
+        m_debugger.m_messages.push_back(formatString("advance %s outward line start edge index %u", isLeftSide ? "left" : "right", m_activeSliceEdgeIndex[isLeftSide]));
+        
         //if last line
         if(m_activeSliceEdgeIndex[isLeftSide] == m_sliceRasterizeEdges[isLeftSide].size() - 2) {
+            m_debugger.m_messages.push_back("last outward line, setting point B of this line as farthest column point");
+
             //set point B as the farthest point
             setSliceRowPoint<isLeftSide>(m_sliceRasterizeEdges[isLeftSide][m_activeSliceEdgeIndex[isLeftSide] + 1]->x);
 
@@ -552,7 +698,9 @@ private:
 
         //advance to the next line
         m_activeSliceEdgeIndex[isLeftSide]++;
-        
+
+        m_debugger.m_messages.push_back(formatString("incremented edge index now %u", m_activeSliceEdgeIndex[isLeftSide]));
+
         //check what direction next line is going in
         m_activeSliceEdgeOutward[isLeftSide] = geq(m_sliceRasterizeEdges[isLeftSide][m_activeSliceEdgeIndex[isLeftSide] + 1]->x, 
             m_sliceRasterizeEdges[isLeftSide][m_activeSliceEdgeIndex[isLeftSide]]->x, 
@@ -561,19 +709,27 @@ private:
         //find which row the other point is in relative to this row
         P rowNum = grid<W, P>(m_sliceRasterizeEdges[isLeftSide][m_activeSliceEdgeIndex[isLeftSide] + 1]->y, m_cellDimensions.y) 
             - grid<W, P>(m_sliceRasterizeEdges[isLeftSide][m_activeSliceEdgeIndex[isLeftSide]]->y, m_cellDimensions.y);
-        
+
+        m_debugger.m_messages.push_back(formatString("%u rows until next point",  rowNum));
+
         //if inward
         if(!m_activeSliceEdgeOutward[isLeftSide]) {
+            m_debugger.m_messages.push_back("next edge inward, set this line's pointA as max");
+
             //set point B as the farthest point
             setSliceRowPoint<isLeftSide>(m_sliceRasterizeEdges[isLeftSide][m_activeSliceEdgeIndex[isLeftSide]]->x);
         }
 
         //if the current line doesn't end in the same row
         if(rowNum > 0) {
+            m_debugger.m_messages.push_back("done advancing outward line");
+
             m_activeSliceEdges[isLeftSide] = rowNum;
 
             //if outward, clip against row top and set as the farthest column
             if(m_activeSliceEdgeOutward[isLeftSide]) {
+                m_debugger.m_messages.push_back("ending advancing as outward line, clip against top");
+
                 //find intersection against row top
                 W xIntercept = lineInterceptX(*m_sliceRasterizeEdges[isLeftSide][m_activeSliceEdgeIndex[isLeftSide]], 
                     *m_sliceRasterizeEdges[isLeftSide][m_activeSliceEdgeIndex[isLeftSide] + 1], m_lineTop);
@@ -589,10 +745,12 @@ private:
 
             //if inward, just loop the inward advance code here
             if(!m_activeSliceEdgeOutward[isLeftSide]) {
+                m_debugger.m_messages.push_back("transitioned from outward to inward advance loop");
                 while(advanceInwardLine<isLeftSide, false>()) {}
                 return false;
             }
             else {
+                m_debugger.m_messages.push_back("continuing outward advance");
                 return true;
             }
         }
@@ -607,16 +765,23 @@ private:
     @return Whether or not advancing needs to continue if the next line segment's second point is still within the same row.
     */
     template <bool isLeftSide>
-    inline bool preAdvanceOutwardLine() {                
+    inline bool preAdvanceOutwardLine() {
+        m_debugger.m_messages.push_back(formatString("pre-advance %s outward line start edge index %u", isLeftSide ? "left" : "right", m_activeSliceEdgeIndex[isLeftSide]));
+                
         //find which row the other point is in relative to this row
         P rowNum = grid<W, P>(m_sliceRasterizeEdges[isLeftSide][m_activeSliceEdgeIndex[isLeftSide] + 1]->y, m_cellDimensions.y) 
             - grid<W, P>(m_sliceRasterizeEdges[isLeftSide][m_activeSliceEdgeIndex[isLeftSide]]->y, m_cellDimensions.y);
-                
+
+        m_debugger.m_messages.push_back(formatString("%u rows until next point",  rowNum));
+        
         //if the current line doesn't end in the same row
         if(rowNum > 0) {
+            m_debugger.m_messages.push_back("done advancing outward line");
+
             m_activeSliceEdges[isLeftSide] = rowNum;
 
-            //if outward, clip against row top and set as the farthest column
+            //if outward, clip against row top and set as the farthest column            
+            m_debugger.m_messages.push_back("ending advancing as outward line, clip against top");
 
             //find intersection against row top
             W xIntercept = lineInterceptX(*m_sliceRasterizeEdges[isLeftSide][m_activeSliceEdgeIndex[isLeftSide]], 
@@ -628,6 +793,7 @@ private:
             return false;
         }
         else {
+            m_debugger.m_messages.push_back("continuing outward advance");
             return true;
         }
     }
@@ -644,8 +810,12 @@ private:
     */
     template <bool isLeftSide, bool isFirstTime>
     inline bool advanceInwardLine() {
+        m_debugger.m_messages.push_back(formatString("advance %s inward line start edge index %u", isLeftSide ? "left" : "right", m_activeSliceEdgeIndex[isLeftSide]));
+
         //if last line
         if(m_activeSliceEdgeIndex[isLeftSide] == m_sliceRasterizeEdges[isLeftSide].size() - 2) {
+            m_debugger.m_messages.push_back("last inward line");
+
             return false;
         }
 
@@ -653,18 +823,25 @@ private:
         if(!isFirstTime) {
             m_activeSliceEdgeIndex[isLeftSide]++;
         }
-                        
+
+        m_debugger.m_messages.push_back(formatString("incremented edge index now %u", m_activeSliceEdgeIndex[isLeftSide]));
+                
         //find which row the other point is in relative to this row
         P rowNum = grid<W, P>(m_sliceRasterizeEdges[isLeftSide][m_activeSliceEdgeIndex[isLeftSide] + 1]->y, m_cellDimensions.y) 
             - grid<W, P>(m_sliceRasterizeEdges[isLeftSide][m_activeSliceEdgeIndex[isLeftSide]]->y, m_cellDimensions.y);
-        
+
+        m_debugger.m_messages.push_back(formatString("%u rows until next point",  rowNum));
+
         //if the current line doesn't end in the same row
         if(rowNum > 0) {
+            m_debugger.m_messages.push_back("done advancing inward line");
+
             m_activeSliceEdges[isLeftSide] = rowNum;
 
             return false;
         }
         else {
+            m_debugger.m_messages.push_back("continuing inward advance");
             return true;
         }
     }
@@ -751,6 +928,9 @@ private:
 
     ///Whether or not the iterator is done and no more points are left to rasterize
     bool m_atEnd;
+
+    ///For debugging, remove later
+    Debugger m_debugger;
 };
 
 #endif
