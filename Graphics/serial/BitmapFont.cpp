@@ -117,8 +117,6 @@ void BitmapFont::reload(RendererBackend * rendererBackend) {
     /////////////////////////////
     //read blocks
     while(!openFile->eof()) {
-        size_t tell = openFile->tell();
-
         //get block type
         uint8_t blockType;
         openFile->read8(blockType);

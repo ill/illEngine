@@ -4,8 +4,9 @@
 #include <stdint.h>
 #include <glm/glm.hpp>
 
-#include "Plane.h"
-#include "Box.h"
+#include "Util/Geometry/MeshEdgeList.h"
+#include "Util/Geometry/Plane.h"
+#include "Util/Geometry/Box.h"
 
 /**
 Some helpers for accessing the corner point indeces array that make up the frustum.
@@ -156,6 +157,26 @@ struct Frustum {
                 m_directedBounds.m_max[dimension] = m_bounds.m_min[dimension];
             }
         }
+    }
+
+    inline MeshEdgeList<T> getMeshEdgeList() const {
+        MeshEdgeList<T> res;
+
+        //the edges
+        for(unsigned int edge = 0; edge < 12; edge++) {
+            res.m_edges.push_back(MeshEdgeList<>::Edge(FRUSTUM_EDGE_LIST[edge][0], FRUSTUM_EDGE_LIST[edge][1]));
+        }
+
+        //the points
+        for(unsigned int point = 0; point < 8; point++) {
+            res.m_points.push_back(m_points[point]);
+        }
+
+        res.computePointEdgeMap();
+        res.computeBounds();
+
+        //TODO: I sure hope compilers in 2013 are smart enough to do return value optimization here, if not, optimize later
+        return res;
     }
 
     //the frustum planes

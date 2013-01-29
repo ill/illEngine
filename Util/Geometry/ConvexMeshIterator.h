@@ -8,7 +8,6 @@
 #include <list>
 
 #include "Util/serial/StaticList.h"
-#include "Util/geometry/GridVolume3D.h"
 #include "Util/geometry/MeshEdgeList.h"
 #include "Util/geometry/geomUtil.h"
 
@@ -18,7 +17,7 @@ Traverses front to back in the a convex mesh edge list that intersects a GridVol
 @param W The precision of the world space
 @param P The precision of the 3d grid volume cell subdivision
 */
-template <typename W = glm::mediump_float, typename P = int>
+template <typename W = glm::mediump_float, typename P = unsigned int>
 class ConvexMeshIterator {
 private:
     const static bool LEFT_SIDE = true;
@@ -29,6 +28,10 @@ public:
         : m_isEdgeChecked(NULL),
         m_atEnd(true)
     {}
+
+    ConvexMeshIterator(MeshEdgeList<W>* meshEdgeList, const glm::detail::tvec3<W>& direction, const Box<P>& bounds, const glm::detail::tvec3<W>& cellDimensions) {
+        initialize(meshEdgeList, direction, bounds, cellDimensions);
+    }
 
     void initialize(MeshEdgeList<W>* meshEdgeList, const glm::detail::tvec3<W>& direction, const Box<P>& bounds, const glm::detail::tvec3<W>& cellDimensions) {
         m_meshEdgeList = meshEdgeList;
