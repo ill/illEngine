@@ -41,7 +41,7 @@ public:
         
         //initialize world bounds, they're based on the grid not the world bounds of the volume itself
         m_worldBounds.m_min = vec3cast<P, W>(m_bounds.m_min) * cellDimensions;
-        m_worldBounds.m_max = vec3cast<P, W>(m_bounds.m_max + glm::detail::tvec3<P>((P) 1)) * cellDimensions - (W)0.0001;
+        m_worldBounds.m_max = vec3cast<P, W>(m_bounds.m_max + glm::detail::tvec3<P>((P) 1)) * cellDimensions - (W)0.001;        //When using floats, you have 7 significant figures of precision
 
         //initialize remapping of world to algorithm space
         m_dimensionOrder = sortDimensions(direction);

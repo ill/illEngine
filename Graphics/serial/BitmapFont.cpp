@@ -86,6 +86,8 @@ void BitmapFont::unload() {
 
     m_pageTextures.clear();
 
+    m_kerningPairs.clear();
+
     m_state = RES_UNLOADED;
 }
 
