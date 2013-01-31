@@ -1,10 +1,14 @@
-#ifndef ILL_GRAPHICS_SCENE_H__
-#define ILL_GRAPHICS_SCENE_H__
+#ifndef ILL_GRAPHICS_SCENE_H_
+#define ILL_GRAPHICS_SCENE_H_
 
-//TODO: make all this work again later
+#include <unordered_set>
 
-#include <vector>
-namespace Video {
+#include "illEngine/Util/Geometry/GridVolume3D.h"
+
+template <typename T = glm::mediump_float>
+struct Frustum;
+
+namespace illGraphics {
 
 class MeshNode;
 
@@ -23,11 +27,12 @@ private:
       /**
       The list of meshes.
       */
-      VectorManager<MeshNode *> m_meshes;
+      std::unordered_set<MeshNode *> m_meshes;
 
       /**
       The list of static meshes.
       */
+      //TODO: make this an array
       std::vector<MeshNode *> m_staticMeshes;
    };
 
@@ -38,14 +43,7 @@ public:
    @param cellDimensions The dimensions of the grid cells in world units.
    @param cellNumber The number of cells in each dimension.
    */
-   GraphicsScene(const glm::vec3& cellDimensions, const glm::uvec3& cellNumber)
-      : m_loadCounter(0),
-      m_cullCounter(0)
-   {
-      m_scene = GridVolume3D<SceneCell>(cellDimensions, cellNumber);
-      m_renderedNodes.getCurrentBuffer() = tbb::concurrent_unordered_set<Node *>(RENDERED_NODES_BUCKET_SIZE);
-      m_renderedNodes.getOtherBuffer() = tbb::concurrent_unordered_set<Node *>(RENDERED_NODES_BUCKET_SIZE);
-   }
+   GraphicsScene(const glm::vec3& cellDimensions, const glm::uvec3& cellNumber);
 
    ~GraphicsScene() {}
 
@@ -102,9 +100,6 @@ private:
    void removeMesh(MeshNode * mesh);
    void moveMesh(MeshNode * mesh, const std::vector<unsigned int>& toAddCells, const std::vector<unsigned int>& toRemoveCells);
    
-   ///Nodes that are currently being rendered and need their resources streamed in
-   DoubleBuffer<tbb::concurrent_unordered_set<Node *> > m_renderedNodes;
-
    /**
    The frame counter that keeps track of which nodes have already been told to load in the current frame.
    This is to handle nodes that overlap multiple cells in the grid and keeps them from being processed more than once.
@@ -120,7 +115,7 @@ private:
    /**
    The 3D uniform grid for the scene.
    */
-   GridVolume3D<SceneCell> m_scene;
+   GridVolume3D<> m_grid;
 
    friend MeshNode;
 };
