@@ -3,11 +3,12 @@
 
 #include <vector>
 
-namespace Input {
+namespace illInput {
 
 struct InputContext;
 struct InputBinding;
-struct InputListenerBase;
+struct ListenerBase;
+struct ValueListener;
 
 /**
 Keeps track of a stack of bound inputs.  Whatever object polls for inputs can hook in through this to let those inputs get handled.
@@ -38,9 +39,15 @@ public:
 
     /**
     Looks up an input listener bound to an input based on contexts on the stack.
-    Returns NULL if no binding is found.
+    Returns empty pointer if no binding is found.
     */
-    InputListenerBase * lookupBinding(const InputBinding& binding);
+    ListenerBase * lookupBinding(const InputBinding& binding);
+
+    /**
+    Looks up a value input listener bound to an input based on contexts on the stack.
+    Returns empty pointer if no binding is found.
+    */
+    ValueListener * lookupValueBinding(const InputBinding& binding);
 
 private:
     std::vector<InputContext *> m_stack;

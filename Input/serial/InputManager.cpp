@@ -1,7 +1,7 @@
 #include "InputManager.h"
 #include "Logging/logging.h"
 
-namespace Input {
+namespace illInput {
 
 void InputManager::addPlayer(int player) {
     if(playerExists(player)) {

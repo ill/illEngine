@@ -5,7 +5,7 @@
 
 #include "Graphics/Window.h"
 
-namespace Input {
+namespace illInput {
 class InputManager;
 }
 
@@ -51,14 +51,14 @@ public:
         m_rendererBackend = rendererBackend;
     }
 
-    inline void setInputManager(Input::InputManager * inputManager) {
+    inline void setInputManager(illInput::InputManager * inputManager) {
         m_inputManager = inputManager;
     }
 
 private:
     //TODO: for now it's hardcoded to have one of each of these
     illGraphics::RendererBackend * m_rendererBackend;
-    Input::InputManager * m_inputManager;
+    illInput::InputManager * m_inputManager;
 
     SDL_Window * m_window;
     void* m_glContext;

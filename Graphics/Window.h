@@ -4,7 +4,7 @@
 #include <set>
 #include <glm/glm.hpp>
 
-namespace Input {
+namespace illInput {
 class InputManager;
 }
 

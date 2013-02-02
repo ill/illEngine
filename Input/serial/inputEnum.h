@@ -1,13 +1,12 @@
 #ifndef ILL_INPUT_ENUM_H__
 #define ILL_INPUT_ENUM_H__
 
-namespace Input {
+namespace illInput {
 /**
 Enumerates the axis types in a joystick or mouse
 */
 enum Axis {
-    AX_X_VAL,   ///<Mouse X position on screen
-    AX_Y_VAL,   ///<Mouse Y position on screen
+    AX_VAL,     ///<Mouse position on screen
 
     AX_X,       ///<X axis
     AX_Y,       ///<Y axis

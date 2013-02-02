@@ -4,9 +4,10 @@
 #include <map>
 #include "InputBinding.h"
 
-namespace Input {
+namespace illInput {
 
-struct InputListenerBase;
+struct ListenerBase;
+struct ValueListener;
 
 /**
 Use the InputContextStack to manage these, but you don't have to.
@@ -16,21 +17,30 @@ Bind InputBinding objects, which represent some input like a key on a keyboard, 
 */
 struct InputContext {
 private:
-    typedef std::map<InputBinding, InputListenerBase *> BindMap;
+    typedef std::map<InputBinding, ListenerBase *> BindMap;
+    typedef std::map<InputBinding, ValueListener *> ValueBindMap;
 
 public:
-    void bindInput(const InputBinding& binding, InputListenerBase * input);
+    void bindInput(const InputBinding& binding, ListenerBase * input);
+    void bindInput(const InputBinding& binding, ValueListener * input);
 
     void unbindInput(const InputBinding& binding);
 
     /**
     Looks up an input listener bound to an input.
-    Returns NULL if no binding is found.
+    Returns empty pointer no binding is found.
     */
-    InputListenerBase * lookupBinding(const InputBinding& binding);
+    ListenerBase * lookupBinding(const InputBinding& binding);
+
+    /**
+    Looks up a value listener bound to an input.
+    Returns empty pointer no binding is found.
+    */
+    ValueListener * lookupValueBinding(const InputBinding& binding);
 
 private:
     BindMap m_inputMapping;
+    ValueBindMap m_valueInputMapping;
 };
 
 }

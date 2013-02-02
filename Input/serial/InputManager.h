@@ -6,7 +6,7 @@
 
 #include "InputContextStack.h"
 
-namespace Input {
+namespace illInput {
     
 /**
 Manages input contexts by player and input devices.

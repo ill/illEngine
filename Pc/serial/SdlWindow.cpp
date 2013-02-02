@@ -6,8 +6,9 @@
 
 #include "Input/serial/InputManager.h"
 #include "Input/serial/InputBinding.h"
-#include "Input/serial/inputAxisEnum.h"
-#include "Input/serial/InputListenerBase.h"
+#include "Input/serial/inputEnum.h"
+#include "Input/serial/Listeners/ListenerBase.h"
+#include "Input/serial/Listeners/ValueListener.h"
 
 #include "SdlWindow.h"
 #include "sdlInputEnum.h"
@@ -93,7 +94,7 @@ void SdlWindow::pollEvents () {
 
     while(SDL_PollEvent(&event))
     {
-        Input::InputBinding inputBinding;
+        illInput::InputBinding inputBinding;
 
         switch(event.type)
         {
@@ -108,10 +109,10 @@ void SdlWindow::pollEvents () {
 
             if(players != NULL) {
                 for(std::set<int>::const_iterator iter = players->begin(); iter != players->end(); iter++) {
-                    Input::InputContextStack * inputs = m_inputManager->getInputContextStack(*iter);
+                    illInput::InputContextStack * inputs = m_inputManager->getInputContextStack(*iter);
 
                     if(inputs != NULL) {
-                        Input::InputListenerBase * inputListener = inputs->lookupBinding(inputBinding);
+                        illInput::ListenerBase * inputListener = inputs->lookupBinding(inputBinding);
 
                         if(inputListener != NULL) {
                             inputListener->onBinPress();
@@ -134,10 +135,10 @@ void SdlWindow::pollEvents () {
 
             if(players != NULL) {
                 for(std::set<int>::const_iterator iter = players->begin(); iter != players->end(); iter++) {
-                    Input::InputContextStack * inputs = m_inputManager->getInputContextStack(*iter);
+                    illInput::InputContextStack * inputs = m_inputManager->getInputContextStack(*iter);
 
                     if(inputs != NULL) {
-                        Input::InputListenerBase * inputListener = inputs->lookupBinding(inputBinding);
+                        illInput::ListenerBase * inputListener = inputs->lookupBinding(inputBinding);
 
                         if(inputListener != NULL) {
                             inputListener->onBinRelease();
@@ -160,10 +161,10 @@ void SdlWindow::pollEvents () {
 
             if(players != NULL) {
                 for(std::set<int>::const_iterator iter = players->begin(); iter != players->end(); iter++) {
-                    Input::InputContextStack * inputs = m_inputManager->getInputContextStack(*iter);
+                    illInput::InputContextStack * inputs = m_inputManager->getInputContextStack(*iter);
 
                     if(inputs != NULL) {
-                        Input::InputListenerBase * inputListener = inputs->lookupBinding(inputBinding);
+                        illInput::ListenerBase * inputListener = inputs->lookupBinding(inputBinding);
 
                         if(inputListener != NULL) {
                             inputListener->onBinPress();
@@ -186,10 +187,10 @@ void SdlWindow::pollEvents () {
 
             if(players != NULL) {
                 for(std::set<int>::const_iterator iter = players->begin(); iter != players->end(); iter++) {
-                    Input::InputContextStack * inputs = m_inputManager->getInputContextStack(*iter);
+                    illInput::InputContextStack * inputs = m_inputManager->getInputContextStack(*iter);
 
                     if(inputs != NULL) {
-                        Input::InputListenerBase * inputListener = inputs->lookupBinding(inputBinding);
+                        illInput::ListenerBase * inputListener = inputs->lookupBinding(inputBinding);
 
                         if(inputListener != NULL) {
                             inputListener->onBinRelease();
@@ -216,13 +217,13 @@ void SdlWindow::pollEvents () {
 
             if(players != NULL) {
                 for(std::set<int>::const_iterator iter = players->begin(); iter != players->end(); iter++) {
-                    Input::InputContextStack * inputs = m_inputManager->getInputContextStack(*iter);
+                    illInput::InputContextStack * inputs = m_inputManager->getInputContextStack(*iter);
 
                     if(inputs != NULL) {
-                        Input::InputListenerBase * inputListener;
+                        illInput::ListenerBase * inputListener;
 
                         //x axis
-                        inputBinding.m_input = Input::AX_X;
+                        inputBinding.m_input = illInput::AX_X;
                         inputListener = inputs->lookupBinding(inputBinding);
 
                         if(inputListener != NULL) {
@@ -231,7 +232,7 @@ void SdlWindow::pollEvents () {
                         }
 
                         //y axis
-                        inputBinding.m_input = Input::AX_Y;
+                        inputBinding.m_input = illInput::AX_Y;
                         inputListener = inputs->lookupBinding(inputBinding);
 
                         if(inputListener != NULL) {
@@ -241,7 +242,7 @@ void SdlWindow::pollEvents () {
 
                         //x positive axis
                         if(event.wheel.x > 0) {
-                            inputBinding.m_input = Input::AX_X_POS;
+                            inputBinding.m_input = illInput::AX_X_POS;
                             inputListener = inputs->lookupBinding(inputBinding);
 
                             if(inputListener != NULL) {
@@ -252,7 +253,7 @@ void SdlWindow::pollEvents () {
 
                         //x negative axis
                         if(event.wheel.x < 0) {
-                            inputBinding.m_input = Input::AX_X_NEG;
+                            inputBinding.m_input = illInput::AX_X_NEG;
                             inputListener = inputs->lookupBinding(inputBinding);
 
                             if(inputListener != NULL) {
@@ -263,7 +264,7 @@ void SdlWindow::pollEvents () {
 
                         //y positive axis
                         if(event.wheel.y > 0) {
-                            inputBinding.m_input = Input::AX_Y_POS;
+                            inputBinding.m_input = illInput::AX_Y_POS;
                             inputListener = inputs->lookupBinding(inputBinding);
 
                             if(inputListener != NULL) {
@@ -274,7 +275,7 @@ void SdlWindow::pollEvents () {
 
                         //y negative axis
                         if(event.wheel.y < 0) {
-                            inputBinding.m_input = Input::AX_Y_NEG;
+                            inputBinding.m_input = illInput::AX_Y_NEG;
                             inputListener = inputs->lookupBinding(inputBinding);
 
                             if(inputListener != NULL) {
@@ -298,29 +299,26 @@ void SdlWindow::pollEvents () {
 
             if(players != NULL) {
                 for(std::set<int>::const_iterator iter = players->begin(); iter != players->end(); iter++) {
-                    Input::InputContextStack * inputs = m_inputManager->getInputContextStack(*iter);
+                    illInput::InputContextStack * inputs = m_inputManager->getInputContextStack(*iter);
 
                     if(inputs != NULL) {
-                        Input::InputListenerBase * inputListener;
+                        illInput::ListenerBase * inputListener;
 
-                        //mouse x value
-                        inputBinding.m_input = Input::AX_X_VAL;
-                        inputListener = inputs->lookupBinding(inputBinding);
+                        //mouse position
+                        {
+                            inputBinding.m_input = illInput::AX_VAL;
 
-                        if(inputListener != NULL) {
-                            inputListener->analogInput((float) event.motion.x);
+                            illInput::ValueListener * valueListener = inputs->lookupValueBinding(inputBinding);
+
+                            if(valueListener != NULL) {
+                                MousePosition pos(event.motion.x, event.motion.y);
+
+                                valueListener->onChange(CopiedData(&pos, sizeof(MousePosition)));
+                            }
                         }
-
-                        //mouse y value
-                        inputBinding.m_input = Input::AX_Y_VAL;
-                        inputListener = inputs->lookupBinding(inputBinding);
-
-                        if(inputListener != NULL) {
-                            inputListener->analogInput((float) event.motion.y);
-                        }
-
+                        
                         //mouse x axis
-                        inputBinding.m_input = Input::AX_X;
+                        inputBinding.m_input = illInput::AX_X;
                         inputListener = inputs->lookupBinding(inputBinding);
 
                         if(inputListener != NULL) {
@@ -328,7 +326,7 @@ void SdlWindow::pollEvents () {
                         }
 
                         //mouse y axis
-                        inputBinding.m_input = Input::AX_Y;
+                        inputBinding.m_input = illInput::AX_Y;
                         inputListener = inputs->lookupBinding(inputBinding);
 
                         if(inputListener != NULL) {
@@ -337,7 +335,7 @@ void SdlWindow::pollEvents () {
 
                         //mouse x positive axis
                         if(event.motion.xrel > 0) {
-                            inputBinding.m_input = Input::AX_X_POS;
+                            inputBinding.m_input = illInput::AX_X_POS;
                             inputListener = inputs->lookupBinding(inputBinding);
 
                             if(inputListener != NULL) {
@@ -347,7 +345,7 @@ void SdlWindow::pollEvents () {
 
                         //mouse x negative axis
                         if(event.motion.xrel < 0) {
-                            inputBinding.m_input = Input::AX_X_NEG;
+                            inputBinding.m_input = illInput::AX_X_NEG;
                             inputListener = inputs->lookupBinding(inputBinding);
 
                             if(inputListener != NULL) {
@@ -357,7 +355,7 @@ void SdlWindow::pollEvents () {
 
                         //mouse y positive axis
                         if(event.motion.yrel > 0) {
-                            inputBinding.m_input = Input::AX_Y_POS;
+                            inputBinding.m_input = illInput::AX_Y_POS;
                             inputListener = inputs->lookupBinding(inputBinding);
 
                             if(inputListener != NULL) {
@@ -367,7 +365,7 @@ void SdlWindow::pollEvents () {
 
                         //mouse y negative axis
                         if(event.motion.yrel < 0) {
-                            inputBinding.m_input = Input::AX_Y_NEG;
+                            inputBinding.m_input = illInput::AX_Y_NEG;
                             inputListener = inputs->lookupBinding(inputBinding);
 
                             if(inputListener != NULL) {

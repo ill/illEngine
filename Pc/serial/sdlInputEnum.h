@@ -2,7 +2,9 @@
 #define ILL_SDL_INPUT_ENUM_H__
 
 #include <cstdint>
-#include "Input/serial/inputAxisEnum.h"
+#include <glm/glm.hpp>
+
+#include "Input/serial/inputEnum.h"
 
 /**
 Includes an enum of the keycodes
@@ -30,6 +32,9 @@ enum InputType {
     PC_MOUSE_WHEEL,         ///<wheels on the mouse
     PC_MOUSE                ///<movement of the mouse
 };
+
+//TODO: figure out a place to keep all of the special input types
+typedef glm::ivec2 MousePosition;
 
 }
 

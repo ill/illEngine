@@ -1,7 +1,7 @@
 #ifndef ILL_INPUT_BINDING_H__
 #define ILL_INPUT_BINDING_H__
 
-namespace Input {
+namespace illInput {
 
 /**
 A general input binding identifier that can represent a keyboard button, a controller button, a joystick axis, etc...

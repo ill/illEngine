@@ -1,27 +1,53 @@
 #include "InputContext.h"
 #include "Logging/logging.h"
 
-namespace Input {
+namespace illInput {
 
-void InputContext::bindInput(const InputBinding& binding, InputListenerBase * input) {
+void InputContext::bindInput(const InputBinding& binding, ListenerBase * input) {
     m_inputMapping[binding] = input;
 }
 
+void InputContext::bindInput(const InputBinding& binding, ValueListener * input) {
+    m_valueInputMapping[binding] = input;
+}
+
 void InputContext::unbindInput(const InputBinding& binding) {
+    {
+        BindMap::iterator iter = m_inputMapping.find(binding);
+
+        if(iter != m_inputMapping.end()) {
+            m_inputMapping.erase(iter);
+            return;
+        }
+    }
+
+    {
+        ValueBindMap::iterator iter = m_valueInputMapping.find(binding);
+
+        if(iter != m_valueInputMapping.end()) {
+            m_valueInputMapping.erase(iter);
+            return;
+        }
+    }
+
+    LOG_ERROR("Attempting to unbind input for a nonexisting input binding.");
+}
+
+ListenerBase * InputContext::lookupBinding(const InputBinding& binding) {
     BindMap::iterator iter = m_inputMapping.find(binding);
 
     if(iter != m_inputMapping.end()) {
-        m_inputMapping.erase(iter);
+        return iter->second;
     }
     else {
-        LOG_ERROR("Attempting to unbind input for a nonexisting input binding.");
+        return NULL;
     }
 }
 
-InputListenerBase * InputContext::lookupBinding(const InputBinding& binding) {
-    BindMap::iterator iter = m_inputMapping.find(binding);
+ValueListener * InputContext::lookupValueBinding(const InputBinding& binding) {
+    ValueBindMap::iterator iter = m_valueInputMapping.find(binding);
 
-    if(iter != m_inputMapping.end()) {
+    if(iter != m_valueInputMapping.end()) {
         return iter->second;
     }
     else {
