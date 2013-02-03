@@ -11,29 +11,6 @@ class Camera;
 
 class RendererFrontend {
 private:
-    /*struct RenderArgsBase {
-        RenderArgsBase()
-            : m_camera(NULL),
-            m_viewPortId(0),
-            m_viewPortOrigin(0),
-            m_viewPortDimensions(0)
-        {}
-
-        ///the camera angle to render from
-        const Camera* m_camera;
-
-        ///the viewport id, for retreiving occlusion query results later
-        unsigned int m_viewPortId;
-
-        ///the viewport lower left corner on the screen
-        glm::ivec2 m_viewPortOrigin;
-
-        ///the width and height of the viewport
-        glm::uvec2 m_viewPortDimensions;
-
-        ///The cull counter so nodes know which frames they were last occluded
-        uint64_t m_cullCounter;
-    };*/
 
 public:
     /*struct RenderArgs : public RenderArgsBase {

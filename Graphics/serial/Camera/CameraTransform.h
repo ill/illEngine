@@ -6,6 +6,8 @@
 namespace illGraphics {
    
 /**
+TODO: a lot of work needs to be done on this.  I refactored the camera and this will be used for animating various camera related things.
+
 Camera transforms can be animated and combined in various ways.
 After you get the final camera transform pass it in to the Camera with setTranform to take effect before drawing the next frame.
 Camera transforms are kept separate from the camera to save memory when you have many transforms that are layered on top of each other.

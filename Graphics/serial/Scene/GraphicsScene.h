@@ -85,8 +85,8 @@ public:
    /**
    Returns the grid volume that is used to manage the scene.
    */
-   const GridVolume3D<SceneCell>& getGridVolume() const {
-      return m_scene;
+   const GridVolume3D<>& getGridVolume() const {
+      return m_grid;
    }
 
 private:

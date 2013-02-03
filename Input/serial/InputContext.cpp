@@ -39,7 +39,7 @@ ListenerBase * InputContext::lookupBinding(const InputBinding& binding) {
     if(iter != m_inputMapping.end()) {
         return iter->second;
     }
-    else {
+    else { 
         return NULL;
     }
 }
