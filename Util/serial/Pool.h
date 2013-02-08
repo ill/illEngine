@@ -1,8 +1,8 @@
 #ifndef ILL_POOL_H_
 #define ILL_POOL_H_
 
-#include <vector>
 #include <unordered_set>
+#include "illEngine/Util/serial/Array.h"
 
 /**
 Useful for objects that are quickly destroyed and created all the time, like particles.
@@ -123,7 +123,8 @@ private:
         size_t m_nextFree;
     };
 
-    std::vector<Element> m_elements;
+    Array<Element> m_elements;
+
     size_t m_freeHead;                  ///<Set to size of the list if no free
     size_t m_freeTail;                  ///<Set to size of the list if no tail
 };
