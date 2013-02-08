@@ -4,6 +4,9 @@
 #include <vector>
 #include "UidGenerator.h"
 
+/**
+TODO: I'm working on rewriting this stuff, the Pool class is replacing this now.
+*/
 template <typename T, typename ID = size_t>
 class VectorManager {
 public:

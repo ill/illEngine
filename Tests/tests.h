@@ -12,4 +12,6 @@ void testEndian();
 
 void testSortDimensions();
 
+void testPool();
+
 #endif
