@@ -2,11 +2,12 @@
 #define ILL_SKELETON_H__
 
 #include <glm/glm.hpp>
-#include <map>
+#include <unordered_map>
 #include <vector>
 #include <string>
 #include "Util/serial/ResourceBase.h"
 #include "Util/serial/ResourceManager.h"
+#include "Util/serial/Array.h"
 #include "Logging/logging.h"
 
 namespace illGraphics {
@@ -44,8 +45,6 @@ public:
 
     Skeleton()
         : ResourceBase(),
-        m_numBones(0),
-        m_bones(NULL),
         m_heirarchy(NULL)
     {}
 
@@ -56,16 +55,16 @@ public:
     virtual void unload();
     virtual void reload(RendererBackend * renderer);
 
-    inline unsigned int getNumBones() const {
-        return m_numBones;
+    inline size_t getNumBones() const {
+		return m_bones.size();
     }
 
     inline const Bone* getBone(unsigned int boneIndex) const {
-        return m_bones + boneIndex;
+        return &m_bones[boneIndex];
     }
 
     inline unsigned int getBone(const char * boneName) const {
-        std::map<std::string, unsigned int>::const_iterator iter = m_boneNameMap.find(boneName);
+        std::unordered_map<std::string, unsigned int>::const_iterator iter = m_boneNameMap.find(boneName);
 
         if(iter == m_boneNameMap.end()) {
             LOG_ERROR("No bone with name %s in skeleton", boneName);
@@ -80,15 +79,19 @@ public:
         return m_heirarchy;
     }
 
-    inline const std::map<std::string, unsigned int>& getBoneNameMap() const {
+    inline const std::unordered_map<std::string, unsigned int>& getBoneNameMap() const {
         return m_boneNameMap;
+    }
+
+	inline const std::unordered_map<unsigned int, std::string>& getBoneIndexMap() const {
+        return m_boneIndexMap;
     }
     
 private:
-    unsigned int m_numBones;
-    Bone * m_bones;
+	Array<Bone> m_bones;
 
-    std::map<std::string, unsigned int> m_boneNameMap;
+    std::unordered_map<std::string, unsigned int> m_boneNameMap;
+	std::unordered_map<unsigned int, std::string> m_boneIndexMap;
 
     BoneHeirarchy * m_heirarchy;
 };

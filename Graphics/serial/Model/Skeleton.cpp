@@ -17,11 +17,8 @@ void Skeleton::unload() {
         return;
     }
 
-    m_numBones = 0;
-    delete[] m_bones;
-    m_bones = NULL;
-
     m_boneNameMap.clear();
+	m_boneIndexMap.clear();
 
     delete m_heirarchy;
     m_heirarchy = NULL;
@@ -63,11 +60,14 @@ void Skeleton::reload(RendererBackend * rendererBackend) {
     }
 
     //read number of bones
-    (*stream) >> m_numBones;
-    m_bones = new Bone[m_numBones];
+	{
+		size_t numBones;
+		(*stream) >> numBones;
+		m_bones.resize(numBones);
+	}
 
     //read the bind poses
-    for(unsigned bone = 0; bone < m_numBones; bone++) {
+    for(unsigned bone = 0; bone < m_bones.size(); bone++) {
         //TODO: hack
         //m_bones[bone].m_boneOffsetHack = NULL;
 
@@ -82,7 +82,7 @@ void Skeleton::reload(RendererBackend * rendererBackend) {
     {
         std::map<unsigned int, BoneHeirarchy *> boneToNode;
 
-        for(unsigned int bone = 0; bone < m_numBones; bone++) {
+        for(unsigned int bone = 0; bone < m_bones.size(); bone++) {
             //BoneHeirarchy * currNode = boneToNode[bone];
 
             //lookup parent node
@@ -145,7 +145,7 @@ void Skeleton::reload(RendererBackend * rendererBackend) {
 
     //read bone names
     {
-        for(unsigned int bone = 0; bone < m_numBones; bone++) {
+        for(unsigned int bone = 0; bone < m_bones.size(); bone++) {
             std::string name;
 
             (*stream) >> name;
@@ -155,6 +155,7 @@ void Skeleton::reload(RendererBackend * rendererBackend) {
             }
             else {
                 m_boneNameMap[name] = bone;
+				m_boneIndexMap[bone] = name;
             }
         }
     }

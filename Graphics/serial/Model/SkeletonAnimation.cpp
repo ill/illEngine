@@ -8,7 +8,7 @@
 
 namespace illGraphics {
 
-glm::mat4 SkeletonAnimation::AnimData::getTransform(glm::mediump_float time, glm::mediump_float duration, LastFrameInfo& lastFrameInfo) const {
+Transform<> SkeletonAnimation::AnimData::getTransform(glm::mediump_float time, glm::mediump_float duration, LastFrameInfo& lastFrameInfo) const {
     time = fmod(time, duration);
     
     if(time < lastFrameInfo.m_lastTime) {
@@ -44,9 +44,7 @@ glm::mat4 SkeletonAnimation::AnimData::getTransform(glm::mediump_float time, glm
     //LOG_DEBUG("Time: %f Pos: %u Rot: %u Scale: %u", time, lastKey[0], lastKey[1], lastKey[2]);
 
     //interpolate between keys
-    glm::vec3 pos;
-    glm::quat rot;
-    glm::vec3 scale;
+    Transform<> res;
 
     //position
     {
@@ -60,11 +58,11 @@ glm::mat4 SkeletonAnimation::AnimData::getTransform(glm::mediump_float time, glm
         }
 
         if(interp == 0.0f) {
-            pos = m_positionKeys[key1].m_data;
+            res.m_position = m_positionKeys[key1].m_data;
         }
         else {
             interp = (time - m_positionKeys[key1].m_time) / interp;
-            pos = m_positionKeys[key1].m_data + (m_positionKeys[key2].m_data - m_positionKeys[key1].m_data) * interp;
+            res.m_position = m_positionKeys[key1].m_data + (m_positionKeys[key2].m_data - m_positionKeys[key1].m_data) * interp;
         }
     }
 
@@ -80,11 +78,11 @@ glm::mat4 SkeletonAnimation::AnimData::getTransform(glm::mediump_float time, glm
         }
 
         if(interp == 0.0f) {
-            rot = m_rotationKeys[key1].m_data;
+            res.m_rotation = m_rotationKeys[key1].m_data;
         }
         else {
             interp = (time - m_rotationKeys[key1].m_time) / interp;
-            rot = glm::shortMix(m_rotationKeys[key1].m_data, m_rotationKeys[key2].m_data, interp);
+            res.m_rotation = glm::shortMix(m_rotationKeys[key1].m_data, m_rotationKeys[key2].m_data, interp);
         }
     }
 
@@ -100,15 +98,15 @@ glm::mat4 SkeletonAnimation::AnimData::getTransform(glm::mediump_float time, glm
         }
 
         if(interp == 0.0f) {
-            scale = m_scalingKeys[key1].m_data;
+            res.m_scale = m_scalingKeys[key1].m_data;
         }
         else {
             interp = (time - m_scalingKeys[key1].m_time) / interp;
-            scale = m_scalingKeys[key1].m_data + (m_scalingKeys[key2].m_data - m_scalingKeys[key1].m_data) * interp;
+            res.m_scale = m_scalingKeys[key1].m_data + (m_scalingKeys[key2].m_data - m_scalingKeys[key1].m_data) * interp;
         }
     }
 
-    return glm::scale(glm::translate(pos) * glm::mat4_cast(rot), scale);
+    return res;
 }
 
 void SkeletonAnimation::unload() {

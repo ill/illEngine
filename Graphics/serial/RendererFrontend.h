@@ -13,20 +13,26 @@ class Camera;
 class Mesh;
 class Light;
 class Material;
-class MeshNode;
 
 struct RenderArgs {
     const Camera* m_camera;
-        
-    /*struct MeshInfo {
-        std::vector<
-    };*/
+       
+    struct MeshInfo {
+        std::vector<Light *> m_affectingLights;
+        glm::mat4 m_transform;
+        Mesh * m_mesh;
+    };
 
-    //TODO: add lights list sorted by light type and track which lights affect each mesh for forward rendering
+    struct LightInfo {
+        glm::mat4 m_transform;
+        Light * m_light;
+    };
+    
+    std::unordered_map<Material *, MeshInfo> m_solidMeshes;
+    std::unordered_map<Material *, MeshInfo> m_unsolidMeshes;
+    std::unordered_map<Material *, MeshInfo> m_unsolidDepthsortedMeshes;
 
-    std::unordered_map<Mesh *, std::unordered_map<Material, MeshNode *> > m_solidMeshes;
-    std::unordered_map<Mesh *, std::unordered_map<Material, MeshNode *> > m_unsolidMeshes;
-    std::unordered_map<Mesh *, std::unordered_map<Material, MeshNode *> > m_unsolidDepthsortedMeshes;
+
 };
 
 class RendererFrontend {

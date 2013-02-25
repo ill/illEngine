@@ -50,7 +50,7 @@ public:
             T m_data;
         };
 
-        glm::mat4 getTransform(glm::mediump_float time, glm::mediump_float duration, LastFrameInfo& lastFrameInfo = LastFrameInfo()) const;
+        Transform<> getTransform(glm::mediump_float time, glm::mediump_float duration, LastFrameInfo& lastFrameInfo = LastFrameInfo()) const;
 
         unsigned int m_numPositionKeys;
         unsigned int m_numRotationKeys;
@@ -88,7 +88,7 @@ public:
      * Gets a bone's transform some time in the animation in seconds.
      * Allows looping of passing in seconds past the duration and negative times and all that.
      */
-    inline bool getTransform(const char * boneName, glm::mediump_float time, glm::mat4& destination, LastFrameInfo& lastFrameInfo = LastFrameInfo()) const {
+    inline bool getTransform(const char * boneName, glm::mediump_float time, Transform<>& destination, LastFrameInfo& lastFrameInfo = LastFrameInfo()) const {
         std::map<std::string, AnimData>::const_iterator iter = m_boneAnimation.find(boneName);
 
         if(iter == m_boneAnimation.end()) {

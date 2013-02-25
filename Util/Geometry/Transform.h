@@ -21,6 +21,10 @@ struct Transform {
         m_scale(scale)
     {}
 
+    Transform(const glm::mat4& transform) {
+        set(transform);
+    }
+
     //TODO: add more constructors as needed, such as from a 4x4 matrix, a 3x3 matrix for rotation instead of a quaternion, etc...
 
     inline Transform interpolate(const Transform& other, T delta) const {
@@ -35,6 +39,12 @@ struct Transform {
 
     inline glm::detail::tmat4x4<T> getMatrix() const {
          return glm::scale(glm::translate(m_position) * glm::mat4_cast(m_rotation), m_scale);
+    }
+
+    inline void set(const glm::mat4& transform) {
+        m_position = getTransformPosition(transform);
+        m_rotation = glm::quat_cast(transform);
+        m_scale = getTransformScale(transform);
     }
 
     glm::detail::tvec3<T> m_position;
