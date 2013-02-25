@@ -6,19 +6,7 @@
 
 namespace illGraphics {
 
-class Light {
-private:
-    struct LightBase {
-        LightBase() {}
-        LightBase(const glm::vec3& color, glm::mediump_float intensity)
-            : m_color(color),
-            m_intensity(intensity)
-        {}
-
-        glm::vec3 m_color;
-        glm::mediump_float m_intensity;
-    };
-
+struct LightBase {
 public:
     enum class Type {
         INVALID,
@@ -27,66 +15,83 @@ public:
         DIRECTIONAL
     };
 
-    struct PointLight : public LightBase {
-        PointLight()
-            : LightBase()
-        {}
+    glm::vec3 m_color;
+    glm::mediump_float m_intensity;
 
-        PointLight(const glm::vec3& color, glm::mediump_float intensity, 
-            glm::mediump_float attenuationStart, glm::mediump_float attenuationEnd) 
-            : LightBase(color, intensity),
-            m_attenuationStart(attenuationStart),
-            m_attenuationEnd(attenuationEnd)
-        {}
+protected:
+    LightBase()
+        : m_type(Type::INVALID)
+    {}
 
-        glm::mediump_float m_attenuationStart;
-        glm::mediump_float m_attenuationEnd;
-    };
+    LightBase(const glm::vec3& color, glm::mediump_float intensity)
+        : m_type(Type::INVALID),
+        m_color(color),
+        m_intensity(intensity)
+    {}
 
-    struct SpotLight : public PointLight {
-        SpotLight()
-            : PointLight()
-        {}
-
-        SpotLight(const glm::vec3& color, glm::mediump_float intensity,
-            glm::mediump_float attenuationStart, glm::mediump_float attenuationEnd,
-            glm::mediump_float coneStart, glm::mediump_float coneEnd, const glm::quat& direction)
-            : PointLight(color, intensity, attenuationStart, attenuationEnd),
-            m_coneStart(coneStart),
-            m_coneEnd(coneEnd),
-            m_direction(direction)
-        {}
-
-        glm::mediump_float m_coneStart;
-        glm::mediump_float m_coneEnd;
-      
-        glm::quat m_direction;
-    };
-
-    struct DirectionLight : public LightBase {
-        DirectionLight()
-            : LightBase()
-        {}
-
-        DirectionLight(const glm::vec3& color, glm::mediump_float intensity, const glm::vec3 direction)
-            : LightBase(color, intensity),
-            m_direction(direction)
-        {}
-
-        glm::vec3 m_direction;
-    };
-
-private:
     Type m_type;
-
-    union Data {
-        PointLight m_pointLight;
-        SpotLight m_spotLight;
-        DirectionLight m_directionLight;
-    } m_data;
 };
 
+struct PointLight : public LightBase {
+    PointLight()
+        : LightBase()
+    {
+        m_type = Type::POINT;
+    }
 
+    PointLight(const glm::vec3& color, glm::mediump_float intensity, 
+        glm::mediump_float attenuationStart, glm::mediump_float attenuationEnd) 
+        : LightBase(color, intensity),
+        m_attenuationStart(attenuationStart),
+        m_attenuationEnd(attenuationEnd)
+    {
+        m_type = Type::POINT;
+    }
+
+    glm::mediump_float m_attenuationStart;
+    glm::mediump_float m_attenuationEnd;
+};
+
+struct SpotLight : public PointLight {
+    SpotLight()
+        : PointLight()
+    {
+        m_type = Type::SPOT;
+    }
+
+    SpotLight(const glm::vec3& color, glm::mediump_float intensity,
+        glm::mediump_float attenuationStart, glm::mediump_float attenuationEnd,
+        glm::mediump_float coneStart, glm::mediump_float coneEnd, const glm::quat& direction)
+        : PointLight(color, intensity, attenuationStart, attenuationEnd),
+        m_coneStart(coneStart),
+        m_coneEnd(coneEnd),
+        m_direction(direction)
+    {
+        m_type = Type::SPOT;
+    }
+
+    glm::mediump_float m_coneStart;
+    glm::mediump_float m_coneEnd;
+      
+    glm::quat m_direction;
+};
+
+struct DirectionLight : public LightBase {
+    DirectionLight()
+        : LightBase()
+    {
+        m_type = Type::DIRECTIONAL;
+    }
+
+    DirectionLight(const glm::vec3& color, glm::mediump_float intensity, const glm::vec3 direction)
+        : LightBase(color, intensity),
+        m_direction(direction)
+    {
+        m_type = Type::DIRECTIONAL;
+    }
+
+    glm::vec3 m_direction;
+};
 
 }
 
