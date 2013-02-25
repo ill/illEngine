@@ -6,6 +6,7 @@
 #include "Util/Geometry/geomUtil.h"
 #include "Util/Geometry/Box.h"
 #include "Util/Geometry/BoxIterator.h"
+#include "Util/Geometry/BoxOmitIterator.h"
 #include "Util/Geometry/Plane.h"
 
 /**
@@ -73,15 +74,29 @@ public:
     /**
     Returns a box iterator for some world bounds.
     */
-    inline BoxIterator<W> boxIterForWorldBounds(const Box<W>& bounds) const {
+    inline BoxIterator<unsigned int> boxIterForWorldBounds(const Box<W>& bounds) const {
         return boxIterForCellBounds(cellBoundsForWorldBounds(bounds));
+    }
+
+    /**
+    Returns a box omit iterator for some world bounds.
+    */
+    inline BoxOmitIterator<unsigned int> boxOmitIterForWorldBounds(const Box<W>& bounds, const Box<W>& omitBounds) const {
+        return boxOmitIterForCellBounds(cellBoundsForWorldBounds(bounds), cellBoundsForWorldBounds(omitBounds));
     }
 
     /**
     Returns a box iterator for some cell bounds.
     */
-    inline BoxIterator<W> boxIterForCellBounds(const Box<unsigned int>& bounds) const {
-        return BoxIterator<W>(bounds);
+    inline BoxIterator<unsigned int> boxIterForCellBounds(const Box<unsigned int>& bounds) const {
+        return BoxIterator<unsigned int>(bounds);
+    }
+
+    /**
+    Returns a box omit iterator for some cell bounds.
+    */
+    inline BoxOmitIterator<unsigned int> boxOmitIterForCellBounds(const Box<unsigned int>& bounds, const Box<unsigned int>& omitBounds) const {
+        return BoxOmitIterator<unsigned int>(bounds, omitBounds);
     }
 
     /**

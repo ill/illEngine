@@ -1,12 +1,14 @@
-#ifndef ILL_MESH_EDGE_LIST_H__
-#define ILL_MESH_EDGE_LIST_H__
+#ifndef ILL_MESH_EDGE_LIST_H_
+#define ILL_MESH_EDGE_LIST_H_
 
+#include <stdint.h>
 #include <algorithm>
 #include <glm/glm.hpp>
 #include <unordered_map>
 #include <unordered_set>
 #include <vector>
 
+#include "Util/Geometry/Box.h"
 #include "Util/Geometry/Plane.h"
 
 /**

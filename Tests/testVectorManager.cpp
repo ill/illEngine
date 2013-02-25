@@ -75,6 +75,6 @@ void concurrentTest() {
 }
 
 void testVectorManager() {
-   singleThreadedTest();
-   concurrentTest();
+   //singleThreadedTest();
+   //concurrentTest();
 }

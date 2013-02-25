@@ -3,6 +3,8 @@
 #include "Util/serial/Pool.h"
 #include "Logging/logging.h"
 
+#include <set>
+
 void testPool() {
     {
         Pool<int> testManager;
@@ -162,8 +164,39 @@ void testPool() {
         //test reserve space
         testManager.reserveSpace(20);
 
-        for(IterablePool<int>::LiveSet::const_iterator iter = testManager.getLiveSet().begin(); iter != testManager.getLiveSet().end(); iter++) {
-            LOG_INFO("Iterable pool element %d", testManager.get(*iter));
+        //test iterating
+        {
+            std::set<size_t> liveIdsTest;
+            liveIdsTest.insert(refA);
+            liveIdsTest.insert(refB);
+            liveIdsTest.insert(refC);
+            liveIdsTest.insert(refD);
+            liveIdsTest.insert(refE);
+            liveIdsTest.insert(refF);
+            liveIdsTest.insert(refG);
+
+            std::set<int> liveValuesTest;
+            liveValuesTest.insert(69);
+            liveValuesTest.insert(77);
+            liveValuesTest.insert(71);
+            liveValuesTest.insert(78);
+            liveValuesTest.insert(73);
+            liveValuesTest.insert(76);
+            liveValuesTest.insert(75);
+
+            for(IterablePool<int>::LiveSet::const_iterator iter = testManager.getLiveSet().begin(); iter != testManager.getLiveSet().end(); iter++) {
+                size_t currId = *iter;
+                int currVal = testManager.get(currId);
+
+                assert(liveIdsTest.find(currId) != liveIdsTest.end());
+                assert(liveValuesTest.find(currVal) != liveValuesTest.end());
+
+                liveIdsTest.erase(currId);
+                liveValuesTest.erase(currVal);
+            }
+
+            assert(liveIdsTest.empty());
+            assert(liveValuesTest.empty());
         }
     }
 }

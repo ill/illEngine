@@ -84,7 +84,7 @@ struct Box {
 
     /**
     Adds a point and expands the box.
-    Be sure the box is the size of a point when adding the second point.
+    Be sure the box is normalized and at least the size of a point before calling this for the first time.
 
     @return Whether or not the box expanded
     */
@@ -102,6 +102,19 @@ struct Box {
                 changed = true;
             }
         }
+
+        return changed;
+    }
+
+    /**
+    Expands the box by also encompassing the other box.
+    Be sure the box is normalized and at least the size of a point before calling this for the first time.
+
+    @return Whether or not the box expanded
+    */
+    inline bool addBox(const Box<T>& box) {
+        bool changed = addPoint(box.m_min);
+        changed |= addPoint(box.m_max);
 
         return changed;
     }

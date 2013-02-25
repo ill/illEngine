@@ -16,16 +16,7 @@ public:
         : m_range(range),
         m_currPos(m_range.m_min)
     {}
-
-    bool operator ==(const BoxIterator& other) const {
-        return m_range == other.m_range
-            && m_currPos == other.m_currPos;
-    }
-
-    bool operator !=(const BoxIterator& other) const {
-        return !(*this == other);
-    }
-
+    
     /**
     Checks if currently at the end of the iterator range.
     */

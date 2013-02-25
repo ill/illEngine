@@ -172,7 +172,7 @@ struct RefCountPtr {
     * sometimes it's better to have the raw pointer for performance related things...
     */
     inline T * get() const {
-        return m_root ? m_root->m_pointer.load() : NULL;
+        return m_root ? m_root->m_pointer : NULL;
     }
 
     template<typename C>

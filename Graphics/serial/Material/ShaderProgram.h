@@ -32,11 +32,14 @@ public:
 
         SHPRG_POSITIONS = 1 << 2,           ///<Positions are being sent
         SHPRG_NORMALS = 1 << 3,             ///<Normals are being sent
+        SHPRG_SKINNING = 1 << 4,            ///<Skinning info is being sent
+        
+        //TODO: add stuff about billboarding
 
-        SHPRG_DIFFUSE_MAP = 1 << 4,         ///<Diffuse map is enabled, implies texture coordinates are sent
-        SHPRG_SPECULAR_MAP = 1 << 5,        ///<Specular map is enabled, implies texture coordinates are sent
-        SHPRG_EMISSIVE_MAP = 1 << 6,        ///<Emissive map is enabled, implies texture coordinates are sent
-        SHPRG_NORMAL_MAP = 1 << 7,          ///<Normal map is enabled, implies texture coordinates and tangents are sent
+        SHPRG_DIFFUSE_MAP = 1 << 5,         ///<Diffuse map is enabled, implies texture coordinates are sent
+        SHPRG_SPECULAR_MAP = 1 << 6,        ///<Specular map is enabled, implies texture coordinates are sent
+        SHPRG_EMISSIVE_MAP = 1 << 7,        ///<Emissive map is enabled, implies texture coordinates are sent
+        SHPRG_NORMAL_MAP = 1 << 8,          ///<Normal map is enabled, implies texture coordinates and tangents are sent
     };
 
     ShaderProgram()
