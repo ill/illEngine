@@ -49,13 +49,7 @@ struct Transform {
         m_rotation = glm::quat_cast(transform);
         m_scale = getTransformScale(transform);
     }
-
-    inline void set(const glm::mat4& transform) {
-        m_position = getTransformPosition(transform);
-        m_rotation = glm::quat_cast(transform);
-        m_scale = getTransformScale(transform);
-    }
-
+    
     glm::detail::tvec3<T> m_position;
     glm::detail::tquat<T> m_rotation;
     glm::detail::tvec3<T> m_scale;

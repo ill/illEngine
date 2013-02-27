@@ -20,10 +20,6 @@ struct MeshLoadArgs {
 /**
 Contains some mesh and its associated vertex buffer objects and index buffer objects.
 */
-struct Mesh {
-    Mesh(MeshData<> * mesh = NULL)
-        : m_meshFrontendData(mesh),
-        m_backend(NULL),
 class Mesh : public ResourceBase<Mesh, MeshLoadArgs, RendererBackend> {
 public:
     Mesh()
@@ -32,13 +28,9 @@ public:
     {}
 
     ~Mesh() {
-        cleanBackend();
-        delete m_meshFrontendData;
         unload();
     }
-
-    void frontendBackendTransfer(RendererBackend * backend, bool freeFrontendData = true);
-    void cleanBackend();
+    
     virtual void unload();
     virtual void reload(RendererBackend * renderer);
 

@@ -38,7 +38,7 @@ void Mesh::frontendBackendTransferInternal(RendererBackend * loader, bool freeFr
 }
 
 void Mesh::reload(RendererBackend * renderer) {
-    IllmeshLoader<> meshLoader(m_loadArgs.m_path.c_str());
+    IllmeshLoader meshLoader(m_loadArgs.m_path.c_str());
 
     setFrontentDataInternal(new MeshData<>(meshLoader.m_numInd / 3, meshLoader.m_numVert, meshLoader.m_features));
     
