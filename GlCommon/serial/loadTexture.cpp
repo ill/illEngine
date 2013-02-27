@@ -12,10 +12,10 @@
 
 inline GLenum getTextureWrap(illGraphics::TextureLoadArgs::Wrap wrap) {
     switch(wrap) {
-    case illGraphics::TextureLoadArgs::W_CLAMP_TO_EDGE:
+    case illGraphics::TextureLoadArgs::Wrap::W_CLAMP_TO_EDGE:
         return GL_CLAMP_TO_EDGE;
 
-    case illGraphics::TextureLoadArgs::W_REPEAT:
+    case illGraphics::TextureLoadArgs::Wrap::W_REPEAT:
         return GL_REPEAT;
 
     default:

@@ -1,6 +1,7 @@
 #ifndef ILL_RESOURCEBASE_H__
 #define ILL_RESOURCEBASE_H__
 
+#include <cstdlib>
 #include <cstdint>
 
 /**
@@ -54,7 +55,8 @@ protected:
    Creates a resource in an uninitialized state
    */
    inline ResourceBase()
-      : m_state(RES_UNINITIALIZED)
+      : m_state(RES_UNINITIALIZED),
+      m_loader(NULL)
    {}
    
    enum State {

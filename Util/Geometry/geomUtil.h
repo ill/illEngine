@@ -124,53 +124,6 @@ inline glm::detail::tvec3<T> signO(const glm::detail::tvec3<T>& value) {
 }
 
 /**
-A container that stores things like quaternions or vectors and allows them to be LERPED
-
-TODO: document a bit better later
-*/
-template <typename GEOM_TYPE, typename T = glm::mediump_float>
-struct LerpTransform {
-    GEOM_TYPE m_base;
-    GEOM_TYPE m_destination;
-    T m_t;
-    T m_delta;
-
-    LerpTransform() {}
-
-    LerpTransform(const GEOM_TYPE& base, const GEOM_TYPE& destination, const T& delta, const T& t = 0.0f) 
-        : m_base(base),
-        m_destination(destination),
-        m_t(t),
-        m_delta(delta)
-    {}
-
-    inline GEOM_TYPE mix() {      //TODO: for some reason glm's mix doesn't seem to clamp between 0 and 1
-        if(m_t <= (T)0) {
-            return m_base;
-        }
-        else if(m_t >= (T)1) {
-            return m_destination;
-        }
-        else {      
-            return glm::shortMix(m_base, m_destination, m_t);
-        }
-    }
-
-    inline void reset(const GEOM_TYPE& destination, const T& delta) {
-        m_base = mix();
-
-        m_delta = delta;
-        m_destination = destination;
-
-        m_t = (T)0;
-    }
-
-    inline void update(float timeStep) {
-        m_t += m_delta * timeStep;
-    }
-};
-
-/**
 Converts a quaternion to a direction vector.
 This is super simple BTW, it's just a convenience function for rotating an unrotated vector by the quaternion
 */

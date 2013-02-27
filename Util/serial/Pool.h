@@ -6,7 +6,7 @@
 
 /**
 Useful for objects that are quickly destroyed and created all the time, like particles.
-This pool resizes itself it more room is needed because it internally contains a vector.
+This pool resizes itself it more room is needed.
 
 The pool works by array indeces.  When you reserve a new object, you get its array index in the pool.
 When you free an object, you free it using its array index, releasing it back into the pool to be returned later.
@@ -176,8 +176,7 @@ public:
     }
 
     inline bool isIdReleased(size_t id) const {
-        //TODO: implement if needed
-        //return m_idGenerator.isIdReleased(id);
+        return m_elementIds.find(id) == m_elementIds.end();
     }
 
     /**

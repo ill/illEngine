@@ -12,7 +12,7 @@ class RendererBackend;
 struct TextureLoadArgs {
     std::string m_path;  //path of image file
 
-    enum Wrap {
+    enum class Wrap {
         W_CLAMP_TO_EDGE,
         W_REPEAT
     };

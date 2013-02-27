@@ -30,12 +30,11 @@ void ShaderProgram::reload(ShaderProgramLoader * loader) {
     m_state = RES_LOADING;
 
     //figure out the shaders to load for the needed features
-    uint64_t shaderId;
 
-    //forward rendering
-    if(m_loadArgs & SHPRG_FORWARD) {
+    //vertex shader
+    {
         //the main vertex shader
-        shaderId = Shader::SHADER_3D_VERT;
+        uint64_t shaderId = Shader::SHADER_3D_VERT;
 
         if(m_loadArgs & SHPRG_POSITIONS) {
             shaderId |= Shader::SHADER_POSITIONS;
@@ -54,34 +53,60 @@ void ShaderProgram::reload(ShaderProgramLoader * loader) {
             shaderId |= Shader::SHADER_TANGENTS;
         }
 
-        m_shaders.push_back(m_loader->m_shaderManager->getResource(shaderId));
-
-        //the forward fragment shader
-        shaderId = Shader::SHADER_FORWARD_FRAG;
+        if(m_loadArgs & SHPRG_SKINNING) {
+            shaderId |= Shader::SHADER_SKINNING;
+        }
 
         if(m_loadArgs & SHPRG_FORWARD_LIGHT) {
             shaderId |= Shader::SHADER_LIGHTING;
         }
 
+        m_shaders.push_back(m_loader->m_shaderManager->getResource(shaderId));
+    }
+
+    //fragment shader
+    {
+        uint64_t shaderId = 0;
+
+        if(m_loadArgs & SHPRG_FORWARD) {
+            shaderId |= Shader::SHADER_FORWARD_FRAG;
+        }
+        else {
+            shaderId |= Shader::SHADER_DEFERRED_FRAG;
+        }
+
+        if(m_loadArgs & SHPRG_FORWARD_LIGHT) {
+            shaderId |= Shader::SHADER_LIGHTING;
+        }
+
+        if(m_loadArgs & SHPRG_NORMALS) {
+            shaderId |= Shader::SHADER_NORMALS;
+        }
+
         if(m_loadArgs & SHPRG_DIFFUSE_MAP) {
             shaderId |= Shader::SHADER_DIFFUSE_MAP;
+            shaderId |= Shader::SHADER_TEX_COORDS;
         }
 
         if(m_loadArgs & SHPRG_SPECULAR_MAP) {
             shaderId |= Shader::SHADER_SPECULAR_MAP;
+            shaderId |= Shader::SHADER_TEX_COORDS;
         }
 
         if(m_loadArgs & SHPRG_EMISSIVE_MAP) {
             shaderId |= Shader::SHADER_EMISSIVE_MAP;
+            shaderId |= Shader::SHADER_TEX_COORDS;
         }
 
         if(m_loadArgs & SHPRG_NORMAL_MAP) {
             shaderId |= Shader::SHADER_NORMAL_MAP;
+            shaderId |= Shader::SHADER_TEX_COORDS;
+            shaderId |= Shader::SHADER_TANGENTS;
         }
 
         m_shaders.push_back(m_loader->m_shaderManager->getResource(shaderId));
     }
-
+    
     build();
 }
 

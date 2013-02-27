@@ -80,9 +80,7 @@ void BitmapFont::unload() {
         return;
     }
 
-    m_mesh.cleanBackend();
-    delete m_mesh.m_meshFrontendData;
-    m_mesh.m_meshFrontendData = NULL;
+    m_mesh.unload();
 
     m_pageTextures.clear();
 
@@ -231,8 +229,8 @@ void BitmapFont::readPages(illFileSystem::File * file, size_t size) {
     //TODO: make the texture path be relative to the path of the font file
 
     TextureLoadArgs loadArgs;
-    loadArgs.m_wrapS = TextureLoadArgs::W_CLAMP_TO_EDGE;
-    loadArgs.m_wrapT = TextureLoadArgs::W_CLAMP_TO_EDGE;
+    loadArgs.m_wrapS = TextureLoadArgs::Wrap::W_CLAMP_TO_EDGE;
+    loadArgs.m_wrapT = TextureLoadArgs::Wrap::W_CLAMP_TO_EDGE;
 
     for(unsigned int texture = 0; texture < m_pageTextures.size(); texture++) {
         file->read(pathBuffer, pathSize);
@@ -254,10 +252,10 @@ void BitmapFont::readChars(illFileSystem::File * file, size_t size, unsigned int
     unsigned int numChars = (unsigned int) size / 20;
     
     //create a mesh data object with 2 triangles per character and 4 verteces per character to create quads
-    m_mesh.cleanBackend();
-    m_mesh.m_meshFrontendData = new MeshData<>(numChars << 1, numChars << 2, MF_POSITION | MF_TEX_COORD);
+    m_mesh.unload();
+    m_mesh.setFrontentDataInternal(new MeshData<>(numChars << 1, numChars << 2, MF_POSITION | MF_TEX_COORD));
     
-    uint16_t * indeces = m_mesh.m_meshFrontendData->getIndeces();
+    uint16_t * indeces = m_mesh.getMeshFrontentData()->getIndeces();
 
     for(unsigned int currChar = 0; currChar < numChars; currChar++) {
         unsigned char character;
@@ -328,16 +326,16 @@ void BitmapFont::readChars(illFileSystem::File * file, size_t size, unsigned int
 
             //set the character vertex buffer data
             //positions
-            m_mesh.m_meshFrontendData->getPosition((uint32_t) firstVertex) = glm::vec3(xOffset, yOffset, 0.0f);                         //vtx 0
-            m_mesh.m_meshFrontendData->getPosition((uint32_t) firstVertex + 1) = glm::vec3(xOffset + width, yOffset, 0.0f);             //vtx 1
-            m_mesh.m_meshFrontendData->getPosition((uint32_t) firstVertex + 2) = glm::vec3(xOffset + width, yOffset + height, 0.0f);    //vtx 2
-            m_mesh.m_meshFrontendData->getPosition((uint32_t) firstVertex + 3) = glm::vec3(xOffset, yOffset + height, 0.0f);            //vtx 3
+            m_mesh.getMeshFrontentData()->getPosition((uint32_t) firstVertex) = glm::vec3(xOffset, yOffset, 0.0f);                         //vtx 0
+            m_mesh.getMeshFrontentData()->getPosition((uint32_t) firstVertex + 1) = glm::vec3(xOffset + width, yOffset, 0.0f);             //vtx 1
+            m_mesh.getMeshFrontentData()->getPosition((uint32_t) firstVertex + 2) = glm::vec3(xOffset + width, yOffset + height, 0.0f);    //vtx 2
+            m_mesh.getMeshFrontentData()->getPosition((uint32_t) firstVertex + 3) = glm::vec3(xOffset, yOffset + height, 0.0f);            //vtx 3
 
             //tex coords
-            m_mesh.m_meshFrontendData->getTexCoord((uint32_t) firstVertex) = glm::vec2(left, bottom);                                   //vtx 0
-            m_mesh.m_meshFrontendData->getTexCoord((uint32_t) firstVertex + 1) = glm::vec2(right, bottom);                              //vtx 1
-            m_mesh.m_meshFrontendData->getTexCoord((uint32_t) firstVertex + 2) = glm::vec2(right, top);                                 //vtx 2
-            m_mesh.m_meshFrontendData->getTexCoord((uint32_t) firstVertex + 3) = glm::vec2(left, top);                                  //vtx 3
+            m_mesh.getMeshFrontentData()->getTexCoord((uint32_t) firstVertex) = glm::vec2(left, bottom);                                   //vtx 0
+            m_mesh.getMeshFrontentData()->getTexCoord((uint32_t) firstVertex + 1) = glm::vec2(right, bottom);                              //vtx 1
+            m_mesh.getMeshFrontentData()->getTexCoord((uint32_t) firstVertex + 2) = glm::vec2(right, top);                                 //vtx 2
+            m_mesh.getMeshFrontentData()->getTexCoord((uint32_t) firstVertex + 3) = glm::vec2(left, top);                                  //vtx 3
 
             //int x = 5;
         }
@@ -354,19 +352,19 @@ void BitmapFont::readChars(illFileSystem::File * file, size_t size, unsigned int
         file->seekAhead(1);
     }
 
-    for(unsigned int ind = 0; ind < m_mesh.m_meshFrontendData->getNumTri() * 3; ind++) {
+    for(unsigned int ind = 0; ind < m_mesh.getMeshFrontentData()->getNumTri() * 3; ind++) {
         LOG_DEBUG("ind %u %u", ind, indeces[ind]);
     }
 
-    for(unsigned int ind = 0; ind < m_mesh.m_meshFrontendData->getNumVert(); ind++) {
-        LOG_DEBUG("vert %u %f %f %f", ind, m_mesh.m_meshFrontendData->getPosition(ind).x, m_mesh.m_meshFrontendData->getPosition(ind).y, m_mesh.m_meshFrontendData->getPosition(ind).z);
+    for(unsigned int ind = 0; ind < m_mesh.getMeshFrontentData()->getNumVert(); ind++) {
+        LOG_DEBUG("vert %u %f %f %f", ind, m_mesh.getMeshFrontentData()->getPosition(ind).x, m_mesh.getMeshFrontentData()->getPosition(ind).y, m_mesh.getMeshFrontentData()->getPosition(ind).z);
     }
 
-    for(unsigned int ind = 0; ind < m_mesh.m_meshFrontendData->getNumVert(); ind++) {
-        LOG_DEBUG("tex %u %f %f", ind, m_mesh.m_meshFrontendData->getTexCoord(ind).x, m_mesh.m_meshFrontendData->getTexCoord(ind).y);
+    for(unsigned int ind = 0; ind < m_mesh.getMeshFrontentData()->getNumVert(); ind++) {
+        LOG_DEBUG("tex %u %f %f", ind, m_mesh.getMeshFrontentData()->getTexCoord(ind).x, m_mesh.getMeshFrontentData()->getTexCoord(ind).y);
     }
 
-    m_mesh.frontendBackendTransfer(m_loader);
+    m_mesh.frontendBackendTransferInternal(m_loader);
 }
 
 void BitmapFont::readKerningPairs(illFileSystem::File * file, size_t size) {
