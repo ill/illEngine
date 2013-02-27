@@ -1,50 +1,101 @@
 #include <glm/gtx/quaternion.hpp>
 #include <glm/gtx/transform.hpp>
+#include <new>
 
 #include "ModelAnimationController.h"
 #include "Skeleton.h"
 #include "SkeletonAnimation.h"
 
-void updateSkeleton(const illGraphics::Skeleton * skeleton, const illGraphics::Skeleton::BoneHeirarchy * currNode, glm::mat4 currXform, glm::mat4 currBindXform, std::map<unsigned int, illGraphics::ModelAnimationController::BoneInfo>& animTransforms, glm::mat4 * animationTestSkelMats) {
-    std::map<unsigned int, illGraphics::ModelAnimationController::BoneInfo>::iterator iter = animTransforms.find(currNode->m_boneIndex);
-        
-    if(iter != animTransforms.end()) {
-        currXform = currXform * iter->second.m_transform;
-    }
-    else {
-        currXform = currXform * skeleton->getBone(currNode->m_boneIndex)->m_transform;
-    }
-
-    currBindXform = currBindXform * skeleton->getBone(currNode->m_boneIndex)->m_transform;
-
-    animationTestSkelMats[currNode->m_boneIndex] = currXform * glm::inverse(currBindXform) 
-        * glm::rotate(-90.0f, glm::vec3(1.0f, 0.0, 0.0f));      //TODO: for now hardcoded to rotate this -90 degrees around x since all md5s seem to be flipped
-                                                                //figure out how to export models in the right orientation
-                                                                //THIS!  is why there's the horrible hack code below and why it took me days to get this working, 1 tiny mistake and it all explodes
-           
-    for(std::vector<illGraphics::Skeleton::BoneHeirarchy *>::const_iterator iter = currNode->m_children.begin(); iter != currNode->m_children.end(); iter++) {
-        updateSkeleton(skeleton, *iter, currXform, currBindXform, animTransforms, animationTestSkelMats);
-    }
-}
-
 namespace illGraphics {
 
-void ModelAnimationController::update(float seconds) {
-    //get transforms for all the bones
-    for(std::map<std::string, unsigned int>::const_iterator iter = m_skeleton->getBoneNameMap().begin(); iter != m_skeleton->getBoneNameMap().end(); iter++) {
-        glm::mat4 transform;
+float ModelAnimationController::updateInternal(float seconds) {
+    m_animations[0].m_animTime += seconds;
+    m_animations[1].m_animTime += seconds;
+
+    m_transitionWeight += m_transitionDelta * seconds;
+
+    //now the transition is over
+    if(m_transitionWeight >= 1.0f) {
+        m_currentAnimation = !m_currentAnimation;
+		m_transitionDelta = 0.0f;
+        m_transitionWeight = 0.0f;
+    }
+
+    //find when the next transition should happen
+    if(!m_transitionQueue.empty()) {
+        const Transition& transition = m_transitionQueue.front();
         
-        if(m_animation->getTransform(iter->first.c_str(), m_animTime, transform, m_animationTest[iter->second].m_lastFrameInfo)) {
-            //place the transform into the thing
-            m_animationTest[iter->second].m_transform = transform;
+        if((m_transitionDelta != 0.0f && m_animations[!m_currentAnimation].m_animTime >= transition.m_triggerTime)
+            || (m_transitionDelta == 0.0f && m_animations[m_currentAnimation].m_animTime >= transition.m_triggerTime)) {
+            m_transitionDelta = transition.m_transitionSeconds == 0.0f 
+				? 0.0f 
+				: 1.0f / transition.m_transitionSeconds;
+			
+			Animation& nextAnim = m_animations[!m_currentAnimation];
+            
+            nextAnim.m_animation = transition.m_animation;
+            nextAnim.m_animTime = transition.m_beginTime;
+            nextAnim.m_lastFrameInfo.clear();
+
+			m_transitionWeight = 0.0f;
+
+			if(transition.m_transitionSeconds == 0.0f) {
+				m_currentAnimation = !m_currentAnimation;
+			}
+
+			float transitionTriggerTime = transition.m_triggerTime;
+			m_transitionQueue.pop();
+
+			//return the overtime in the transition as the remaining time for the next update
+			return m_animations[m_currentAnimation].m_animTime - transitionTriggerTime;
         }
     }
 
-    m_animTime += seconds;
+	return 0.0f;
 }
 
-void ModelAnimationController::computeAnimPose() {
-    updateSkeleton(m_skeleton, m_skeleton->getRootBoneNode(), glm::mat4(), glm::mat4(), m_animationTest, m_skelMats);
+void ModelAnimationController::computeAnimPose(glm::mat4 * skelMats) {
+    updateSkeleton(skelMats, m_skeleton->getRootBoneNode(), glm::mat4());
+}
+
+void ModelAnimationController::updateSkeleton(glm::mat4 * skelMats, const illGraphics::Skeleton::BoneHeirarchy * currNode, glm::mat4 currXform) {	
+	Transform<> transform[2];
+
+	//for the primary animation
+	if(m_animations[m_currentAnimation].m_animation) {
+		transform[0] = m_animations[m_currentAnimation].m_animation->getTransform(currNode->m_boneIndex,
+			m_animations[m_currentAnimation].m_animTime,
+			m_animations[m_currentAnimation].m_lastFrameInfo[currNode->m_boneIndex]);
+	}
+	else {
+		new(&transform[0]) Transform<>();
+	}
+
+	//for the secondary animation, see if the bone is in the animation
+	if(m_transitionWeight > 0.0f) {
+		if(m_animations[!m_currentAnimation].m_animation) {
+			transform[1] = m_animations[!m_currentAnimation].m_animation->getTransform(currNode->m_boneIndex,
+				m_animations[!m_currentAnimation].m_animTime,
+				m_animations[!m_currentAnimation].m_lastFrameInfo[currNode->m_boneIndex]);
+		}
+		else {
+			new(&transform[1]) Transform<>();
+		}
+
+		//now blend them
+		transform[0] = transform[0].interpolate(transform[1], m_transitionWeight);
+	}
+		
+	currXform = currXform * m_skeleton->getBone(currNode->m_boneIndex).m_relativeTransform * transform[0].getMatrix();
+
+	skelMats[currNode->m_boneIndex] = currXform * m_skeleton->getBone(currNode->m_boneIndex).m_offsetTransform
+        * glm::rotate(-90.0f, glm::vec3(1.0f, 0.0, 0.0f));      //TODO: for now hardcoded to rotate this -90 degrees around x since all md5s seem to be flipped
+                                                                //figure out how to export models in the right orientation
+                                                                //THIS!  is why there's the horrible hack code below and why it took me days to get this working, 1 tiny mistake and it all explodes
+
+	for(std::vector<illGraphics::Skeleton::BoneHeirarchy *>::const_iterator iter = currNode->m_children.begin(); iter != currNode->m_children.end(); iter++) {
+        updateSkeleton(skelMats, *iter, currXform);
+    }
 }
 
 }

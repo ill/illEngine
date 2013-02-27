@@ -19,11 +19,25 @@ public:
     */
     virtual void addPath(const char * path) = 0;
 
+	/**
+	Checks if a file exists;
+	*/
+	virtual bool fileExists(const char * path) const = 0;
+
     /**
     Opens an file for reading relative to one of the search paths added.
-    To 
     */
     virtual File * openRead(const char * path) const = 0;
+
+	/**
+    Opens an file for writing a new empty file relative to one of the search paths added.
+    */
+    virtual File * openWrite(const char * path) const = 0;
+
+	/**
+    Opens an file for appending to an existing file relative to one of the search paths added.
+    */
+    virtual File * openAppend(const char * path) const = 0;
 };
 
 //a public global variable, problem?

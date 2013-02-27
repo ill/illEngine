@@ -7,6 +7,8 @@ namespace illGraphics {
 
 class RendererBackend;
 
+//TODO: write a class for a model resource
+
 /**
 Contains some mesh and its associated vertex buffer objects and index buffer objects.
 */

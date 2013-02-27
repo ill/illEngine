@@ -402,26 +402,6 @@ inline glm::detail::tvec3<uint8_t> sortDimensions(glm::detail::tvec3<T> vec) {
     return res;
 }
 
-/**
-Generates a random vector
-TODO: document better
-*/
-/*template <typename T = glm::mediump_float>
-inline glm::detail::tvec3<T> randomVec(const glm::detail::tvec3<T>& minRange, const glm::detail::tvec3<T>& maxRange) {
-glm::detail::tvec3<T> res(0.0f);
-
-for(int i = 0; i < 3; i++) {
-}
-
-return res;
-}*/
-
-/*
-vx = random(-range, +range);
-vy = random(-range, +range);
-vz = sqrt(1.0f - (vx * vx + vy * vy)); // good
-vz = 1.0f;*/
-
 template <typename T>
 inline glm::detail::tvec3<T> getTransformPosition(const glm::detail::tmat4x4<T>& transform) {
     return glm::detail::tvec3<T>(transform[3][0], transform[3][1], transform[3][2]);
@@ -438,9 +418,65 @@ inline glm::detail::tmat4x4<T> setTransformPosition(const glm::detail::tmat4x4<T
     return res;
 }
 
+/**
+Decomposes a 4x4 matrix into its rotation, and scale components.
+This assumes the transform was created in this order: translate * rotate * scale which is the usual way to do it.
+
+If a matrix has no scaling, it's safe to just extract the 3x3 portion of the matrix to get the rotation.
+
+It's always safe to just call getTransfromPosition for the position.
+
+Based on the Assimp decompose transform method.
+*/
 template <typename T>
-inline glm::detail::tvec3<T> getTransformScale(const glm::detail::tmat4x4<T>& transform) {
-    return glm::detail::tvec3<T>(transform[0][0], transform[1][1], transform[2][2]);
+inline void getTransformRotationScale(const glm::detail::tmat4x4<T>& transform, 
+                                      glm::detail::tmat3x3<T>& rotation, glm::detail::tvec3<T>& scale) {
+	//extract the matrix columns
+	glm::detail::tvec3<T> col[3] = {
+		glm::detail::tvec3<T>(transform[0]),
+		glm::detail::tvec3<T>(transform[1]),
+		glm::detail::tvec3<T>(transform[2])
+	};
+
+	// extract the scaling factors
+	scale.x = glm::length(col[0]);
+	scale.y = glm::length(col[1]);
+	scale.z = glm::length(col[2]);
+
+	// and the sign of the scaling
+    if(glm::determinant(transform) < (T)0) {
+        scale = -scale;
+	}
+
+	// and remove all scaling from the matrix
+	if(scale.x != (T)0) {
+		col[0] /= scale.x;
+	}
+
+	if(scale.y != (T)0) {
+		col[1] /= scale.y;
+	}
+
+	if(scale.z != (T)0) {
+		col[2] /= scale.z;
+	}
+
+	// build a 3x3 rotation matrix
+	rotation[0] = col[0];
+    rotation[1] = col[1];
+    rotation[2] = col[2];
+}
+
+/**
+Same as the other decomposeTransform function that takes scale but this gives the quaternion rotation.
+*/
+template <typename T>
+inline void getTransformRotationScale(const glm::detail::tmat4x4<T>& transform, 
+                                      glm::detail::tquat<T>& rotation, glm::detail::tvec3<T>& scale) {
+    glm::detail::tmat3x3<T> rotMat;
+
+    getTransformRotationScale(transform, rotMat, scale);
+    rotation = glm::quat_cast(rotMat);
 }
 
 /**
@@ -550,6 +586,66 @@ inline glm::detail::tvec3<R> gridVec(const glm::detail::tvec3<T>& value, const g
     }
 
     return res;
+}
+
+/**
+Read docs for eq under util.h.  Only this works on the components of a vector.
+*/
+template <typename T>
+inline bool eqVec(const glm::detail::tvec3<T>& vec1, const glm::detail::tvec3<T>& vec2, const T& delta = (T)0.001) {    
+    for(int i = 0; i < 3; i++) {
+		if(!eq(vec1[i], vec2[i], delta)) {
+			return false;
+		}
+    }
+
+    return true;
+}
+
+/**
+Read docs for eq under util.h.  Only this works on the components of a quaternion.
+*/
+template <typename T>
+inline bool eqQuat(const glm::detail::tquat<T>& quat1, const glm::detail::tquat<T>& quat2, const T& delta = (T)0.001) {    
+    for(int i = 0; i < 4; i++) {
+		if(!eq(quat1[i], quat2[i], delta)) {
+			return false;
+		}
+    }
+
+    return true;
+}
+
+/**
+Read docs for eq under util.h.  Only this works on the components of a 3x3 matrix.
+*/
+template <typename T>
+inline bool eqMat3(const glm::detail::tmat3x3<T>& mat1, const glm::detail::tmat3x3<T>& mat2, const T& delta = (T)0.001) {    
+    for(int col = 0; col < 3; col++) {
+		for(int row = 0; row < 3; row++) {
+			if(!eq(mat1[col][row], mat2[col][row], delta)) {
+				return false;
+			}
+		}
+    }
+
+    return true;
+}
+
+/**
+Read docs for eq under util.h.  Only this works on the components of a 4x4 matrix.
+*/
+template <typename T>
+inline bool eqMat4(const glm::detail::tmat4x4<T>& mat1, const glm::detail::tmat4x4<T>& mat2, const T& delta = (T)0.001) {    
+    for(int col = 0; col < 4; col++) {
+		for(int row = 0; row < 4; row++) {
+			if(!eq(mat1[col][row], mat2[col][row], delta)) {
+				return false;
+			}
+		}
+    }
+
+    return true;
 }
 
 /**

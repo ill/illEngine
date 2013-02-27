@@ -2,11 +2,12 @@
 #define ILL_SKELETON_H__
 
 #include <glm/glm.hpp>
-#include <map>
+#include <unordered_map>
 #include <vector>
 #include <string>
 #include "Util/serial/ResourceBase.h"
 #include "Util/serial/ResourceManager.h"
+#include "Util/serial/Array.h"
 #include "Logging/logging.h"
 
 namespace illGraphics {
@@ -23,11 +24,11 @@ struct SkeletonLoadArgs {
 
 class Skeleton : public ResourceBase<Skeleton, SkeletonLoadArgs, RendererBackend> { //TODO: RendererBackend not needed for this, figure out how to write the templates to not require a loader
 public:
-    struct Bone {
-        glm::mat4 m_transform;  //TODO: for now it's a transform while I debug this, later use quats and positions
-        //glm::mat4 * m_boneOffsetHack;
+	struct Bone {
+        glm::mat4 m_relativeTransform;  //the transform relative to the parent in the bind pose
+        glm::mat4 m_offsetTransform;    //the inverse of the full transform in the bind pose
     };
-    
+
     struct BoneHeirarchy {
         unsigned int m_boneIndex;
 
@@ -44,8 +45,6 @@ public:
 
     Skeleton()
         : ResourceBase(),
-        m_numBones(0),
-        m_bones(NULL),
         m_heirarchy(NULL)
     {}
 
@@ -56,40 +55,20 @@ public:
     virtual void unload();
     virtual void reload(RendererBackend * renderer);
 
-    inline unsigned int getNumBones() const {
-        return m_numBones;
+    inline size_t getNumBones() const {
+		return m_bones.size();
     }
 
-    inline const Bone* getBone(unsigned int boneIndex) const {
-        return m_bones + boneIndex;
+    inline const Bone& getBone(unsigned int boneIndex) const {
+        return m_bones[boneIndex];
     }
-
-    inline unsigned int getBone(const char * boneName) const {
-        std::map<std::string, unsigned int>::const_iterator iter = m_boneNameMap.find(boneName);
-
-        if(iter == m_boneNameMap.end()) {
-            LOG_ERROR("No bone with name %s in skeleton", boneName);
-            return 0;
-        }
-        else {
-            return iter->second;
-        }
-    }
-
+	
     inline const BoneHeirarchy* getRootBoneNode() const {
         return m_heirarchy;
     }
 
-    inline const std::map<std::string, unsigned int>& getBoneNameMap() const {
-        return m_boneNameMap;
-    }
-    
 private:
-    unsigned int m_numBones;
-    Bone * m_bones;
-
-    std::map<std::string, unsigned int> m_boneNameMap;
-
+	Array<Bone> m_bones;	
     BoneHeirarchy * m_heirarchy;
 };
 

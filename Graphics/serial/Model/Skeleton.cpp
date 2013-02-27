@@ -6,6 +6,8 @@
 #include "FileSystem/FileSystem.h"
 #include "FileSystem/File.h"
 
+const uint64_t SKEL_MAGIC = 0x494C4C534B454C30;		//ILLSKEL0 in big endian 64 bit
+
 namespace illGraphics {
 
 void Skeleton::unload() {
@@ -16,13 +18,7 @@ void Skeleton::unload() {
     if(m_state == RES_UNINITIALIZED || m_state == RES_UNLOADED) {
         return;
     }
-
-    m_numBones = 0;
-    delete[] m_bones;
-    m_bones = NULL;
-
-    m_boneNameMap.clear();
-
+	
     delete m_heirarchy;
     m_heirarchy = NULL;
     
@@ -35,45 +31,39 @@ void Skeleton::reload(RendererBackend * rendererBackend) {
     m_loader = rendererBackend;
 
     m_state = RES_LOADING;
-
-    //TODO: LOL this is horrible, inefficient, and temporary, and works just fine in most situations so whatever...
-    //I need to write a nice file IO interface around physfs for PC and whatever we need on Android and Ios when the time comes, for now this will work
-    char * fileData;
-
+	
     illFileSystem::File * openFile = illFileSystem::fileSystem->openRead(m_loadArgs.m_path.c_str());
-
-    fileData = new char[openFile->getSize() + 1];
-    fileData[openFile->getSize()] = '\0';
-
-    openFile->read(fileData, openFile->getSize());
-    std::string streamData(fileData);
-    std::stringstream * stream = new std::stringstream(streamData, std::ios_base::in);
-
-    delete openFile;
-
-    //read header
+	
+	//read magic string
     {
-        std::string magicStr;
+		uint64_t magic;
+        openFile->readB64(magic);
 
-        (*stream) >> magicStr;
-
-        if(magicStr.compare("ILLSKEL0") != 0) {
+        if(magic != SKEL_MAGIC) {
             LOG_FATAL_ERROR("Not a valid ILLSKEL0 file.");      //TODO: make this not fatal somehow, I guess all meshes would be in their rest pose if they're supposed to have an associated skeleton
         }
     }
-
+	
     //read number of bones
-    (*stream) >> m_numBones;
-    m_bones = new Bone[m_numBones];
+	{
+		uint16_t numBones;
+		openFile->readL16(numBones);
+		m_bones.resize(numBones);
+	}
 
     //read the bind poses
-    for(unsigned bone = 0; bone < m_numBones; bone++) {
-        //TODO: hack
-        //m_bones[bone].m_boneOffsetHack = NULL;
+    for(unsigned bone = 0; bone < m_bones.size(); bone++) {
+		//bind pose
+		for(unsigned int matCol = 0; matCol < 4; matCol++) {
+            for(unsigned int matRow = 0; matRow < 4; matRow++) {
+				openFile->readLF(m_bones[bone].m_relativeTransform[matCol][matRow]);
+            }            
+        }
 
-        for(unsigned int matRow = 0; matRow < 4; matRow++) {
-            for(unsigned int matCol = 0; matCol < 4; matCol++) {
-                (*stream) >> m_bones[bone].m_transform[matCol][matRow];
+		//offset
+		for(unsigned int matCol = 0; matCol < 4; matCol++) {
+            for(unsigned int matRow = 0; matRow < 4; matRow++) {
+				openFile->readLF(m_bones[bone].m_offsetTransform[matCol][matRow]);
             }            
         }
     }
@@ -82,17 +72,18 @@ void Skeleton::reload(RendererBackend * rendererBackend) {
     {
         std::map<unsigned int, BoneHeirarchy *> boneToNode;
 
-        for(unsigned int bone = 0; bone < m_numBones; bone++) {
+        for(uint16_t bone = 0; bone < m_bones.size(); bone++) {
             //BoneHeirarchy * currNode = boneToNode[bone];
 
             //lookup parent node
-            int parentInd;
-            (*stream) >> parentInd;
+            uint16_t parentInd;
+			openFile->readL16(parentInd);
 
             //look up the parent node
             BoneHeirarchy * parentNode;
             
-            if(parentInd >= 0 && parentInd != (int) bone) {
+			//if the bone is referencing itself, it's the root
+            if(parentInd != bone) {
                 std::map<unsigned int, BoneHeirarchy *>::iterator iter = boneToNode.find(parentInd);
 
                 //if not found, create the new node
@@ -142,25 +133,8 @@ void Skeleton::reload(RendererBackend * rendererBackend) {
             }
         }
     }
-
-    //read bone names
-    {
-        for(unsigned int bone = 0; bone < m_numBones; bone++) {
-            std::string name;
-
-            (*stream) >> name;
-
-            if(m_boneNameMap.find(name) != m_boneNameMap.end()) {
-                LOG_ERROR("Skeleton %s has duplicate bone name %s.  This will cause problems when animating.", m_loadArgs.m_path.c_str(), name.c_str());
-            }
-            else {
-                m_boneNameMap[name] = bone;
-            }
-        }
-    }
-
-    delete stream;    
-    delete[] fileData;
+		
+	delete openFile;
 
     m_state = RES_LOADED;
 }

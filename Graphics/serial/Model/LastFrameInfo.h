@@ -12,9 +12,9 @@ struct LastFrameInfo {
     {}
 
     float m_lastTime;
-    unsigned int m_lastPositionKey;
-    unsigned int m_lastRotationKey;
-    unsigned int m_lastScalingKey;
+    size_t m_lastPositionKey;
+    size_t m_lastRotationKey;
+    size_t m_lastScalingKey;
 };
 
 }

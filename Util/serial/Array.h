@@ -1,6 +1,7 @@
 #ifndef ILL_ARRAY_H_
 #define ILL_ARRAY_H_
 
+#include <glm/glm.hpp>
 #include <cassert>
 #include <cstdlib>
 
@@ -48,7 +49,7 @@ public:
     */
     inline void reserve(size_t size) {
         if(m_size < size) {
-            resize(m_size << 1);
+            resize(glm::max(m_size << 1, size));
         }
     }
 

@@ -23,6 +23,10 @@ void PhysFsFileSystem::addPath(const char * path) {
     }
 }
 
+bool PhysFsFileSystem::fileExists(const char * path) const {
+	return PHYSFS_exists(path);
+}
+
 illFileSystem::File * PhysFsFileSystem::openRead(const char * path) const {
     PHYSFS_file* file;
 
@@ -35,6 +39,37 @@ illFileSystem::File * PhysFsFileSystem::openRead(const char * path) const {
         LOG_FATAL_ERROR("Failed to set file %s buffer to %d bytes. Error %s", path, illFileSystem::IO_BUFFER_SIZE, PHYSFS_getLastError());
     }
 
-    return new PhysFsFile(file, illFileSystem::File::ST_READ, path);
+    return new PhysFsFile(file, illFileSystem::File::State::ST_READ, path);
 }
+
+illFileSystem::File * PhysFsFileSystem::openWrite(const char * path) const {
+    PHYSFS_file* file;
+
+    if((file = PHYSFS_openWrite(path)) == NULL) {
+        LOG_FATAL_ERROR("Failed to open file %s for writing. Error %s", path, PHYSFS_getLastError());
+    }
+
+    //set file buffer or reading and writing will be inefficient
+    if(PHYSFS_setBuffer(file, illFileSystem::IO_BUFFER_SIZE) == 0) {
+        LOG_FATAL_ERROR("Failed to set file %s buffer to %d bytes. Error %s", path, illFileSystem::IO_BUFFER_SIZE, PHYSFS_getLastError());
+    }
+
+    return new PhysFsFile(file, illFileSystem::File::State::ST_WRITE, path);
+}
+
+illFileSystem::File * PhysFsFileSystem::openAppend(const char * path) const {
+    PHYSFS_file* file;
+
+    if((file = PHYSFS_openAppend(path)) == NULL) {
+        LOG_FATAL_ERROR("Failed to open file %s for appending. Error %s", path, PHYSFS_getLastError());
+    }
+
+    //set file buffer or reading and writing will be inefficient
+    if(PHYSFS_setBuffer(file, illFileSystem::IO_BUFFER_SIZE) == 0) {
+        LOG_FATAL_ERROR("Failed to set file %s buffer to %d bytes. Error %s", path, illFileSystem::IO_BUFFER_SIZE, PHYSFS_getLastError());
+    }
+
+    return new PhysFsFile(file, illFileSystem::File::State::ST_APPEND, path);
+}
+
 }

@@ -1,6 +1,5 @@
 #include <cassert>
 #include "PhysFsFile.h"
-#include "Util/endian.h"
 #include "Logging/logging.h"
 
 namespace illPhysFs {
@@ -47,86 +46,20 @@ bool PhysFsFile::eof() {
 
 void PhysFsFile::read(void* destination, size_t size) {
     assert(destination);
+	assert(getState() == File::State::ST_READ);
 
-    if(PHYSFS_read(m_file, destination, 1, (PHYSFS_uint32) size) < (PHYSFS_sint64) size) {
+    if(PHYSFS_read(m_file, destination, 1, (PHYSFS_uint32) size) != (PHYSFS_sint64) size) {
         LOG_FATAL_ERROR("Failed to read %u bytes from file %s. Error: %s", size, getFileName(), PHYSFS_getLastError());
     }
 }
 
+void PhysFsFile::write(const void* source, size_t size) {
+    assert(source);
+	assert(getState() == File::State::ST_WRITE || getState() == File::State::ST_APPEND);
 
-
-void PhysFsFile::read8(uint8_t& destination) {
-    read(&destination, sizeof(int8_t));
-}
-
-
-
-void PhysFsFile::readL16(uint16_t& destination) {
-    read(&destination, sizeof(int16_t));
-
-    destination = little16(destination);
-}
-
-void PhysFsFile::readB16(uint16_t& destination) {
-    read(&destination, sizeof(int16_t));
-
-    destination = big16(destination);
-}
-
-
-    
-void PhysFsFile::readL32(uint32_t& destination) {
-    read(&destination, sizeof(int32_t));
-
-    destination = little32(destination);
-}
-
-void PhysFsFile::readB32(uint32_t& destination) {
-    read(&destination, sizeof(int32_t));
-
-    destination = big32(destination);
-}
-
-
-
-void PhysFsFile::readL64(uint64_t& destination) {
-    read(&destination, sizeof(int64_t));
-
-    destination = little64(destination);
-}
-
-void PhysFsFile::readB64(uint64_t& destination) {
-    read(&destination, sizeof(int64_t));
-
-    destination = big64(destination);
-}
-
-
-    
-void PhysFsFile::readLF(float& destination) {
-    read(&destination, sizeof(float));
-
-    destination = littleF(destination);
-}
-
-void PhysFsFile::readBF(float& destination) {
-    read(&destination, sizeof(float));
-
-    destination = bigF(destination);
-}
-
-
-
-void PhysFsFile::readLD(double& destination) {
-    read(&destination, sizeof(double));
-
-    destination = littleD(destination);
-}
-
-void PhysFsFile::readBD(double& destination) {
-    read(&destination, sizeof(double));
-
-    destination = bigD(destination);
+    if(PHYSFS_write(m_file, source, 1, (PHYSFS_uint32) size) != (PHYSFS_sint64) size) {
+        LOG_FATAL_ERROR("Failed to write %u bytes to file %s. Error: %s", size, getFileName(), PHYSFS_getLastError());
+    }
 }
 
 }

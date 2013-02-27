@@ -14,4 +14,6 @@ void testSortDimensions();
 
 void testPool();
 
+void testGeomUtil();
+
 #endif

@@ -1,15 +1,14 @@
-#ifndef ILL_PHYSFS_FILE_SYSTEM_H__
-#define ILL_PHYSFS_FILE_SYSTEM_H__
+#ifndef ILL_STDIO_FILE_SYSTEM_H__
+#define ILL_STDIO_FILE_SYSTEM_H__
 
 #include "FileSystem/FileSystem.h"
 
-namespace illPhysFs {
-class PhysFsFileSystem : public illFileSystem::FileSystem {
+namespace illStdio {
+class StdioFileSystem : public illFileSystem::FileSystem {
 public:
-    void init(const char * argv0);
-    ~PhysFsFileSystem();
-
-    void addPath(const char * path);
+	~StdioFileSystem() {}
+	
+	virtual void addPath(const char * path) {}
 
 	virtual bool fileExists(const char * path) const;
 

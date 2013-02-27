@@ -1,15 +1,15 @@
-#ifndef ILL_PHYSFS_FILE_H__
-#define ILL_PHYSFS_FILE_H__
+#ifndef ILL_STDIO_FILE_H__
+#define ILL_STDIO_FILE_H__
 
-#include <physfs.h>
+#include <cstdio>
 #include "FileSystem/File.h"
 
-namespace illPhysFs {
-class PhysFsFileSystem;
+namespace illStdio {
+class StdioFileSystem;
 
-class PhysFsFile : public illFileSystem::File {
+class StdioFile : public illFileSystem::File {
 public:
-    virtual ~PhysFsFile() {
+    virtual ~StdioFile() {
         close();
     }
 
@@ -24,17 +24,17 @@ public:
     virtual bool eof();
     
     virtual void read(void* destination, size_t size);
-    virtual void write(const void* source, size_t size);
-
+	virtual void write(const void* source, size_t size);
+    
 private:
-    PhysFsFile(PHYSFS_File * file, File::State state, const char * fileName)
+    StdioFile(FILE * file, File::State state, const char * fileName)
         : File(state, fileName),
         m_file(file)
     {}
 
-    PHYSFS_File * m_file;
+    FILE * m_file;
 
-friend PhysFsFileSystem;
+friend StdioFileSystem;
 };
 }
 
