@@ -44,10 +44,8 @@ struct Transform {
     }
 
     inline void set(const glm::mat4& transform) {
-		//TODO: this is horribly wrong, use the geomUtil getTransformRotationScale method
         m_position = getTransformPosition(transform);
-        m_rotation = glm::quat_cast(transform);
-        m_scale = getTransformScale(transform);
+        getTransformRotationScale(transform, m_rotation, m_scale);
     }
     
     glm::detail::tvec3<T> m_position;

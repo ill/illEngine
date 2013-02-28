@@ -99,7 +99,7 @@ public:
 		uint16_t strlength;
 		readB16(strlength);
 
-		return strlength;
+		return strlength + 1;
 	}
 
 	/**
