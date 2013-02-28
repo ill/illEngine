@@ -11,9 +11,9 @@ void PhysFsFileSystem::init(const char * argv0) {
     }
 }
 
-PhysFsFileSystem::~PhysFsFileSystem() {
-    if (!PHYSFS_deinit()) {
-        LOG_FATAL_ERROR("Failed to uninitialize physFS. Error %s", PHYSFS_getLastError());
+void PhysFsFileSystem::deinit() {
+    if(!PHYSFS_deinit()) {
+        LOG_FATAL_ERROR("Failed to deinitialize physFS. Error %s", PHYSFS_getLastError());
     }
 }
 
@@ -24,7 +24,7 @@ void PhysFsFileSystem::addPath(const char * path) {
 }
 
 bool PhysFsFileSystem::fileExists(const char * path) const {
-	return PHYSFS_exists(path);
+	return PHYSFS_exists(path) != 0;
 }
 
 illFileSystem::File * PhysFsFileSystem::openRead(const char * path) const {
