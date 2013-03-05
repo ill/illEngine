@@ -1,39 +1,39 @@
-#ifndef ILL_GL_RENDERER_H__
-#define ILL_GL_RENDERER_H__
+#ifndef ILL_GL_BACKEND_H_
+#define ILL_GL_BACKEND_H_
 
 //#include <GL/glew.h>
 //#include <set>
 
-#include "Graphics/RendererBackend.h"
+#include "Graphics/GraphicsBackend.h"
 #include "Graphics/serial/Material/ShaderProgram.h"         //temporary for now until I get the material system working again
 
 namespace GlCommon {
 
-class GlRenderer : public illGraphics::RendererBackend {
+class GlBackend : public illGraphics::GraphicsBackend {
 public:
-    void initialize();
-    void uninitialize();
+    virtual void initialize();
+    virtual void uninitialize();
 
-    void beginFrame();
-    void endFrame();
+    virtual void beginFrame();
+    virtual void endFrame();
 
     //void beginFontRender(const illGraphics::BitmapFont &font);
     //void renderCharacter(const illGraphics::Camera& camera, const glm::mat4& transform, const illGraphics::BitmapFont &font, unsigned char character);
 
     ////////////////////
     //Resource loading functions
-    void loadTexture(void ** textureData, const illGraphics::TextureLoadArgs& loadArgs);
-    void unloadTexture(void ** textureData);
+    virtual void loadTexture(void ** textureData, const illGraphics::TextureLoadArgs& loadArgs);
+    virtual void unloadTexture(void ** textureData);
     
-    void loadMesh(void** meshBackendData, const MeshData<>& meshFrontendData);
-    void unloadMesh(void** meshBackendData);
+    virtual void loadMesh(void** meshBackendData, const MeshData<>& meshFrontendData);
+    virtual void unloadMesh(void** meshBackendData);
 
-    void loadShader(void ** shaderData, uint64_t featureMask);
-    void loadShaderInternal(void ** shaderData, const char * path, unsigned int shaderType, const char * defines);
-    void unloadShader(void ** shaderData);
+    virtual void loadShader(void ** shaderData, uint64_t featureMask);
+    virtual void loadShaderInternal(void ** shaderData, const char * path, unsigned int shaderType, const char * defines);
+    virtual void unloadShader(void ** shaderData);
 
-    void loadShaderProgram(void ** programData, const std::vector<RefCountPtr<illGraphics::Shader> >& shaderList);
-    void unloadShaderProgram(void ** programData);
+    virtual void loadShaderProgram(void ** programData, const std::vector<RefCountPtr<illGraphics::Shader> >& shaderList);
+    virtual void unloadShaderProgram(void ** programData);
 
     ////////////////////
     //GL State Stuff

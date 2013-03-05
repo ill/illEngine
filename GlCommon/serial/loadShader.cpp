@@ -2,7 +2,7 @@
 
 #include <GL/glew.h>
 
-#include "GlCommon/serial/GlRenderer.h"
+#include "GlCommon/serial/GlBackend.h"
 #include "Graphics/serial/Material/Shader.h"
 
 #include "GlCommon/glLogging.h"
@@ -13,7 +13,7 @@
 
 namespace GlCommon {
 
-void GlRenderer::loadShader(void ** shaderData, uint64_t featureMask) {
+void GlBackend::loadShader(void ** shaderData, uint64_t featureMask) {
     /////////////////////////////////////
     //determine shader type and path
 
@@ -68,7 +68,7 @@ void GlRenderer::loadShader(void ** shaderData, uint64_t featureMask) {
     loadShaderInternal(shaderData, path.c_str(), shaderType, defines.c_str());
 }
 
-void GlRenderer::loadShaderInternal(void ** shaderData, const char * path, unsigned int shaderType, const char * defines) {    
+void GlBackend::loadShaderInternal(void ** shaderData, const char * path, unsigned int shaderType, const char * defines) {    
     //////////////////////////////////
     //declare stuff
     GLint status; //status of shader
@@ -134,7 +134,7 @@ void GlRenderer::loadShaderInternal(void ** shaderData, const char * path, unsig
     memcpy(*shaderData, &shader, sizeof(GLuint));
 }
 
-void GlRenderer::unloadShader(void ** shaderData) {
+void GlBackend::unloadShader(void ** shaderData) {
     glDeleteShader(*(GLuint *)(*shaderData));
     delete (GLuint *) *shaderData;
     *shaderData = NULL;

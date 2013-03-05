@@ -1,5 +1,5 @@
 #include "Graphics/serial/BitmapFont.h"
-#include "Graphics/RendererBackend.h"
+#include "Graphics/GraphicsBackend.h"
 #include "FileSystem/FileSystem.h"
 #include "FileSystem/File.h"
 
@@ -89,10 +89,10 @@ void BitmapFont::unload() {
     m_state = RES_UNLOADED;
 }
 
-void BitmapFont::reload(RendererBackend * rendererBackend) {
+void BitmapFont::reload(GraphicsBackend * backend) {
     unload();
     
-    m_loader = rendererBackend;
+    m_loader = backend;
 
     m_state = RES_LOADING;
 

@@ -8,7 +8,7 @@
 
 namespace illGraphics {
 
-class RendererBackend;
+class GraphicsBackend;
 
 
 struct MeshLoadArgs {
@@ -20,7 +20,7 @@ struct MeshLoadArgs {
 /**
 Contains some mesh and its associated vertex buffer objects and index buffer objects.
 */
-class Mesh : public ResourceBase<Mesh, MeshLoadArgs, RendererBackend> {
+class Mesh : public ResourceBase<Mesh, MeshLoadArgs, GraphicsBackend> {
 public:
     Mesh()
         : m_meshFrontendData(NULL),
@@ -32,10 +32,10 @@ public:
     }
     
     virtual void unload();
-    virtual void reload(RendererBackend * renderer);
+    virtual void reload(GraphicsBackend * backend);
 
     void setFrontentDataInternal(MeshData<> * mesh);
-    void frontendBackendTransferInternal(RendererBackend * loader, bool freeFrontendData = true);
+    void frontendBackendTransferInternal(GraphicsBackend * loader, bool freeFrontendData = true);
 
     inline void * getMeshBackendData() const {
         return m_meshBackendData;
@@ -47,7 +47,7 @@ public:
 
 private:
     MeshData<> * m_meshFrontendData;
-    RendererBackend * m_backend;
+    GraphicsBackend * m_backend;
     void * m_meshBackendData;
 };
 }

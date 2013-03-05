@@ -8,19 +8,41 @@
 #include "Util/serial/Array.h"
 #include "Util/Geometry/BoxIterator.h"
 #include "Util/Geometry/BoxOmitIterator.h"
-#include "Graphics/serial/Scene/GraphicsEntity.h"
+#include "RendererCommon/serial/GraphicsEntity.h"
+#include "Graphics/serial/Light.h"
 
 #include "Logging/logging.h"
 
-template <typename T = glm::mediump_float>
-struct Frustum;
-
 namespace illGraphics {
+class Camera;
+class Mesh;
+class Material;
+}
 
-class RenderArgs;
+namespace illRendererCommon {
 
 class GraphicsScene {
 public:
+    virtual inline ~GraphicsScene() {
+        delete[] m_nodes;
+        delete[] m_staticNodes;
+        delete[] m_lights;
+        delete[] m_staticLights;
+    }
+
+    /**
+    Render a scene from a camera angle.  This interacts with the renderer backend directly.
+    */
+    virtual void render(const illGraphics::Camera& camera) = 0;
+
+    /**
+    Returns the grid volume that is used to manage the scene.
+    */
+    const GridVolume3D<>& getGridVolume() const {
+        return m_grid;
+    }
+
+protected:
     /**
     Creates the scene and its 3D uniform grid.
 
@@ -37,37 +59,29 @@ public:
         m_staticLights = new StaticNodeContainer[cellNumber.x * cellNumber.y * cellNumber.z];
     }
 
-    inline ~GraphicsScene() {
-        delete[] m_nodes;
-        delete[] m_staticNodes;
-        delete[] m_lights;
-        delete[] m_staticLights;
-    }
-
-    /**
-    As you are about to render a viewport, call this to retreive what object are visible in that viewport.
-    This does view frustum and occlusion culling on the scene from a point of view.
-
-    You can even reuse the objects returned in this call in a totally different view port to debug draw the effectiveness of the occlusion culling
-    and see only what's visible from another camera angle.
-
-    @param viewFrustum The view frustum computed from a camera when you set the camera's transform.
-    @param renderArgsDest This is the structure you will pass in to the Renderer::render method.
-    It contains the nodes in the scene and will be rendered.
-    */
-    void viewCull(const Frustum<>& viewFrustum, RenderArgs& renderArgsDest);
-
-    /**
-    Returns the grid volume that is used to manage the scene.
-    */
-    const GridVolume3D<>& getGridVolume() const {
-        return m_grid;
-    }
-
-private:
     typedef std::unordered_set<GraphicsEntity::GraphicsNode*> NodeContainer;
     typedef Array<GraphicsEntity::GraphicsNode*> StaticNodeContainer;
 
+    struct RenderArgs {       
+        struct MeshInfo {
+            std::vector<illGraphics::LightBase *> m_affectingLights;
+            glm::mat4 m_transform;
+            illGraphics::Mesh * m_mesh;
+        };
+
+        struct LightInfo {
+            glm::mat4 m_transform;
+            illGraphics::LightBase * m_light;
+        };
+    
+        std::unordered_map<illGraphics::Material *, MeshInfo> m_solidMeshes;
+        std::unordered_map<illGraphics::Material *, MeshInfo> m_unsolidMeshes;
+        std::unordered_map<illGraphics::Material *, MeshInfo> m_unsolidDepthsortedMeshes;
+
+        std::unordered_map<illGraphics::LightBase::Type, LightInfo> m_lights;
+    };
+
+private:
     inline void addNode(GraphicsEntity::GraphicsNode * node) {
         BoxIterator<> iter = m_grid.boxIterForWorldBounds(node->getFullBoundingVol());
 
@@ -116,6 +130,7 @@ private:
         }
     }
 
+protected:
     inline NodeContainer * nodeCollectionForType(GraphicsEntity::GraphicsNode::Type type) {
         switch(type) {
         case GraphicsEntity::GraphicsNode::Type::GENERIC:
@@ -150,6 +165,8 @@ private:
     */
     uint64_t m_accessCounter;
 
+    //TODO: add a finer grid for tracking lights that's used specifically for finding lights close to an object for forward rendering
+
     /**
     The 3D uniform grid for the scene.
     */
@@ -169,7 +186,7 @@ private:
     The list of moving lights per grid cell.
     */
     NodeContainer * m_lights;
-
+    
     /**
     The list of static lights per grid cell.
     */

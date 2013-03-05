@@ -1,5 +1,5 @@
 #include "Shader.h"
-#include "Graphics/RendererBackend.h"
+#include "Graphics/GraphicsBackend.h"
 
 using namespace std;
 
@@ -21,10 +21,10 @@ void Shader::unload() {
 
 //TODO: Maybe add some error checking to check for invalid masks to this if I have problems
 //ex: creating both a fragment shader and a vertex shader, creating two different shaders at a time, stuff like that...
-void Shader::reload(RendererBackend * renderer) {
+void Shader::reload(GraphicsBackend * backend) {
     unload();
 
-    m_loader = renderer;
+    m_loader = backend;
 
     m_state = RES_LOADING;
 
@@ -33,7 +33,7 @@ void Shader::reload(RendererBackend * renderer) {
     m_state = RES_LOADED;
 }
 
-void Shader::loadInternal(RendererBackend * renderer, const char * path, unsigned int shaderType, const char * defines) {
+void Shader::loadInternal(GraphicsBackend * renderer, const char * path, unsigned int shaderType, const char * defines) {
     unload();
 
     m_loader = renderer;

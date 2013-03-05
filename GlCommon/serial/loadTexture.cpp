@@ -5,7 +5,7 @@
 
 #include <GL/glew.h>
 
-#include "GlRenderer.h"
+#include "GlCommon/serial/GlBackend.h"
 #include "Graphics/serial/Material/Texture.h"
 #include "FileSystem/FileSystem.h"
 #include "FileSystem/File.h"
@@ -25,7 +25,7 @@ inline GLenum getTextureWrap(illGraphics::TextureLoadArgs::Wrap wrap) {
 
 namespace GlCommon {
 
-void GlRenderer::loadTexture(void ** textureData, const illGraphics::TextureLoadArgs& loadArgs) {
+void GlBackend::loadTexture(void ** textureData, const illGraphics::TextureLoadArgs& loadArgs) {
     //////////////////////////////////
     //declare stuff
     char * textureMemBuffer;
@@ -121,7 +121,7 @@ void GlRenderer::loadTexture(void ** textureData, const illGraphics::TextureLoad
     memcpy(*textureData, &texture, sizeof(GLuint));
 }
 
-void GlRenderer::unloadTexture(void ** textureData) {
+void GlBackend::unloadTexture(void ** textureData) {
     glDeleteTextures(1, (GLuint *)(*textureData));
     delete (GLuint *) *textureData;
     *textureData = NULL;

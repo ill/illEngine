@@ -24,7 +24,7 @@ void PhysFsFileSystem::addPath(const char * path) {
 }
 
 bool PhysFsFileSystem::fileExists(const char * path) const {
-	return PHYSFS_exists(path);
+	return PHYSFS_exists(path) != 0;
 }
 
 illFileSystem::File * PhysFsFileSystem::openRead(const char * path) const {

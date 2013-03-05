@@ -1,5 +1,5 @@
-#ifndef ILL_RENDERER_H__
-#define ILL_RENDERER_H__
+#ifndef ILL_GRAPHICS_BACKEND_H__
+#define ILL_GRAPHICS_BACKEND_H__
 
 #include <glm/glm.hpp>
 #include <stdint.h>
@@ -15,7 +15,7 @@ class Shader;
 class Camera;
 class BitmapFont;
 
-class RendererBackend {
+class GraphicsBackend {
 public:
     virtual void initialize() = 0;
     virtual void uninitialize() = 0;

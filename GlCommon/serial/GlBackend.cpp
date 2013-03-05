@@ -5,14 +5,14 @@
 #include "Logging/logging.h"
 #include "GlCommon/glLogging.h"
 
-#include "GlCommon/serial/GlRenderer.h"
+#include "GlCommon/serial/GlBackend.h"
 
 #include "Graphics/serial/Camera/Camera.h"
 #include "Graphics/serial/BitmapFont.h"
 
 namespace GlCommon {
 
-void GlRenderer::initialize() {
+void GlBackend::initialize() {
     glewExperimental = true;      //TODO: remove this once GLEW stops being retarded after an update
     if(glewInit() != GLEW_OK) {
         LOG_FATAL_ERROR("Glew failed to initialize");
@@ -42,7 +42,7 @@ void GlRenderer::initialize() {
     }*/
 }
 
-void GlRenderer::uninitialize() {
+void GlBackend::uninitialize() {
     //m_fontShader.unload();
     //delete m_debugShaderLoader;
 
@@ -51,12 +51,12 @@ void GlRenderer::uninitialize() {
     //glewDes
 }
 
-void GlRenderer::beginFrame() {
+void GlBackend::beginFrame() {
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 }
 
-void GlRenderer::endFrame() {
+void GlBackend::endFrame() {
     //TODO: figure this out later, for now the SDL Window flips the buffer
 }
 

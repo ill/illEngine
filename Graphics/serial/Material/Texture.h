@@ -7,7 +7,7 @@
 
 namespace illGraphics {
     
-class RendererBackend;
+class GraphicsBackend;
 
 struct TextureLoadArgs {
     std::string m_path;  //path of image file
@@ -25,7 +25,7 @@ struct TextureLoadArgs {
 Textures are used by materials for drawing 3D objects.
 Sometimes a texture might be useable by itself outside of a material for drawing HUD elements or something.
 */
-class Texture : public ResourceBase<Texture, TextureLoadArgs, RendererBackend> {
+class Texture : public ResourceBase<Texture, TextureLoadArgs, GraphicsBackend> {
 public:
     Texture()
         : ResourceBase(),
@@ -37,7 +37,7 @@ public:
     }
 
     virtual void unload();
-    virtual void reload(RendererBackend * renderer);
+    virtual void reload(GraphicsBackend * backend);
 
     inline void* getTextureData() const {
         return m_textureData; 
@@ -47,7 +47,7 @@ private:
     void* m_textureData;
 };
 
-typedef ConfigurableResourceManager<uint32_t, Texture, TextureLoadArgs, RendererBackend> TextureManager;
+typedef ConfigurableResourceManager<uint32_t, Texture, TextureLoadArgs, GraphicsBackend> TextureManager;
 }
 
 #endif

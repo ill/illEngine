@@ -8,9 +8,9 @@
 
 namespace illGraphics {
 
-class RendererBackend;
+class GraphicsBackend;
 
-class Shader : public ResourceBase<Shader, uint64_t, RendererBackend> {
+class Shader : public ResourceBase<Shader, uint64_t, GraphicsBackend> {
 public:
     enum Feature {
         SHADER_3D_VERT = 1 << 0,            ///<Doing a standard 3D vertex transform
@@ -44,19 +44,19 @@ public:
     }
 
     void unload();
-    void reload(RendererBackend * rendererBackend);
+    void reload(GraphicsBackend * backend);
 
     inline void * getShaderData() const {
         return m_shaderData; 
     }
 
-    void loadInternal(RendererBackend * renderer, const char * path, unsigned int shaderType, const char * defines);
+    void loadInternal(GraphicsBackend * backend, const char * path, unsigned int shaderType, const char * defines);
 
 private:
     void* m_shaderData;
 };
 
-typedef ResourceManager<uint64_t, Shader, RendererBackend> ShaderManager;
+typedef ResourceManager<uint64_t, Shader, GraphicsBackend> ShaderManager;
 }
 
 #endif

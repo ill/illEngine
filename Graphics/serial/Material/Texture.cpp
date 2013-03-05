@@ -1,5 +1,5 @@
 #include "Graphics/serial/Material/Texture.h"
-#include "Graphics/RendererBackend.h"
+#include "Graphics/GraphicsBackend.h"
 
 #include "Logging/logging.h"
 
@@ -19,10 +19,10 @@ void Texture::unload() {
     m_state = RES_UNLOADED;
 }
 
-void Texture::reload(RendererBackend * rendererBackend) {
+void Texture::reload(GraphicsBackend * backend) {
     unload();
 
-    m_loader = rendererBackend;
+    m_loader = backend;
 
     m_state = RES_LOADING;
 

@@ -1,5 +1,5 @@
 #include "Mesh.h"
-#include "Graphics/RendererBackend.h"
+#include "Graphics/GraphicsBackend.h"
 #include "illEngine/Util/Illmesh/IllmeshLoader.h"
 
 namespace illGraphics {
@@ -26,7 +26,7 @@ void Mesh::setFrontentDataInternal(MeshData<> * mesh) {
     m_meshFrontendData = mesh;
 }
 
-void Mesh::frontendBackendTransferInternal(RendererBackend * loader, bool freeFrontendData) {
+void Mesh::frontendBackendTransferInternal(GraphicsBackend * loader, bool freeFrontendData) {
     m_loader = loader;
     m_loader->loadMesh(&m_meshBackendData, *m_meshFrontendData);
 
@@ -37,12 +37,12 @@ void Mesh::frontendBackendTransferInternal(RendererBackend * loader, bool freeFr
     m_state = RES_LOADED;
 }
 
-void Mesh::reload(RendererBackend * renderer) {
+void Mesh::reload(GraphicsBackend * backend) {    
     IllmeshLoader meshLoader(m_loadArgs.m_path.c_str());
 
     setFrontentDataInternal(new MeshData<>(meshLoader.m_numInd / 3, meshLoader.m_numVert, meshLoader.m_features));
     
     meshLoader.buildMesh(*getMeshFrontentData());
-    frontendBackendTransferInternal(renderer, true);
+    frontendBackendTransferInternal(backend, true);
 }
 }

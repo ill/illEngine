@@ -10,7 +10,7 @@ class InputManager;
 }
 
 namespace illGraphics {
-class RendererBackend;
+class GraphicsBackend;
 }
 
 namespace SdlPc {
@@ -47,8 +47,8 @@ public:
     void endFrame();
 
     //TODO: this is done this way for now, but in the future don't do it this way.
-    inline void setRenderer(illGraphics::RendererBackend * rendererBackend) {
-        m_rendererBackend = rendererBackend;
+    inline void setBackend(illGraphics::GraphicsBackend * graphicsBackend) {
+        m_graphicsBackend = graphicsBackend;
     }
 
     inline void setInputManager(illInput::InputManager * inputManager) {
@@ -57,7 +57,7 @@ public:
 
 private:
     //TODO: for now it's hardcoded to have one of each of these
-    illGraphics::RendererBackend * m_rendererBackend;
+    illGraphics::GraphicsBackend * m_graphicsBackend;
     illInput::InputManager * m_inputManager;
 
     SDL_Window * m_window;

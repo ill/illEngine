@@ -10,17 +10,17 @@
 
 namespace illGraphics {
 
-class RendererBackend;
+class GraphicsBackend;
 
-typedef ResourceManager<uint64_t, Shader, RendererBackend> ShaderManager;
+typedef ResourceManager<uint64_t, Shader, GraphicsBackend> ShaderManager;
 
 struct ShaderProgramLoader {
-    ShaderProgramLoader(RendererBackend * rendererBackend, ShaderManager * shaderManager)
-        : m_rendererBackend(rendererBackend),
+    ShaderProgramLoader(GraphicsBackend * backend, ShaderManager * shaderManager)
+        : m_backend(backend),
         m_shaderManager(shaderManager)
     {}
 
-    RendererBackend * m_rendererBackend;
+    GraphicsBackend * m_backend;
     ShaderManager * m_shaderManager;
 };
 

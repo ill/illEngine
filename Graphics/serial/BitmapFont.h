@@ -15,7 +15,7 @@ namespace illGraphics {
 
 const unsigned int NUM_CHARS = 256;
 
-class RendererBackend;
+class GraphicsBackend;
 
 struct BitmapFontLoadArgs {
     std::string m_path;
@@ -29,7 +29,7 @@ I also plan on trying out this article sometime for vector graphics. http://http
 
 This will most likely get redesigned later so there's some common font rendering code and different ways to load fonts in.
 */
-class BitmapFont : public ResourceBase<BitmapFont, BitmapFontLoadArgs, RendererBackend> {
+class BitmapFont : public ResourceBase<BitmapFont, BitmapFontLoadArgs, GraphicsBackend> {
 public:
     struct CharData {
         uint16_t m_meshIndex;               ///<the index of the first vertex in the mesh that contains geometry data for this character
@@ -46,7 +46,7 @@ public:
     }
 
     virtual void unload();
-    virtual void reload(RendererBackend * renderer);
+    virtual void reload(GraphicsBackend * backend);
     
     /**
     Gets the width of a line of text in the buffer provided.

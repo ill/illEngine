@@ -3,7 +3,7 @@
 
 #include "Util/Geometry/SceneNode.h"
 
-namespace illGraphics {
+namespace illRendererCommon {
 
 class RenderArgs;
 class GraphicsScene;

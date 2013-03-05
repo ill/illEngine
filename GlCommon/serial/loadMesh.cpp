@@ -1,10 +1,10 @@
 #include <GL/glew.h>
-#include "GlCommon/serial/GlRenderer.h"
+#include "GlCommon/serial/GlBackend.h"
 #include "Util/Geometry/MeshData.h"
 
 namespace GlCommon {
 
-void GlRenderer::loadMesh(void** meshBackendData, const MeshData<>& meshFrontendData) {
+void GlBackend::loadMesh(void** meshBackendData, const MeshData<>& meshFrontendData) {
     *meshBackendData = new GLuint[2];
 
     glGenBuffers(2, (GLuint *)(*meshBackendData));
@@ -18,7 +18,7 @@ void GlRenderer::loadMesh(void** meshBackendData, const MeshData<>& meshFrontend
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 }
 
-void GlRenderer::unloadMesh(void** meshBackendData) {
+void GlBackend::unloadMesh(void** meshBackendData) {
     glDeleteBuffers(2, (GLuint *)(*meshBackendData));
     delete[] (GLuint *)(*meshBackendData);
     *meshBackendData = NULL;

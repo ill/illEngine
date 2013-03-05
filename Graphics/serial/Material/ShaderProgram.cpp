@@ -2,7 +2,7 @@
 
 #include "ShaderProgram.h"
 #include "Shader.h"
-#include "Graphics/RendererBackend.h"
+#include "Graphics/GraphicsBackend.h"
 
 using namespace std;
 
@@ -17,7 +17,7 @@ void ShaderProgram::unload() {
         return;
     }
 
-    m_loader->m_rendererBackend->unloadShaderProgram(&m_shaderProgramData);
+    m_loader->m_backend->unloadShaderProgram(&m_shaderProgramData);
 
     m_state = RES_UNLOADED;
 }
@@ -111,7 +111,7 @@ void ShaderProgram::reload(ShaderProgramLoader * loader) {
 }
 
 void ShaderProgram::build() {
-    m_loader->m_rendererBackend->loadShaderProgram(&m_shaderProgramData, m_shaders);
+    m_loader->m_backend->loadShaderProgram(&m_shaderProgramData, m_shaders);
 
     m_state = RES_LOADED;
 }

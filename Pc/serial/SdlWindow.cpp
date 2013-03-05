@@ -2,7 +2,7 @@
 
 #include "Logging/logging.h"
 
-#include "Graphics/RendererBackend.h"
+#include "Graphics/GraphicsBackend.h"
 
 #include "Input/serial/InputManager.h"
 #include "Input/serial/InputBinding.h"
@@ -52,7 +52,7 @@ void SdlWindow::initialize() {
     //TODO: for now there is only OpenGL so figure out later how to make this all modular and stuff to load different renderers like DirectX (try my hand and Direct3D before I start prematurely designing things)
     m_glContext = SDL_GL_CreateContext(m_window);
 
-    m_rendererBackend->initialize();
+    m_graphicsBackend->initialize();
 
     m_state = m_fullScreen ? WIN_FULL : WIN_WINDOWED;
 }
@@ -66,7 +66,7 @@ void SdlWindow::uninitialize() {
         return;
     }
 
-    m_rendererBackend->uninitialize();
+    m_graphicsBackend->uninitialize();
     SDL_GL_DeleteContext(m_glContext);
     SDL_DestroyWindow(m_window);
 

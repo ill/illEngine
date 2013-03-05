@@ -2,7 +2,7 @@
 
 #include <GL/glew.h>
 
-#include "GlCommon/serial/GlRenderer.h"
+#include "GlCommon/serial/GlBackend.h"
 #include "Graphics/serial/Material/Shader.h"
 
 #include "GlCommon/glLogging.h"
@@ -10,7 +10,7 @@
 
 namespace GlCommon {
 
-void GlRenderer::loadShaderProgram(void ** programData, const std::vector<RefCountPtr<illGraphics::Shader> >& shaderList) {
+void GlBackend::loadShaderProgram(void ** programData, const std::vector<RefCountPtr<illGraphics::Shader> >& shaderList) {
     //////////////////////////////////
     //declare stuff
     GLint status; //status of shader
@@ -64,7 +64,7 @@ void GlRenderer::loadShaderProgram(void ** programData, const std::vector<RefCou
     memcpy(*programData, &program, sizeof(GLuint));
 }
 
-void GlRenderer::unloadShaderProgram(void ** programData) {
+void GlBackend::unloadShaderProgram(void ** programData) {
     glDeleteProgram(*(GLuint *)(*programData));
     delete (GLuint *) *programData;
     *programData = NULL;

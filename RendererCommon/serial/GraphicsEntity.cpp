@@ -1,10 +1,10 @@
 #include <cassert>
 
 #include "Util/Geometry/geomUtil.h"
-#include "Graphics/serial/Scene/GraphicsEntity.h"
-#include "Graphics/serial/Scene/GraphicsScene.h"
+#include "RendererCommon/serial/GraphicsEntity.h"
+#include "RendererCommon/serial/GraphicsScene.h"
 
-namespace illGraphics {
+namespace illRendererCommon {
 
 void GraphicsEntity::GraphicsNode::rootMove(const glm::vec3& position) {
     assert(m_state == State::IN_SCENE);
