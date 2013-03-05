@@ -7,7 +7,11 @@ namespace illPhysFs {
 class PhysFsFileSystem : public illFileSystem::FileSystem {
 public:
     void init(const char * argv0);
-    ~PhysFsFileSystem();
+    void deinit();
+
+    virtual ~PhysFsFileSystem() {
+        deinit();
+    }
 
     void addPath(const char * path);
 

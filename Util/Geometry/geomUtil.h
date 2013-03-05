@@ -291,7 +291,7 @@ inline glm::detail::tvec3<T> lineInterceptXZ(const glm::detail::tvec3<T>& pt1, c
     //find t at the y
     T t = (y - pt1.y) / dir.y;
 
-    return glm::detail::tvec3(pt1.x + dir.x * t, y, pt1.z + dir.z * t);
+    return glm::detail::tvec3<T>(pt1.x + dir.x * t, y, pt1.z + dir.z * t);
 }
 
 /**
@@ -305,7 +305,7 @@ inline glm::detail::tvec3<T> lineInterceptYZ(const glm::detail::tvec3<T>& pt1, c
     //find t at the x
     T t = (x - pt1.x) / dir.x;
 
-    return glm::detail::tvec3(x, pt1.y + dir.y * t, pt1.z + dir.z * t);
+    return glm::detail::tvec3<T>(x, pt1.y + dir.y * t, pt1.z + dir.z * t);
 }
 
 /**

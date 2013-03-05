@@ -73,14 +73,17 @@ public:
     Allows looping of passing in seconds past the duration and negative times and all that.
 	Returns an identity transform if passing in a bone index that isn't affected by this animation.
     */
-    inline Transform<> getTransform(uint16_t boneIndex, glm::mediump_float time, LastFrameInfo& lastFrameInfo = LastFrameInfo()) const {
+    inline bool getTransform(uint16_t boneIndex, glm::mediump_float time, Transform<>& dest, LastFrameInfo& lastFrameInfo = LastFrameInfo()) const {
         BoneAnimationMap::const_iterator iter = m_boneAnimation.find(boneIndex);
 
         if(iter == m_boneAnimation.end()) {
-            return Transform<>();
+            //return Transform<>();
+            return false;
         }
         else {
-            return iter->second.getTransform(time, m_duration, lastFrameInfo);
+            //return iter->second.getTransform(time, m_duration, lastFrameInfo);
+            dest = iter->second.getTransform(time, m_duration, lastFrameInfo);
+            return true;
         }
     }
 	

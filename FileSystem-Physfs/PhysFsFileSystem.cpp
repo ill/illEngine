@@ -11,9 +11,9 @@ void PhysFsFileSystem::init(const char * argv0) {
     }
 }
 
-PhysFsFileSystem::~PhysFsFileSystem() {
-    if (!PHYSFS_deinit()) {
-        LOG_FATAL_ERROR("Failed to uninitialize physFS. Error %s", PHYSFS_getLastError());
+void PhysFsFileSystem::deinit() {
+    if(!PHYSFS_deinit()) {
+        LOG_FATAL_ERROR("Failed to deinitialize physFS. Error %s", PHYSFS_getLastError());
     }
 }
 

@@ -124,7 +124,7 @@ public:
 	};
 
     struct Transition {
-		Transition(SkeletonAnimation * animation, 
+		Transition(SkeletonAnimation * animation,
 			float transitionSeconds, 
 			float triggerTime, 
 			float beginTime)
@@ -153,6 +153,7 @@ public:
     Eventually this will support animation trees and all that crazyness.
     */
     Animation m_animations[2];
+
     bool m_currentAnimation;
     glm::mediump_float m_transitionWeight;
     glm::mediump_float m_transitionDelta;
