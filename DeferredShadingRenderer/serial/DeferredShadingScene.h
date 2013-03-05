@@ -14,8 +14,10 @@ namespace illDeferredShadingRenderer {
 
 class DeferredShadingScene : public illRendererCommon::GraphicsScene {
 public:
-    inline DeferredShadingScene(const glm::vec3& cellDimensions, const glm::uvec3& cellNumber)
-        : GraphicsScene(cellDimensions, cellNumber),
+    inline DeferredShadingScene(illRendererCommon::RendererBackend * rendererBackend, 
+            glm::vec3& cellDimensions, const glm::uvec3& cellNumber,
+            glm::vec3& interactionCellDimensions, const glm::uvec3& interactionCellNumber)
+        : GraphicsScene(rendererBackend, cellDimensions, cellNumber, interactionCellDimensions, interactionCellNumber, true),
         m_currentFrame(1) {
         m_lastVisibleFrame = new uint64_t[cellNumber.x * cellNumber.y * cellNumber.z];
 
@@ -31,7 +33,9 @@ public:
 protected:
     uint64_t m_currentFrame;
 
-    ///For each cell, what was the last frame that this cell was visible
+    /**
+    For each cell, what was the last frame that this cell was visible
+    */
     uint64_t * m_lastVisibleFrame;
 };
 

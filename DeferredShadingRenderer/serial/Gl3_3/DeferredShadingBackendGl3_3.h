@@ -6,9 +6,9 @@
 
 namespace illDeferredShadingRenderer {
 
-class DeferredShadingBackendGL3_3 : public illRendererCommon::RendererBackend {
+class DeferredShadingBackendGl3_3 : public illRendererCommon::RendererBackend {
 public:
-    DeferredShadingBackendGL3_3(GlCommon::GlBackend * glBackend)
+    DeferredShadingBackendGl3_3(GlCommon::GlBackend * glBackend)
         : RendererBackend(glBackend)
     {}
 

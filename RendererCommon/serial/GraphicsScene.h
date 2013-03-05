@@ -21,13 +21,22 @@ class Material;
 
 namespace illRendererCommon {
 
+class RendererBackend;
+
+/**
+The base graphics scene.
+More docs to come.
+*/
 class GraphicsScene {
 public:
+    typedef std::unordered_set<GraphicsEntity::GraphicsNode*> NodeContainer;
+    typedef Array<GraphicsEntity::GraphicsNode*> StaticNodeContainer;
+    
     virtual inline ~GraphicsScene() {
-        delete[] m_nodes;
-        delete[] m_staticNodes;
-        delete[] m_lights;
-        delete[] m_staticLights;
+        delete[] m_sceneNodes;
+        delete[] m_staticSceneNodes;
+        delete[] m_lightNodes;
+        delete[] m_staticLightNodes;
     }
 
     /**
@@ -36,10 +45,49 @@ public:
     virtual void render(const illGraphics::Camera& camera) = 0;
 
     /**
-    Returns the grid volume that is used to manage the scene.
+    Returns the grid volume that is used to manage visibility in the scene.
     */
     const GridVolume3D<>& getGridVolume() const {
         return m_grid;
+    }
+
+    /**
+    Returns the finer grid volume for assisting with spatial queries between objects.
+    */
+    const GridVolume3D<>& getInteractionGridVolume() const {
+        return m_interactionGrid;
+    }
+
+    /**
+    Returns a reference to the collection of scene nodes at a given cell array index in the visibility culling grid.
+    If you have a cell grid index (a 3 element vector) you can call getGridVolume to help convert that into an array index.
+    */
+    const NodeContainer& getSceneNodeCell(size_t cellArrayIndex) const {
+        return m_sceneNodes[cellArrayIndex];
+    }
+
+    /**
+    Returns a reference to the collection of static scene nodes at a given cell array index in the visibility culling grid.
+    If you have a cell grid index (a 3 element vector) you can call getGridVolume to help convert that into an array index.
+    */
+    const StaticNodeContainer& getStaticNodeCell(size_t cellArrayIndex) const {
+        return m_staticSceneNodes[cellArrayIndex];
+    }
+
+    /**
+    Returns a reference to the collection of light nodes at a given cell array index in the interaction grid.
+    If you have a cell grid index (a 3 element vector) you can call getInteractionGridVolume to help convert that into an array index.
+    */
+    const NodeContainer& getLightCell(size_t cellArrayIndex) const {
+        return m_lightNodes[cellArrayIndex];
+    }
+
+    /**
+    Returns a reference to the collection of static light nodes at a given cell array index in the interaction grid.
+    If you have a cell grid index (a 3 element vector) you can call getInteractionGridVolume to help convert that into an array index.
+    */
+    const StaticNodeContainer& getStaticLightCell(size_t cellArrayIndex) const {
+        return m_staticLightNodes[cellArrayIndex];
     }
 
 protected:
@@ -49,18 +97,21 @@ protected:
     @param cellDimensions The dimensions of the grid cells in world units.
     @param cellNumber The number of cells in each dimension.
     */
-    inline GraphicsScene(const glm::vec3& cellDimensions, const glm::uvec3& cellNumber)
-        : m_accessCounter(0),
-        m_grid(cellDimensions, cellNumber)
+    inline GraphicsScene(RendererBackend * rendererBackend, 
+            const glm::vec3& cellDimensions, const glm::uvec3& cellNumber,
+            const glm::vec3& interactionCellDimensions, const glm::uvec3& interactionCellNumber,
+            bool trackLightsInMainGrid)
+        : m_trackLightsInMainGrid(trackLightsInMainGrid),
+        m_rendererBackend(rendererBackend),
+        m_accessCounter(0),
+        m_grid(cellDimensions, cellNumber),
+        m_interactionGrid(interactionCellDimensions, interactionCellNumber)
     {
-        m_nodes = new NodeContainer[cellNumber.x * cellNumber.y * cellNumber.z];
-        m_staticNodes = new StaticNodeContainer[cellNumber.x * cellNumber.y * cellNumber.z];
-        m_lights = new NodeContainer[cellNumber.x * cellNumber.y * cellNumber.z];
-        m_staticLights = new StaticNodeContainer[cellNumber.x * cellNumber.y * cellNumber.z];
+        m_sceneNodes = new NodeContainer[cellNumber.x * cellNumber.y * cellNumber.z];
+        m_staticSceneNodes = new StaticNodeContainer[cellNumber.x * cellNumber.y * cellNumber.z];
+        m_lightNodes = new NodeContainer[interactionCellNumber.x * interactionCellNumber.y * interactionCellNumber.z];
+        m_staticLightNodes = new StaticNodeContainer[interactionCellNumber.x * interactionCellNumber.y * interactionCellNumber.z];
     }
-
-    typedef std::unordered_set<GraphicsEntity::GraphicsNode*> NodeContainer;
-    typedef Array<GraphicsEntity::GraphicsNode*> StaticNodeContainer;
 
     struct RenderArgs {       
         struct MeshInfo {
@@ -82,115 +133,154 @@ protected:
     };
 
 private:
-    inline void addNode(GraphicsEntity::GraphicsNode * node) {
-        BoxIterator<> iter = m_grid.boxIterForWorldBounds(node->getFullBoundingVol());
+    /**
+    If true tracks lights in both the lights grid and the main scene grid.
+    If false, tracks lights only in the lights grid.
 
-        NodeContainer * nodeContainer = nodeCollectionForType(node->getType());
-    
-        while(!iter.atEnd()) {
-            nodeContainer[m_grid.indexForCell(iter.getCurrentPosition())].insert(node);
-            iter.forward();
+    Forward rendering should leave this as false, and deferred shading should leave this as true.
+    */
+    bool m_trackLightsInMainGrid;
+
+    inline void addNode(GraphicsEntity::GraphicsNode * node) {
+        //regular nodes
+        if(node->getType() == GraphicsEntity::GraphicsNode::Type::GENERIC
+                || (m_trackLightsInMainGrid && node->getType() == GraphicsEntity::GraphicsNode::Type::LIGHT)) {
+            BoxIterator<> iter = m_grid.boxIterForWorldBounds(node->getFullBoundingVol());
+                
+            while(!iter.atEnd()) {
+                m_sceneNodes[m_grid.indexForCell(iter.getCurrentPosition())].insert(node);
+                iter.forward();
+            }
+        }
+
+        //lights
+        if(node->getType() == GraphicsEntity::GraphicsNode::Type::LIGHT) {
+            BoxIterator<> iter = m_interactionGrid.boxIterForWorldBounds(node->getFullBoundingVol());
+                
+            while(!iter.atEnd()) {
+                m_lightNodes[m_grid.indexForCell(iter.getCurrentPosition())].insert(node);
+                iter.forward();
+            }
         }
     }
 
     inline void removeNode(GraphicsEntity::GraphicsNode * node) {
-        BoxIterator<> iter = m_grid.boxIterForWorldBounds(node->getFullBoundingVol());
+        //regular nodes
+        if(node->getType() == GraphicsEntity::GraphicsNode::Type::GENERIC
+                || (m_trackLightsInMainGrid && node->getType() == GraphicsEntity::GraphicsNode::Type::LIGHT)) {
+            BoxIterator<> iter = m_grid.boxIterForWorldBounds(node->getFullBoundingVol());
+            
+            while(!iter.atEnd()) {
+                m_sceneNodes[m_grid.indexForCell(iter.getCurrentPosition())].erase(node);
+                iter.forward();
+            }
+        }
 
-        NodeContainer * nodeContainer = nodeCollectionForType(node->getType());
-
-        while(!iter.atEnd()) {
-            nodeContainer[m_grid.indexForCell(iter.getCurrentPosition())].erase(node);
-            iter.forward();
+        //lights
+        if(node->getType() == GraphicsEntity::GraphicsNode::Type::LIGHT) {
+            BoxIterator<> iter = m_interactionGrid.boxIterForWorldBounds(node->getFullBoundingVol());
+                
+            while(!iter.atEnd()) {
+                m_lightNodes[m_grid.indexForCell(iter.getCurrentPosition())].erase(node);
+                iter.forward();
+            }
         }
     }
 
     inline void moveNode(GraphicsEntity::GraphicsNode * node, const Box<>& prevBounds) {
         //remove
         {
-            BoxOmitIterator<> iter = m_grid.boxOmitIterForWorldBounds(prevBounds, node->getFullBoundingVol());
+            //regular nodes
+            if(node->getType() == GraphicsEntity::GraphicsNode::Type::GENERIC
+                    || (m_trackLightsInMainGrid && node->getType() == GraphicsEntity::GraphicsNode::Type::LIGHT)) {
+                BoxOmitIterator<> iter = m_grid.boxOmitIterForWorldBounds(prevBounds, node->getFullBoundingVol());
 
-            NodeContainer * nodeContainer = nodeCollectionForType(node->getType());
-    
-            while(!iter.atEnd()) {
-                nodeContainer[m_grid.indexForCell(iter.getCurrentPosition())].insert(node);
-                iter.forward();
+                while(!iter.atEnd()) {
+                    m_sceneNodes[m_grid.indexForCell(iter.getCurrentPosition())].insert(node);
+                    iter.forward();
+                }
+            }
+
+            //lights
+            if(node->getType() == GraphicsEntity::GraphicsNode::Type::LIGHT) {
+                BoxOmitIterator<> iter = m_interactionGrid.boxOmitIterForWorldBounds(prevBounds, node->getFullBoundingVol());
+
+                while(!iter.atEnd()) {
+                    m_lightNodes[m_grid.indexForCell(iter.getCurrentPosition())].insert(node);
+                    iter.forward();
+                }
             }
         }
-
+        
         //add
         {
-            BoxOmitIterator<> iter = m_grid.boxOmitIterForWorldBounds(node->getFullBoundingVol(), prevBounds);
+            //regular nodes
+            if(node->getType() == GraphicsEntity::GraphicsNode::Type::GENERIC
+                    || (m_trackLightsInMainGrid && node->getType() == GraphicsEntity::GraphicsNode::Type::LIGHT)) {
+                BoxOmitIterator<> iter = m_grid.boxOmitIterForWorldBounds(node->getFullBoundingVol(), prevBounds);
 
-            NodeContainer * nodeContainer = nodeCollectionForType(node->getType());
+                while(!iter.atEnd()) {
+                    m_sceneNodes[m_grid.indexForCell(iter.getCurrentPosition())].erase(node);
+                    iter.forward();
+                }
+            }
 
-            while(!iter.atEnd()) {
-                nodeContainer[m_grid.indexForCell(iter.getCurrentPosition())].erase(node);
-                iter.forward();
+            //lights
+            if(node->getType() == GraphicsEntity::GraphicsNode::Type::LIGHT) {
+                BoxOmitIterator<> iter = m_interactionGrid.boxOmitIterForWorldBounds(node->getFullBoundingVol(), prevBounds);
+
+                while(!iter.atEnd()) {
+                    m_lightNodes[m_grid.indexForCell(iter.getCurrentPosition())].erase(node);
+                    iter.forward();
+                }
             }
         }
     }
 
 protected:
-    inline NodeContainer * nodeCollectionForType(GraphicsEntity::GraphicsNode::Type type) {
-        switch(type) {
-        case GraphicsEntity::GraphicsNode::Type::GENERIC:
-            return m_nodes;
-
-        case GraphicsEntity::GraphicsNode::Type::LIGHT:
-            return m_lights;
-
-        default:
-            LOG_FATAL_ERROR("Invalid Node Type");
-            return NULL;
-        }
-    }
-
-    inline StaticNodeContainer * staticNodeCollectionForType(GraphicsEntity::GraphicsNode::Type type) {
-        switch(type) {
-        case GraphicsEntity::GraphicsNode::Type::GENERIC:
-            return m_staticNodes;
-
-        case GraphicsEntity::GraphicsNode::Type::LIGHT:
-            return m_staticLights;
-
-        default:
-            LOG_FATAL_ERROR("Invalid Node Type");
-            return NULL;
-        }
-    }
+    RendererBackend * m_rendererBackend;
 
     /**
     The counter that keeps track of which nodes have been accessed in some way during some call.
     This is to handle nodes that overlap multiple cells in the grid and keeps them from being processed more than once.
     */
     uint64_t m_accessCounter;
-
-    //TODO: add a finer grid for tracking lights that's used specifically for finding lights close to an object for forward rendering
-
+    
     /**
     The 3D uniform grid for the scene.
+    This grid is more sparce and is used for the visibility computation.
     */
     GridVolume3D<> m_grid;
 
     /**
-    The list of moving nodes per grid cell.
+    An additional finer grid for keeping track of interactions with other objects.
+    This would speed up spatial queries to find all surrounding lights for example.
     */
-    NodeContainer * m_nodes;
+    GridVolume3D<> m_interactionGrid;
 
     /**
-    The list of static nodes per grid cell.
+    The scene nodes for each cell managed by the main visibility grid.
     */
-    StaticNodeContainer * m_staticNodes;
+    NodeContainer * m_sceneNodes;
 
     /**
-    The list of moving lights per grid cell.
+    The static scene nodes for each cell managed by the main visibility grid.
     */
-    NodeContainer * m_lights;
-    
+    StaticNodeContainer * m_staticSceneNodes;
+
     /**
-    The list of static lights per grid cell.
+    The light nodes for each cell managed by the interaction grid.
+
+    Lights are also kept track of in the scene cells structure as well if trackLightsInMain is true.
     */
-    StaticNodeContainer * m_staticLights;
+    NodeContainer * m_lightNodes;
+
+    /**
+    The static light nodes for each cell managed by the interaction grid.
+
+    Lights are also kept track of in the static scene cells structure as well if trackLightsInMain is true.
+    */
+    StaticNodeContainer * m_staticLightNodes;
 
     friend class GraphicsEntity::GraphicsNode;
 };

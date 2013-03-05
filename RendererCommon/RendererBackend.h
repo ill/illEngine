@@ -8,6 +8,7 @@ class GraphicsBackend;
 namespace illRendererCommon {
 class RendererBackend {
 public:
+    
 
 protected:
     RendererBackend(illGraphics::GraphicsBackend * backend)
