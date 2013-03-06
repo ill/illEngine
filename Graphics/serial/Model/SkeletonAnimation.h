@@ -17,7 +17,7 @@
 
 namespace illGraphics {
 
-class RendererBackend;
+class GraphicsBackend;
 
 //TODO: put this together right, at the moment it's just quickly thrown together
 
@@ -27,7 +27,7 @@ struct SkeletonAnimationLoadArgs {
     //TODO: more to come?  Maybe?
 };
 
-class SkeletonAnimation : public ResourceBase<SkeletonAnimation, SkeletonAnimationLoadArgs, RendererBackend> {
+class SkeletonAnimation : public ResourceBase<SkeletonAnimationLoadArgs, GraphicsBackend> {
 public:
     struct AnimData {
         template <typename T>
@@ -55,7 +55,7 @@ public:
     }
 
     virtual void unload();
-    virtual void reload(RendererBackend * renderer);
+    virtual void reload(GraphicsBackend * backend);
 
     inline unsigned int getNumBones() const {
         return (unsigned int) m_boneAnimation.size();
@@ -91,6 +91,9 @@ private:
     glm::mediump_float m_duration;          ///<Duration in seconds
     BoneAnimationMap m_boneAnimation;		///<map of bone index to animation
 };
+
+typedef uint32_t SkeletonAnimationId;
+typedef ConfigurableResourceManager<SkeletonAnimationId, SkeletonAnimation, SkeletonAnimationLoadArgs, GraphicsBackend> SkeletonAnimationManager;
 
 }
 

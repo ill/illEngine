@@ -9,7 +9,7 @@
 
 namespace illGraphics {
 
-class RendererBackend;
+class GraphicsBackend;
 
 struct AnimSetLoadArgs {
     std::string m_path; //path of anim set file
@@ -29,12 +29,12 @@ and reuse animations between the different skeletons.  This might be useful if y
 of a character but want to reuse the same animations.  For example, this way the Left foot bone will always be index 5
 in all animations, skeletons, and meshes that belong to an anim set.
 */
-class AnimSet : public ResourceBase<AnimSet, AnimSetLoadArgs, RendererBackend> { //TODO: RendererBackend not needed for this, figure out how to write the templates to not require a loader
+class AnimSet : public ResourceBase<AnimSetLoadArgs, GraphicsBackend> { //TODO: RendererBackend not needed for this, figure out how to write the templates to not require a loader
 public:
 	typedef std::map<std::string, unsigned int> BoneNameMap;
 
 	virtual void unload();
-    virtual void reload(RendererBackend * renderer);
+    virtual void reload(GraphicsBackend * backend);
 
     inline size_t getNumBones() const {
 		return m_boneNameMap.size();
@@ -58,6 +58,9 @@ public:
 private:
 	BoneNameMap m_boneNameMap;
 };
+
+typedef uint32_t AnimSetId;
+typedef ConfigurableResourceManager<AnimSetId, AnimSet, AnimSetLoadArgs, GraphicsBackend> AnimSetManager;
 
 }
 

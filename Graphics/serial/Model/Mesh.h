@@ -20,7 +20,7 @@ struct MeshLoadArgs {
 /**
 Contains some mesh and its associated vertex buffer objects and index buffer objects.
 */
-class Mesh : public ResourceBase<Mesh, MeshLoadArgs, GraphicsBackend> {
+class Mesh : public ResourceBase<MeshLoadArgs, GraphicsBackend> {
 public:
     Mesh()
         : m_meshFrontendData(NULL),
@@ -50,6 +50,9 @@ private:
     GraphicsBackend * m_backend;
     void * m_meshBackendData;
 };
+
+typedef uint32_t MeshId;
+typedef ConfigurableResourceManager<MeshId, Mesh, MeshLoadArgs, GraphicsBackend> MeshManager;
 }
 
 #endif

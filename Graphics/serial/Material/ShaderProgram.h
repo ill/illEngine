@@ -24,7 +24,7 @@ struct ShaderProgramLoader {
     ShaderManager * m_shaderManager;
 };
 
-class ShaderProgram : public ResourceBase<ShaderProgram, uint64_t, ShaderProgramLoader> {
+class ShaderProgram : public ResourceBase<uint64_t, ShaderProgramLoader> {
 public:
     enum Feature {
         SHPRG_FORWARD = 1 << 0,             ///<Doing a forward render
@@ -77,7 +77,8 @@ private:
     void * m_shaderProgramData;
 };
 
-typedef ResourceManager<uint64_t, ShaderProgram, ShaderProgramLoader> ShaderProgramManager;
+typedef uint64_t ShaderProgramId;
+typedef ResourceManager<ShaderProgramId, ShaderProgram, ShaderProgramLoader> ShaderProgramManager;
 }
 
 #endif

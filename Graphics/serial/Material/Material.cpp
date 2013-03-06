@@ -67,7 +67,7 @@ void Material::reload(MaterialLoader * rendererBackend) {
     }
 
     //check if should do forward rendering instead of deferred shading
-    if(m_loader->m_forceForwardRendering || m_loadArgs.m_forceForwardRendering || m_loadArgs.m_blendMode != MaterialLoadInfo::BlendMode::NONE) {
+    if(m_loader->m_forceForwardRendering || m_loadArgs.m_forceForwardRendering || m_loadArgs.m_blendMode != MaterialLoadArgs::BlendMode::NONE) {
         shaderMask |= ShaderProgram::SHPRG_FORWARD;
 
         if(!m_loadArgs.m_noLighting) {

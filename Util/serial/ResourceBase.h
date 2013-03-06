@@ -6,11 +6,10 @@
 
 /**
 Base class for a Resource like a texture or sound.
-@tparam T_LoadArgsStruct The type of struct that holds the loading arguments for the resource when passed into the load function.
-@tparam T_ResourceType The actual class type that implements this base class.
-@tparam T_ManagerType The class type that implementes the resource manager for this class.
+@tparam LoadArgs The type of struct that holds the loading arguments for the resource when passed into the load function.
+@tparam Loader The backend loader object that is used for loading this resource type. (TODO: make a version that doesn't take a loader)
 */
-template <typename T, typename LoadArgs, typename Loader>
+template <typename LoadArgs, typename Loader>
 class ResourceBase 
 {
 public:

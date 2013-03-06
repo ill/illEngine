@@ -29,7 +29,7 @@ I also plan on trying out this article sometime for vector graphics. http://http
 
 This will most likely get redesigned later so there's some common font rendering code and different ways to load fonts in.
 */
-class BitmapFont : public ResourceBase<BitmapFont, BitmapFontLoadArgs, GraphicsBackend> {
+class BitmapFont : public ResourceBase<BitmapFontLoadArgs, GraphicsBackend> {
 public:
     struct CharData {
         uint16_t m_meshIndex;               ///<the index of the first vertex in the mesh that contains geometry data for this character
@@ -176,6 +176,9 @@ private:
     CharData m_charData[NUM_CHARS];
     std::map<unsigned char, std::map<unsigned char, glm::mediump_float> > m_kerningPairs;      ///<Kerning pairs, look up by first character, then by second character, than by amount    
 };
+
+typedef uint32_t BitmapFontId;
+typedef ConfigurableResourceManager<BitmapFontId, BitmapFont, BitmapFontLoadArgs, GraphicsBackend> BitmapFontManager;
 
 }
 

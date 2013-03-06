@@ -129,10 +129,10 @@ void SkeletonAnimation::unload() {
     m_state = RES_UNLOADED;
 }
 
-void SkeletonAnimation::reload(RendererBackend * rendererBackend) {
+void SkeletonAnimation::reload(GraphicsBackend * backend) {
     unload();
 
-    m_loader = rendererBackend;
+    m_loader = backend;
 
     m_state = RES_LOADING;
 	

@@ -25,10 +25,10 @@ void Skeleton::unload() {
     m_state = RES_UNLOADED;
 }
 
-void Skeleton::reload(RendererBackend * rendererBackend) {
+void Skeleton::reload(GraphicsBackend * backend) {
     unload();
 
-    m_loader = rendererBackend;
+    m_loader = backend;
 
     m_state = RES_LOADING;
 	

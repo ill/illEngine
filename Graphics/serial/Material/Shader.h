@@ -10,7 +10,7 @@ namespace illGraphics {
 
 class GraphicsBackend;
 
-class Shader : public ResourceBase<Shader, uint64_t, GraphicsBackend> {
+class Shader : public ResourceBase<uint64_t, GraphicsBackend> {
 public:
     enum Feature {
         SHADER_3D_VERT = 1 << 0,            ///<Doing a standard 3D vertex transform
@@ -56,7 +56,8 @@ private:
     void* m_shaderData;
 };
 
-typedef ResourceManager<uint64_t, Shader, GraphicsBackend> ShaderManager;
+typedef uint64_t ShaderId;
+typedef ResourceManager<ShaderId, Shader, GraphicsBackend> ShaderManager;
 }
 
 #endif

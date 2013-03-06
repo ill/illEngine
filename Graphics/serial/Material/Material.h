@@ -10,7 +10,7 @@
 
 namespace illGraphics {
 
-struct MaterialLoadInfo {
+struct MaterialLoadArgs {
 	enum class BlendMode {
 		NONE,                           ///<solid object, no blending
 		ALPHA,                          ///<alpha blended
@@ -65,7 +65,7 @@ struct MaterialLoader {
     TextureManager * m_textureManager;
 };
 
-class Material : public ResourceBase<Material, MaterialLoadInfo, MaterialLoader> {
+class Material : public ResourceBase<MaterialLoadArgs, MaterialLoader> {
 public:
 	Material()
         : ResourceBase()
@@ -106,6 +106,9 @@ private:
 
 	RefCountPtr<ShaderProgram> m_shaderProgram;
 };
+
+typedef uint32_t MaterialId;
+typedef ConfigurableResourceManager<MaterialId, Material, MaterialLoadArgs, GraphicsBackend> MaterialManager;
 
 }
 

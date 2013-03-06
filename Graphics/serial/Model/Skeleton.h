@@ -12,7 +12,7 @@
 
 namespace illGraphics {
 
-class RendererBackend;
+class GraphicsBackend;
 
 //TODO: put this together right, at the moment it's just quickly thrown together
 
@@ -22,7 +22,7 @@ struct SkeletonLoadArgs {
     //TODO: more to come?  Maybe?
 };
 
-class Skeleton : public ResourceBase<Skeleton, SkeletonLoadArgs, RendererBackend> { //TODO: RendererBackend not needed for this, figure out how to write the templates to not require a loader
+class Skeleton : public ResourceBase<SkeletonLoadArgs, GraphicsBackend> { //TODO: RendererBackend not needed for this, figure out how to write the templates to not require a loader
 public:
 	struct Bone {
         glm::mat4 m_relativeTransform;  //the transform relative to the parent in the bind pose
@@ -53,7 +53,7 @@ public:
     }
 
     virtual void unload();
-    virtual void reload(RendererBackend * renderer);
+    virtual void reload(GraphicsBackend * backend);
 
     inline size_t getNumBones() const {
 		return m_bones.size();
@@ -72,7 +72,8 @@ private:
     BoneHeirarchy * m_heirarchy;
 };
 
-typedef ConfigurableResourceManager<uint32_t, Skeleton, SkeletonLoadArgs, RendererBackend> SkeletonManager;
+typedef uint32_t SkeletonId;
+typedef ConfigurableResourceManager<SkeletonId, Skeleton, SkeletonLoadArgs, GraphicsBackend> SkeletonManager;
 
 }
 

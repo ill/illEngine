@@ -18,6 +18,10 @@ public:
     glm::vec3 m_color;
     glm::mediump_float m_intensity;
 
+    inline Type getType() const {
+        return m_type;
+    }
+
 protected:
     LightBase()
         : m_type(Type::INVALID)
@@ -61,19 +65,16 @@ struct SpotLight : public PointLight {
 
     SpotLight(const glm::vec3& color, glm::mediump_float intensity,
         glm::mediump_float attenuationStart, glm::mediump_float attenuationEnd,
-        glm::mediump_float coneStart, glm::mediump_float coneEnd, const glm::quat& direction)
+        glm::mediump_float coneStart, glm::mediump_float coneEnd)
         : PointLight(color, intensity, attenuationStart, attenuationEnd),
         m_coneStart(coneStart),
-        m_coneEnd(coneEnd),
-        m_direction(direction)
+        m_coneEnd(coneEnd)
     {
         m_type = Type::SPOT;
     }
 
     glm::mediump_float m_coneStart;
     glm::mediump_float m_coneEnd;
-      
-    glm::quat m_direction;
 };
 
 struct DirectionLight : public LightBase {

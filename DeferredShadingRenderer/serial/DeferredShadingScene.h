@@ -14,11 +14,15 @@ namespace illDeferredShadingRenderer {
 
 class DeferredShadingScene : public illRendererCommon::GraphicsScene {
 public:
-    inline DeferredShadingScene(illRendererCommon::RendererBackend * rendererBackend, 
+    inline DeferredShadingScene(illRendererCommon::RendererBackend * rendererBackend,
+            illGraphics::MeshManager * meshManager, illGraphics::MaterialManager * materialManager,
             glm::vec3& cellDimensions, const glm::uvec3& cellNumber,
             glm::vec3& interactionCellDimensions, const glm::uvec3& interactionCellNumber)
-        : GraphicsScene(rendererBackend, cellDimensions, cellNumber, interactionCellDimensions, interactionCellNumber, true),
-        m_currentFrame(1) {
+        : GraphicsScene(rendererBackend, 
+            meshManager, materialManager, 
+            cellDimensions, cellNumber, interactionCellDimensions, interactionCellNumber, true),
+        m_currentFrame(1) 
+    {
         m_lastVisibleFrame = new uint64_t[cellNumber.x * cellNumber.y * cellNumber.z];
 
         memset(m_lastVisibleFrame, 0, sizeof(uint64_t));

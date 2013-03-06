@@ -23,10 +23,10 @@ void AnimSet::unload() {
     m_state = RES_UNLOADED;
 }
 
-void AnimSet::reload(RendererBackend * rendererBackend) {
+void AnimSet::reload(GraphicsBackend * backend) {
     unload();
 
-    m_loader = rendererBackend;
+    m_loader = backend;
 
     m_state = RES_LOADING;
 	

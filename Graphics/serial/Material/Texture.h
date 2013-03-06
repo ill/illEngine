@@ -25,7 +25,7 @@ struct TextureLoadArgs {
 Textures are used by materials for drawing 3D objects.
 Sometimes a texture might be useable by itself outside of a material for drawing HUD elements or something.
 */
-class Texture : public ResourceBase<Texture, TextureLoadArgs, GraphicsBackend> {
+class Texture : public ResourceBase<TextureLoadArgs, GraphicsBackend> {
 public:
     Texture()
         : ResourceBase(),
@@ -47,7 +47,8 @@ private:
     void* m_textureData;
 };
 
-typedef ConfigurableResourceManager<uint32_t, Texture, TextureLoadArgs, GraphicsBackend> TextureManager;
+typedef uint32_t TextureId;
+typedef ConfigurableResourceManager<TextureId, Texture, TextureLoadArgs, GraphicsBackend> TextureManager;
 }
 
 #endif
