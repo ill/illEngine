@@ -8,7 +8,7 @@
 /**
 A wrapper around plain arrays.  Simpler than vector since it
 simply allocates memory rather than calling constructors and all that crazyness.
-This should save some CPU cycles as well ass taking off some limitations by C++
+This should save some CPU cycles as well as taking off some limitations by C++
 of what kinds of classes can be stored in a collection.
 */
 template <typename T>

@@ -6,18 +6,18 @@
 
 /**
 Useful for objects that are quickly destroyed and created all the time, like particles.
-This pool resizes itself it more room is needed.
+This pool resizes itself if more room is needed.
 
 The pool works by array indeces.  When you reserve a new object, you get its array index in the pool.
 When you free an object, you free it using its array index, releasing it back into the pool to be returned later.
 
-The objects in the pool are all preallocated and constructed so when you get a new object id back, just reinitialize that
-object from scratch.  2 phase initialization is good for objects managed in this pool.
+The objects in the pool are all preallocated but not constructed so when you get a new object id back, reinitialize that
+object from scratch or call the inplace new operator on it.  2 phase initialization is good for objects managed in this pool.
 
 The IterablePool class defined below additionally keeps track of which ids are live so you can easily iterate over all live
 objects in the pool, to maybe update all live particles or something.
 */
-template <typename T>
+template <typename Key, typename T>
 class Pool {
 public:
     /**
@@ -25,7 +25,7 @@ public:
 
     @param reserve How many elements to have in the pool.  The pool will resize itself if more are needed.
     */
-    Pool(size_t reserve = 10) {
+    Pool(Key reserve = 10) {
         m_elements.resize(reserve);
 
         clear();
@@ -35,7 +35,7 @@ public:
     Returns an id of a free element in the pool.  Now you can use this id to release the object
     from the pool or for accessing the object.
     */
-    inline size_t getFreeId() {
+    inline Key getFreeId() {
         if(m_freeHead == m_elements.size()) {   //if no free
             m_elements.resize(m_elements.size() + 1);
             return m_elements.size() - 1;
@@ -50,9 +50,9 @@ public:
     /**
     Resizes the pool to hold more elements if needed.  Does nothing if trying to make the pool smaller.
     */
-    inline void reserveSpace(size_t size) {
+    inline void reserveSpace(Key size) {
         if(m_elements.size() < size) {
-            size_t originalSize = m_elements.size();
+            Key originalSize = m_elements.size();
 
             m_elements.resize(size);
             
@@ -67,7 +67,7 @@ public:
             m_freeHead = originalSize;
 
             //push all new ids, I hope this isn't too inefficient            
-            for(size_t id = originalSize; id < size; id++) {
+            for(Key id = originalSize; id < size; id++) {
                 m_elements[id].m_nextFree = id + 1;
             }
         }
@@ -78,7 +78,7 @@ public:
     At this point, the object that this id refers to can't be considered valid anymore.
     In fact it'll be corrupted now.
     */
-    inline void remove(size_t elementId) {
+    inline void remove(Key elementId) {
         m_elements[elementId].m_nextFree = m_freeHead;
         m_freeHead = elementId;
     }
@@ -89,7 +89,7 @@ public:
     inline void clear() { 
         m_freeHead = 0;
 
-        for(size_t id = 0; id < m_elements.size(); id++) {
+        for(Key id = 0; id < m_elements.size(); id++) {
             m_elements[id].m_nextFree = id + 1;
         }
 
@@ -99,7 +99,7 @@ public:
     /**
     Gets a constant reference to an element in the pool for an id.
     */
-    inline const T& get(size_t id) const {
+    inline const T& get(Key id) const {
         //TODO: make sure id is valid, at least in debug build
         return m_elements[id].m_element;
     }
@@ -107,12 +107,12 @@ public:
     /**
     Gets a reference to an element in the pool for an id.
     */
-    inline T& get(size_t id) {
+    inline T& get(Key id) {
         //TODO: make sure id is valid, at least in debug build
         return m_elements[id].m_element;
     }
 
-    inline bool isIdReleased(size_t id) const {
+    inline bool isIdReleased(Key id) const {
         //TODO: implement if needed
         //return m_idGenerator.isIdReleased(id);
     }
@@ -134,28 +134,28 @@ private:
 This is a wrapper around the pool class by maintaining a set of which ids are live.
 You can iterate over that set to get back all live objects.
 */
-template <typename T>
+template <typename Key, typename T>
 class IterablePool {
 public:
-    typedef std::unordered_set<size_t> LiveSet;
+    typedef std::unordered_set<Key> LiveSet;
 
-    IterablePool(size_t reserve = 10)
+    IterablePool(Key reserve = 10)
         : m_pool(reserve),
         m_elementIds(reserve)
     {}
 
-    inline size_t getFreeId() {
-        size_t res = m_pool.getFreeId();
+    inline Key getFreeId() {
+        Key res = m_pool.getFreeId();
         m_elementIds.insert(res);
 
         return res;
     }
 
-    inline void reserveSpace(size_t size) {
+    inline void reserveSpace(Key size) {
         m_pool.reserveSpace(size);
     }
         
-    inline void remove(size_t elementId) {
+    inline void remove(Key elementId) {
         m_pool.remove(elementId);
         m_elementIds.erase(elementId);
     }
@@ -165,17 +165,17 @@ public:
         m_elementIds.clear();
     }
     
-    inline const T& get(size_t id) const {
+    inline const T& get(Key id) const {
         //TODO: make sure id is valid, at least in debug build
         return m_pool.get(id);
     }
 
-    inline T& get(size_t id) {
+    inline T& get(Key id) {
         //TODO: make sure id is valid, at least in debug build
         return m_pool.get(id);
     }
 
-    inline bool isIdReleased(size_t id) const {
+    inline bool isIdReleased(Key id) const {
         return m_elementIds.find(id) == m_elementIds.end();
     }
 
@@ -189,7 +189,7 @@ public:
 
 private:
     LiveSet m_elementIds;
-    Pool<T> m_pool;
+    Pool<Key, T> m_pool;
 };
 
 #endif

@@ -4,6 +4,8 @@
 #include <sstream>
 #include "Logging/logging.h"
 
+//TODO: don't use this anymore, RTTI isn't even available on some platforms unless you enable it specifically, I'd rather just disable RTTI in release builds anyway
+
 /**
 Functions useful for typecasting in C++ that make use of dynamic_cast.
 This is the proper way to typecast most things instead of using C style casts.

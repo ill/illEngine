@@ -7,7 +7,7 @@
 
 void testPool() {
     {
-        Pool<int> testManager;
+        Pool<size_t, int> testManager;
 
         //test get Free
         size_t refA = testManager.getFreeId();
@@ -87,7 +87,7 @@ void testPool() {
 
 
     {
-        IterablePool<int> testManager;
+        IterablePool<size_t, int> testManager;
 
         //test get Free
         size_t refA = testManager.getFreeId();
@@ -184,7 +184,7 @@ void testPool() {
             liveValuesTest.insert(76);
             liveValuesTest.insert(75);
 
-            for(IterablePool<int>::LiveSet::const_iterator iter = testManager.getLiveSet().begin(); iter != testManager.getLiveSet().end(); iter++) {
+            for(auto iter = testManager.getLiveSet().cbegin(); iter != testManager.getLiveSet().cend(); iter++) {
                 size_t currId = *iter;
                 int currVal = testManager.get(currId);
 

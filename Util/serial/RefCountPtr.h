@@ -11,6 +11,7 @@ template <typename T>
 struct RefCountPtrRoot;
 
 /**
+This is the object that has callbacks to what should happen in certain events.
 */
 template <typename T>
 struct PtrHelper {
@@ -20,10 +21,16 @@ struct PtrHelper {
 
     virtual ~PtrHelper() {}
 
+    /**
+    What happens when there are no more references to the smart pointer.
+    */
     virtual inline void onZeroReferences() {
         delete m_root;
     }
 
+    /**
+    What happens when there are references to the smart pointer again.
+    */
     virtual inline void onNonZeroReferences() {}
 
     RefCountPtrRoot<T> * m_root;
@@ -184,17 +191,6 @@ struct RefCountPtr {
     inline RefCountPtr<C> as() const {
         return RefCountPtr<C>(m_root);
     }
-
-    template<typename C>
-    inline RefCountPtr<C> safeAs() const {
-        if(!is<C>()) {
-            //LOG_FATAL_ERROR("Cannot cast %s to %s", typeid(T).name(), typeid(C).name());
-
-            //TODO: exception
-        }
-
-        return as<C>();
-    }   
 
 private:
     inline void referenceIncrement() {
