@@ -7,25 +7,23 @@
 #include "Util/Geometry/GridVolume3D.h"
 #include "RendererCommon/serial/GraphicsScene.h"
 
-template <typename T = glm::mediump_float>
-struct Frustum;
+#include "DeferredShadingRenderer/DeferredShadingBackend.h"
 
 namespace illDeferredShadingRenderer {
 
 class DeferredShadingScene : public illRendererCommon::GraphicsScene {
 public:
-    inline DeferredShadingScene(illRendererCommon::RendererBackend * rendererBackend,
+    inline DeferredShadingScene(DeferredShadingBackend * rendererBackend,
             illGraphics::MeshManager * meshManager, illGraphics::MaterialManager * materialManager,
             glm::vec3& cellDimensions, const glm::uvec3& cellNumber,
             glm::vec3& interactionCellDimensions, const glm::uvec3& interactionCellNumber)
         : GraphicsScene(rendererBackend, 
             meshManager, materialManager, 
-            cellDimensions, cellNumber, interactionCellDimensions, interactionCellNumber, true),
-        m_currentFrame(1) 
+            cellDimensions, cellNumber, interactionCellDimensions, interactionCellNumber, true)
     {
         m_lastVisibleFrame = new uint64_t[cellNumber.x * cellNumber.y * cellNumber.z];
 
-        memset(m_lastVisibleFrame, 0, sizeof(uint64_t));
+        memset(m_lastVisibleFrame, 0, sizeof(uint64_t) * cellNumber.x * cellNumber.y * cellNumber.z);
     }
     
     virtual ~DeferredShadingScene() {
@@ -35,8 +33,6 @@ public:
     virtual void render(const illGraphics::Camera& camera);
 
 protected:
-    uint64_t m_currentFrame;
-
     /**
     For each cell, what was the last frame that this cell was visible
     */

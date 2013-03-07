@@ -220,6 +220,9 @@ public:
     inline void free() {
         delete[] m_data;
         delete[] m_indeces;
+
+        m_data = NULL;
+        m_indeces = NULL;
     }
 
     /**

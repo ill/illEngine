@@ -5,9 +5,9 @@
 #include <set>
 #include <unordered_set>
 
-#include "Util/Geometry/GridVolume3D.h"
-#include "Util/Geometry/SceneNode.h"
 #include "Util/serial/Array.h"
+#include "Util/Geometry/GridVolume3D.h"
+#include "Util/Geometry/Sphere.h"
 #include "Util/Geometry/BoxIterator.h"
 #include "Util/Geometry/BoxOmitIterator.h"
 #include "RendererCommon/serial/GraphicsNode.h"
@@ -27,9 +27,10 @@ typedef uint32_t MeshId;
 typedef ConfigurableResourceManager<MeshId, Mesh, MeshLoadArgs, GraphicsBackend> MeshManager;
 
 class Material;
+struct MaterialLoader;
 struct MaterialLoadArgs;
 typedef uint32_t MaterialId;
-typedef ConfigurableResourceManager<MaterialId, Material, MaterialLoadArgs, GraphicsBackend> MaterialManager;
+typedef ConfigurableResourceManager<MaterialId, Material, MaterialLoadArgs, MaterialLoader> MaterialManager;
 }
 
 namespace illRendererCommon {
@@ -55,7 +56,7 @@ public:
         delete[] m_lightNodes;
         delete[] m_staticLightNodes;
     }
-
+    
     /**
     Render a scene from a camera angle.  This interacts with the renderer backend directly.
     */
@@ -131,14 +132,27 @@ protected:
         m_materialManager(materialManager),
         m_rendererBackend(rendererBackend),
         m_accessCounter(0),
+        m_frameCounter(1),
         m_grid(cellDimensions, cellNumber),
         m_interactionGrid(interactionCellDimensions, interactionCellNumber),
         m_trackLightsInVisibilityGrid(trackLightsInVisibilityGrid)
     {
-        m_sceneNodes = new NodeContainer[cellNumber.x * cellNumber.y * cellNumber.z];
-        m_staticSceneNodes = new StaticNodeContainer[cellNumber.x * cellNumber.y * cellNumber.z];
-        m_lightNodes = new LightNodeContainer[interactionCellNumber.x * interactionCellNumber.y * interactionCellNumber.z];
-        m_staticLightNodes = new StaticLightNodeContainer[interactionCellNumber.x * interactionCellNumber.y * interactionCellNumber.z];
+        size_t numCells = cellNumber.x * cellNumber.y * cellNumber.z;
+        size_t numInteractionCells = interactionCellNumber.x * interactionCellNumber.y * interactionCellNumber.z;
+
+        m_sceneNodes = new NodeContainer[numCells];
+        LOG_DEBUG("Allocated %u Scene Node Cells. Each cell is %u bytes. Allocated %u bytes.", numCells, sizeof(NodeContainer), numCells * sizeof(NodeContainer));
+
+        m_staticSceneNodes = new StaticNodeContainer[numCells];
+        LOG_DEBUG("Allocated %u Static Scene Node Cells. Each cell is %u bytes. Allocated %u bytes.", numCells, sizeof(StaticNodeContainer), numCells * sizeof(StaticNodeContainer));
+
+        m_lightNodes = new LightNodeContainer[numInteractionCells];
+        LOG_DEBUG("Allocated %u Light Node Cells. Each cell is %u bytes. Allocated %u bytes.", numInteractionCells, sizeof(LightNodeContainer), numInteractionCells * sizeof(LightNodeContainer));
+
+        m_staticLightNodes = new StaticLightNodeContainer[numInteractionCells];
+        LOG_DEBUG("Allocated %u Static Light Cells. Each cell is %u bytes. Allocated %u bytes.", numInteractionCells, sizeof(StaticLightNodeContainer), numInteractionCells * sizeof(StaticLightNodeContainer));
+
+        LOG_DEBUG("Scene cells take %u bytes", numCells * sizeof(NodeContainer) + numCells * sizeof(StaticNodeContainer) + numInteractionCells * sizeof(LightNodeContainer) + numInteractionCells * sizeof(StaticLightNodeContainer));
     }
 
 private:
@@ -173,6 +187,11 @@ protected:
     This is to handle nodes that overlap multiple cells in the grid and keeps them from being processed more than once.
     */
     mutable uint64_t m_accessCounter;
+
+    /**
+    The counter keeps track of the current frame.
+    */
+    mutable uint64_t m_frameCounter;
     
     /**
     The 3D uniform grid for the scene.

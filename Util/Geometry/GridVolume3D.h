@@ -114,25 +114,36 @@ public:
 
         //clip the mesh against the bounds
         meshEdgeList->convexClip(Plane<>(glm::detail::tvec3<W>((W) 1, (W) 0, (W) 0), -m_volumeBounds.m_min.x));
-        if(meshEdgeList->m_points.empty()) return ConvexMeshIterator<W, unsigned int>();
+        if(meshEdgeList->m_points.empty()) {
+            return ConvexMeshIterator<W, unsigned int>();
+        }
 
         meshEdgeList->convexClip(Plane<>(glm::detail::tvec3<W>((W) 0, (W) 1, (W) 0), -m_volumeBounds.m_min.y));
-        if(meshEdgeList->m_points.empty()) return ConvexMeshIterator<W, unsigned int>();
+        if(meshEdgeList->m_points.empty()) {
+            return ConvexMeshIterator<W, unsigned int>();
+        }
 
         meshEdgeList->convexClip(Plane<>(glm::detail::tvec3<W>((W) 0, (W) 0, (W) 1), -m_volumeBounds.m_min.z));
-        if(meshEdgeList->m_points.empty()) return ConvexMeshIterator<W, unsigned int>();
+        if(meshEdgeList->m_points.empty()) {
+            return ConvexMeshIterator<W, unsigned int>();
+        }
 
 
         meshEdgeList->convexClip(Plane<>(glm::detail::tvec3<W>((W) -1, (W) 0, (W) 0), m_volumeBounds.m_max.x));
-        if(meshEdgeList->m_points.empty()) return ConvexMeshIterator<W, unsigned int>();
+        if(meshEdgeList->m_points.empty()) {
+            return ConvexMeshIterator<W, unsigned int>();
+        }
 
         meshEdgeList->convexClip(Plane<>(glm::detail::tvec3<W>((W) 0, (W) -1, (W) 0), m_volumeBounds.m_max.y));
-        if(meshEdgeList->m_points.empty()) return ConvexMeshIterator<W, unsigned int>();
+        if(meshEdgeList->m_points.empty()) {
+            return ConvexMeshIterator<W, unsigned int>();
+        }
 
         meshEdgeList->convexClip(Plane<>(glm::detail::tvec3<W>((W) 0, (W) 0, (W) -1), m_volumeBounds.m_max.z));
-        if(meshEdgeList->m_points.empty()) return ConvexMeshIterator<W, unsigned int>();
-
-
+        if(meshEdgeList->m_points.empty()) {
+            return ConvexMeshIterator<W, unsigned int>();
+        }
+        
         meshEdgeList->computeBounds(m_volumeBounds);
 
         //get intersection of frustum and bounds
@@ -141,7 +152,6 @@ public:
 
         if(iterBounds.intersects(frustumGrid)) {
             iterBounds.constrain(frustumGrid);
-
             return ConvexMeshIterator<W, unsigned int>(meshEdgeList, direction, cellBoundsForWorldBounds(meshEdgeList->m_bounds), m_cellDimensions);
         }
         else {

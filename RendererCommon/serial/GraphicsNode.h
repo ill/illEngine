@@ -72,6 +72,7 @@ protected:
             const glm::mat4& transform, const Box<>& boundingVol,
             Type type, State initialState = State::IN_SCENE)
         : m_accessCounter(0),
+        m_frameCounter(0),
         m_transform(transform),
         m_boundingVol(boundingVol),
         m_scene(scene),
@@ -91,6 +92,11 @@ private:
     This is so scene queries don't return duplicate results when an object intersects multiple cells.
     */
     uint64_t m_accessCounter;
+
+    /**
+    This is so visibility culling queries don't return duplicate results when an object intersects multiple cells.
+    */
+    uint64_t m_frameCounter;
 
     glm::mat4 m_transform;
 

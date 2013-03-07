@@ -47,7 +47,6 @@ public:
 
 private:
     MeshData<> * m_meshFrontendData;
-    GraphicsBackend * m_backend;
     void * m_meshBackendData;
 };
 

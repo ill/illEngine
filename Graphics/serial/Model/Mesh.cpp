@@ -8,6 +8,10 @@ void Mesh::unload() {
         LOG_FATAL_ERROR("Attempting to unload mesh while it's loading");
     }
 
+    if(m_state == RES_UNINITIALIZED || m_state == RES_UNLOADED) {
+        return;
+    }
+
     if(m_loader) {
         m_loader->unloadMesh(&m_meshBackendData);
         m_loader = NULL;
@@ -37,7 +41,9 @@ void Mesh::frontendBackendTransferInternal(GraphicsBackend * loader, bool freeFr
     m_state = RES_LOADED;
 }
 
-void Mesh::reload(GraphicsBackend * backend) {    
+void Mesh::reload(GraphicsBackend * backend) {
+    unload();
+
     IllmeshLoader meshLoader(m_loadArgs.m_path.c_str());
 
     setFrontentDataInternal(new MeshData<>(meshLoader.m_numInd / 3, meshLoader.m_numVert, meshLoader.m_features));

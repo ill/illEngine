@@ -81,7 +81,7 @@ public:
     inline void initialize(LoadArgs * loadArgs, std::map<std::string, Id>* nameMap) {
         delete m_nameMap;
         delete[] m_loadArgs;
-        m_resourceCache->clean();
+        m_resourceCache.clear();
 
         m_loadArgs = loadArgs;
         m_nameMap = nameMap;

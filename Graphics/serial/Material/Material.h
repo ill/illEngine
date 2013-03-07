@@ -104,11 +104,12 @@ private:
 	RefCountPtr<Texture> m_emissiveTexture;
 	RefCountPtr<Texture> m_normalTexture;
 
+    RefCountPtr<ShaderProgram> m_depthPassProgram;
 	RefCountPtr<ShaderProgram> m_shaderProgram;
 };
 
 typedef uint32_t MaterialId;
-typedef ConfigurableResourceManager<MaterialId, Material, MaterialLoadArgs, GraphicsBackend> MaterialManager;
+typedef ConfigurableResourceManager<MaterialId, Material, MaterialLoadArgs, MaterialLoader> MaterialManager;
 
 }
 
