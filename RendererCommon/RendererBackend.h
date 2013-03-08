@@ -1,6 +1,8 @@
 #ifndef ILL_RENDERER_BACKEND_H_
 #define ILL_RENDERER_BACKEND_H_
 
+#include <glm/glm.hpp>
+
 namespace illGraphics {
 class GraphicsBackend;
 }

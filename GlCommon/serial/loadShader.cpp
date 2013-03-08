@@ -31,6 +31,11 @@ void GlBackend::loadShader(void ** shaderData, uint64_t featureMask) {
         path = "shaders/forward.frag";
     }
 
+    if(featureMask & illGraphics::Shader::SHADER_DEFERRED_FRAG) {
+        shaderType = GL_FRAGMENT_SHADER;
+        path = "shaders/deferredG.frag";
+    }
+
     ///////////////////////////////////////
     //determine shader includes
     if(featureMask & illGraphics::Shader::SHADER_POSITIONS) {

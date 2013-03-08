@@ -38,6 +38,30 @@ public:
         m_mesh.reset();
     }
 
+    inline illGraphics::MeshId getMeshId() const {
+        return m_meshId;
+    }
+
+    inline RefCountPtr<illGraphics::Mesh> getMeshReference() const {
+        return m_mesh;
+    }
+
+    inline const illGraphics::Mesh * getMesh() const {
+        return m_mesh.get();
+    }
+
+    inline illGraphics::MaterialId getMaterialId() const {
+        return m_materialId;
+    }
+
+    inline RefCountPtr<illGraphics::Material> getMaterialReference() const {
+        return m_material;
+    }
+
+    inline const illGraphics::Material * getMaterial() const {
+        return m_material.get();
+    }
+
 private:
     illGraphics::MeshId m_meshId;
     RefCountPtr<illGraphics::Mesh> m_mesh;

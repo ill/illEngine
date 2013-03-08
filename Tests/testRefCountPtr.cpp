@@ -77,10 +77,10 @@ void testRefCountPtr() {
       LOG_INFO("PtrRoot Test");
 
       int * testInt = new int(20);
-      RefCountPtrRoot<int>* testRoot = new RefCountPtrRoot<int>(testInt, new TestPtrHelper<int>());
+      RefCountPtrRoot<int>* testRoot = new RefCountPtrRoot<int>(testInt, false, new TestPtrHelper<int>());
 
       int * testInt2 = new int(40);
-      RefCountPtrRoot<int>* testRoot2 = new RefCountPtrRoot<int>(testInt2, new TestPtrHelper<int>());
+      RefCountPtrRoot<int>* testRoot2 = new RefCountPtrRoot<int>(testInt2, false, new TestPtrHelper<int>());
 
       RefCountPtr<int> testPtr(testRoot);
 

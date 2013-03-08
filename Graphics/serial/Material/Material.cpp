@@ -32,29 +32,34 @@ void Material::reload(MaterialLoader * rendererBackend) {
     m_state = RES_LOADING;
 
     uint64_t shaderMask = ShaderProgram::SHPRG_POSITIONS;
+    uint64_t depthShaderMask = ShaderProgram::SHPRG_POSITIONS | ShaderProgram::SHPRG_FORWARD;
 
     //load textures
     //TODO: check if textures are effectively unused if things like blend colors make them invisible
 
     bool normalsNeeded = false;
 
+    //diffuse
     if(m_loadArgs.m_diffuseTextureIndex >= 0) {
         m_diffuseTexture = m_loader->m_textureManager->getResource(m_loadArgs.m_diffuseTextureIndex);
         shaderMask |= ShaderProgram::SHPRG_DIFFUSE_MAP;
         normalsNeeded = true;
     }
-        
+    
+    //emissive
     if(m_loadArgs.m_emissiveTextureIndex >= 0) {
         m_emissiveTexture = m_loader->m_textureManager->getResource(m_loadArgs.m_emissiveTextureIndex);
         shaderMask |= ShaderProgram::SHPRG_EMISSIVE_MAP;
     }
-        
+    
+    //specular
     if(m_loadArgs.m_specularTextureIndex >= 0 && !m_loadArgs.m_noLighting) {
         m_specularTexture = m_loader->m_textureManager->getResource(m_loadArgs.m_specularTextureIndex);
         shaderMask |= ShaderProgram::SHPRG_SPECULAR_MAP;
         normalsNeeded = true;
     }
 
+    //normals
     if(m_loadArgs.m_normalTextureIndex >= 0 && !m_loadArgs.m_noLighting) {
         m_normalTexture = m_loader->m_textureManager->getResource(m_loadArgs.m_normalTextureIndex);
         shaderMask |= ShaderProgram::SHPRG_NORMAL_MAP;
@@ -77,12 +82,19 @@ void Material::reload(MaterialLoader * rendererBackend) {
         
     //TODO: billboarding mode
 
+    //skinning
     if(m_loadArgs.m_skinning) {
         shaderMask |= ShaderProgram::SHPRG_SKINNING;
+        depthShaderMask |= ShaderProgram::SHPRG_SKINNING;
     }
 
-    //load defferred g buffer shader
+    //load render pass shader
     m_shaderProgram = m_loader->m_shaderProgramManager->getResource(shaderMask);
+
+    //load depth pass shader
+    if(m_loadArgs.m_blendMode == MaterialLoadArgs::BlendMode::NONE) {
+        m_depthPassProgram = m_loader->m_shaderProgramManager->getResource(depthShaderMask);
+    }
     
     m_state = RES_LOADED;
 }

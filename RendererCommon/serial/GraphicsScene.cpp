@@ -56,21 +56,19 @@ void GraphicsScene::addNode(GraphicsNode * node) {
     if(node->getType() != GraphicsNode::Type::LIGHT
             || (m_trackLightsInVisibilityGrid && node->getType() == GraphicsNode::Type::LIGHT)) {
         BoxIterator<> iter = m_grid.boxIterForWorldBounds(node->getWorldBoundingVolume());
-                
-        while(!iter.atEnd()) {
+       
+        do {
             m_sceneNodes[m_grid.indexForCell(iter.getCurrentPosition())].insert(node);
-            iter.forward();
-        }
+        } while(iter.forward());
     }
 
     //lights
     if(node->getType() == GraphicsNode::Type::LIGHT) {
         BoxIterator<> iter = m_interactionGrid.boxIterForWorldBounds(node->getWorldBoundingVolume());
                 
-        while(!iter.atEnd()) {
+        do {
             m_lightNodes[m_grid.indexForCell(iter.getCurrentPosition())].insert(static_cast<LightNode *>(node));
-            iter.forward();
-        }
+        } while(iter.forward());
     }
 }
 
@@ -80,20 +78,18 @@ void GraphicsScene::removeNode(GraphicsNode * node) {
             || (m_trackLightsInVisibilityGrid && node->getType() == GraphicsNode::Type::LIGHT)) {
         BoxIterator<> iter = m_grid.boxIterForWorldBounds(node->getWorldBoundingVolume());
             
-        while(!iter.atEnd()) {
+        do {
             m_sceneNodes[m_grid.indexForCell(iter.getCurrentPosition())].erase(node);
-            iter.forward();
-        }
+        } while(iter.forward());
     }
 
     //lights
     if(node->getType() == GraphicsNode::Type::LIGHT) {
         BoxIterator<> iter = m_interactionGrid.boxIterForWorldBounds(node->getWorldBoundingVolume());
                 
-        while(!iter.atEnd()) {
+        do {
             m_lightNodes[m_grid.indexForCell(iter.getCurrentPosition())].erase(static_cast<LightNode *>(node));
-            iter.forward();
-        }
+        } while(iter.forward());
     }
 }
 
@@ -105,20 +101,18 @@ void GraphicsScene::moveNode(GraphicsNode * node, const Box<>& prevBounds) {
                 || (m_trackLightsInVisibilityGrid && node->getType() == GraphicsNode::Type::LIGHT)) {
             BoxOmitIterator<> iter = m_grid.boxOmitIterForWorldBounds(prevBounds, node->getWorldBoundingVolume());
 
-            while(!iter.atEnd()) {
+            do {
                 m_sceneNodes[m_grid.indexForCell(iter.getCurrentPosition())].insert(node);
-                iter.forward();
-            }
+            } while(iter.forward());
         }
 
         //lights
         if(node->getType() == GraphicsNode::Type::LIGHT) {
             BoxOmitIterator<> iter = m_interactionGrid.boxOmitIterForWorldBounds(prevBounds, node->getWorldBoundingVolume());
 
-            while(!iter.atEnd()) {
+            do {
                 m_lightNodes[m_grid.indexForCell(iter.getCurrentPosition())].insert(static_cast<LightNode *>(node));
-                iter.forward();
-            }
+            } while(iter.forward());
         }
     }
         
@@ -129,20 +123,18 @@ void GraphicsScene::moveNode(GraphicsNode * node, const Box<>& prevBounds) {
                 || (m_trackLightsInVisibilityGrid && node->getType() == GraphicsNode::Type::LIGHT)) {
             BoxOmitIterator<> iter = m_grid.boxOmitIterForWorldBounds(node->getWorldBoundingVolume(), prevBounds);
 
-            while(!iter.atEnd()) {
+            do {
                 m_sceneNodes[m_grid.indexForCell(iter.getCurrentPosition())].erase(node);
-                iter.forward();
-            }
+            } while(iter.forward());
         }
 
         //lights
         if(node->getType() == GraphicsNode::Type::LIGHT) {
             BoxOmitIterator<> iter = m_interactionGrid.boxOmitIterForWorldBounds(node->getWorldBoundingVolume(), prevBounds);
 
-            while(!iter.atEnd()) {
+            do {
                 m_lightNodes[m_grid.indexForCell(iter.getCurrentPosition())].erase(static_cast<LightNode *>(node));
-                iter.forward();
-            }
+            } while(iter.forward());
         }
     }
 }

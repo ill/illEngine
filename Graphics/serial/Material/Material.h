@@ -45,6 +45,8 @@ struct MaterialLoadArgs {
     BlendMode m_blendMode;
     BillboardMode m_billboardMode;
 
+    //TODO: vertex colors
+
     bool m_noLighting;
     bool m_skinning;
     bool m_forceForwardRendering;
@@ -96,6 +98,10 @@ public:
 
     inline const ShaderProgram * getShaderProgram() const {
         return m_shaderProgram.get();
+    }
+
+    inline const ShaderProgram * getDepthPassProgram() const {
+        return m_depthPassProgram.get();
     }
 	
 private:

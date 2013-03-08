@@ -41,11 +41,26 @@ This is the behind the scenes struct that holds the actual value of a pointer th
 */
 template <typename T>
 struct RefCountPtrRoot {
-    inline RefCountPtrRoot(T* pointer, PtrHelper<T>* ptrHelper = new PtrHelper<T>())
-        : m_references(0),
-        m_pointer(pointer),
+    /**
+    Usually a smart pointer automatically creates this behind the scenes.
+    If you are doing some custom pointer stuff, you may need to create this yourself
+    and feed it into the pointer.
+
+    @param pointer The raw C pointer to the object.
+    @param initReferences If true initializes the references to 1 instead of 0.
+        This can help avoid some unnecessary overhead when creating the pointer for the first time
+        by not allowing the onNonZeroReferences() event get called.
+        Only set this to true if the pointer really is about to have 1 reference after creation,
+        otherwise leave this to false.
+    @param ptrHelper The struct with some callbacks for what happens when the pointer
+        now has zero references and when it no longer has zero references.
+        The default helper just deletes the object.
+    */
+    inline RefCountPtrRoot(T* pointer, bool initReferences = true, PtrHelper<T>* ptrHelper = new PtrHelper<T>())
+        : m_pointer(pointer),
         m_helper(ptrHelper)
     {
+        m_references = initReferences ? 1 : 0;
         m_helper->m_root = this;
     }
 
@@ -61,6 +76,8 @@ struct RefCountPtrRoot {
         }
 
         m_references++;
+
+        assert(m_references > 0);   //might help catch cases when there's rollover
     }
 
     inline void referenceDecrement() {
@@ -86,30 +103,60 @@ The actual pointer
 */
 template <typename T>
 struct RefCountPtr {
+    /**
+    Creates an empty null pointer.
+    This makes it safe to just create these guys statically.
+    */
     inline RefCountPtr()
         : m_root(NULL)
     {}
 
+    /**
+    Copy constructor.
+    This causes a reference increment on the pointer itself.
+    */
     inline RefCountPtr(const RefCountPtr &other)
         : m_root(other.m_root)
     {
         referenceIncrement();
     }
 
+    /**
+    Creates a new smart pointer that points to a raw C pointer.
+    */
     inline explicit RefCountPtr(T * pointer) {
-        m_root = new RefCountPtrRoot<T>(pointer);
-        referenceIncrement();
+        m_root = new RefCountPtrRoot<T>(pointer, true);
     }
 
+    /**
+    Creates a new smart pointer from a reference.
+    */
     inline explicit RefCountPtr(T& pointer) {
-        m_root = new RefCountPtrRoot<T>(&pointer);
-        referenceIncrement();
+        m_root = new RefCountPtrRoot<T>(&pointer, true);
     }
 
+    /**
+    Creates a new smart pointer given an existing behind the scenes pointer root.
+    This will also increment the reference.
+    */
     template<typename R_T>
     inline explicit RefCountPtr(RefCountPtrRoot<R_T> * pointerRoot) {
         m_root = (RefCountPtrRoot<T> *) pointerRoot;
         referenceIncrement();
+    }
+
+    /**
+    Creates a new smart pointer given an existing behind the scenes pointer root.
+    This gives you the option to not increment the reference if the root was
+    created with initReferences set to true and this is the first reference.
+    */
+    template<typename R_T>
+    inline explicit RefCountPtr(RefCountPtrRoot<R_T> * pointerRoot, bool refIncrement) {
+        m_root = (RefCountPtrRoot<T> *) pointerRoot;
+
+        if(refIncrement) {
+            referenceIncrement();
+        }
     }
 
     inline ~RefCountPtr() {

@@ -49,8 +49,18 @@ private:
     Info stored about each element.
     */
     struct ElementInfo {
+        ElementInfo()
+            : m_element(NULL)
+        {}
+
         ~ElementInfo() {
             delete m_element;
+        }
+
+        inline void init(HandleRoot * element, 
+                typename std::list<Key>::iterator freeListIterator) {
+            m_element = element;
+            m_freeListIterator = freeListIterator; 
         }
 
         HandleRoot * m_element;
@@ -91,12 +101,12 @@ public:
         helper->m_key = key;
         helper->m_cache = this;
 
-        RefCountPtrRoot<T> * element = new RefCountPtrRoot<T>(m_createFunc(key), helper);
-        m_elements[key].m_element = element;
+        RefCountPtrRoot<T> * element = new RefCountPtrRoot<T>(m_createFunc(key), true, helper);
+        m_elements[key].init(element, m_freeOrder.end());
 
         evictElements();
 
-        return RefCountPtr<T>(element);
+        return RefCountPtr<T>(element, false);
     }
 
     /**

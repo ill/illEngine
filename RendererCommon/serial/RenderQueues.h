@@ -36,13 +36,6 @@ struct RenderQueues {
     This should be true if doing deferred shading, but false if doing forward rendering.
     */
     bool m_queueLights;
-
-    //TODO: more infos to come
-
-    struct StaticMeshInfo {
-        std::set<LightNode *> m_affectingLights;
-        const StaticMeshNode * m_node;
-    };
         
     //TODO: for now using std::maps, I may in the future use something more efficient if needed, maybe radix sort lists of radix sorted lists, etc...
 
@@ -50,7 +43,14 @@ struct RenderQueues {
     Solid static meshes to be drawn in the depth only pass for the currently drawn cell.
     Storing their transforms sorted by mesh.
     */
-    std::unordered_map<const illGraphics::Mesh *, std::vector<StaticMeshNode *>> m_depthPassSolidStaticMeshes;
+    std::unordered_map<const illGraphics::ShaderProgram *, 
+        std::unordered_map<const illGraphics::Material *, 
+            std::unordered_map<const illGraphics::Mesh *, std::vector<const StaticMeshNode *>>>> m_depthPassSolidStaticMeshes;
+    
+    struct StaticMeshInfo {
+        std::set<LightNode *> m_affectingLights;
+        const StaticMeshNode * m_node;
+    };
 
     /**
     Solid static meshes to be drawn during the render pass.
@@ -58,7 +58,7 @@ struct RenderQueues {
     */
     std::unordered_map<const illGraphics::ShaderProgram *, 
         std::unordered_map<const illGraphics::Material *, 
-            std::unordered_map<const illGraphics::Mesh *, std::vector<StaticMeshInfo>>>> 
+            std::unordered_map<const illGraphics::Mesh *, std::vector<StaticMeshInfo>>>>
         m_solidStaticMeshes;
 
     /**

@@ -4,33 +4,63 @@
 #include "RendererCommon/RendererBackend.h"
 #include "RendererCommon/serial/RenderQueues.h"
 
+namespace illGraphics {
+class Camera;
+}
+
 namespace illDeferredShadingRenderer {
 
 class DeferredShadingBackend : public illRendererCommon::RendererBackend {
 public:
     DeferredShadingBackend(illGraphics::GraphicsBackend * backend)
-        : RendererBackend(backend)
+        : RendererBackend(backend),
+        m_debugMode(DebugMode::NONE)
     {}
 
     /**
     Call this before rendering a frame.
     */
-    virtual void setup() = 0;
+    virtual void setupFrame() = 0;
+
+    /**
+    Call this before rendering a view.
+    */
+    virtual void setupViewport(const illGraphics::Camera& camera) = 0;
 
     /**
     Retreives the cell queries for a view port.
     */
     virtual void retreiveCellQueries(size_t viewPort) = 0;
-
+    
     /**
     Do a depth pass of objects currently in the depth pass queue in the passed in render queues.
     */
-    virtual void depthPass(illRendererCommon::RenderQueues& renderQueues) = 0;
+    virtual void depthPass(illRendererCommon::RenderQueues& renderQueues, const illGraphics::Camera& camera) = 0;
 
     /**
     Now the scene is ready to be deferred shaded.
     */
-    virtual void render(illRendererCommon::RenderQueues& renderQueues) = 0;
+    virtual void render(illRendererCommon::RenderQueues& renderQueues, const illGraphics::Camera& camera) = 0;
+    
+    //different debug modes
+    enum class DebugMode {
+        NONE,
+
+        LIGHT_POS,
+
+        WIRE,
+        SOLID,
+
+        DEPTH,
+        NORMAL,
+        DIFFUSE,
+        SPECULAR,
+
+        DIFFUSE_ACCUMULATION,
+        SPECULAR_ACCUMULATION
+    };
+
+    DebugMode m_debugMode;
 };
 
 }

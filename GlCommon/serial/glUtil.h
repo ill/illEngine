@@ -3,10 +3,15 @@
 
 #include <GL/glew.h>
 #include "Logging/logging.h"
+#include "Graphics/serial/Material/Texture.h"
 #include "Graphics/serial/Material/ShaderProgram.h"
 
 inline GLuint getProgram(const illGraphics::ShaderProgram& program) {
     return *((GLuint *) program.getShaderProgram());
+}
+
+inline GLuint getTexture(const illGraphics::Texture& texture) {
+    return *((GLuint *) texture.getTextureData());
 }
 
 inline GLint getProgramUniformLocation(GLuint program, const char * name) {
