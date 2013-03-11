@@ -24,6 +24,9 @@ public:
         m_lastVisibleFrame = new uint64_t[cellNumber.x * cellNumber.y * cellNumber.z];
 
         memset(m_lastVisibleFrame, 0, sizeof(uint64_t) * cellNumber.x * cellNumber.y * cellNumber.z);
+
+        m_renderQueues.m_queueLights = true;
+        m_renderQueues.m_getSolidAffectingLights = false;
     }
     
     virtual ~DeferredShadingScene() {

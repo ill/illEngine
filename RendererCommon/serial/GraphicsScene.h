@@ -177,6 +177,8 @@ private:
     void moveNode(GraphicsNode * node, const Box<>& prevBounds);
 
 protected:
+    illRendererCommon::RenderQueues m_renderQueues;
+
     RendererBackend * m_rendererBackend;
 
     illGraphics::MeshManager * m_meshManager;

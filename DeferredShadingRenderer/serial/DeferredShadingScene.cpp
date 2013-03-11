@@ -13,10 +13,6 @@ void DeferredShadingScene::render(const illGraphics::Camera& camera) {
     MeshEdgeList<> meshEdgeList = camera.getViewFrustum().getMeshEdgeList();
     ConvexMeshIterator<> frustumIterator = getGridVolume().meshIteratorForMesh(&meshEdgeList, camera.getViewFrustum().m_direction);
 
-    illRendererCommon::RenderQueues renderQueues;
-    renderQueues.m_queueLights = true;
-    renderQueues.m_getSolidAffectingLights = false;
-    
     while(!frustumIterator.atEnd()) {
         unsigned int currentCell = getGridVolume().indexForCell(frustumIterator.getCurrentPosition());
         frustumIterator.forward();
@@ -28,7 +24,7 @@ void DeferredShadingScene::render(const illGraphics::Camera& camera) {
             auto& currCell = getSceneNodeCell(currentCell);
 
             for(auto cellIter = currCell.begin(); cellIter != currCell.end(); cellIter++) {
-                (*cellIter)->render(renderQueues, m_frameCounter);
+                (*cellIter)->render(m_renderQueues, m_frameCounter);
             }
         }
 
@@ -36,17 +32,21 @@ void DeferredShadingScene::render(const illGraphics::Camera& camera) {
             auto& currCell = getStaticNodeCell(currentCell);
 
             for(size_t arrayInd = 0; arrayInd < currCell.size(); arrayInd++) {
-                currCell[arrayInd]->render(renderQueues, m_frameCounter);
+                currCell[arrayInd]->render(m_renderQueues, m_frameCounter);
             }
         }
 
         //draw objects for the depth pass
-        static_cast<DeferredShadingBackend *>(m_rendererBackend)->depthPass(renderQueues, camera);
+        static_cast<DeferredShadingBackend *>(m_rendererBackend)->depthPass(m_renderQueues, camera);
     }
 
-    static_cast<DeferredShadingBackend *>(m_rendererBackend)->render(renderQueues, camera);
+    static_cast<DeferredShadingBackend *>(m_rendererBackend)->render(m_renderQueues, camera);
 
     ++m_frameCounter;
+
+    m_renderQueues.m_depthPassSolidStaticMeshes.clear();
+    m_renderQueues.m_lights.clear();
+    m_renderQueues.m_solidStaticMeshes.clear();
 }
 
 }
