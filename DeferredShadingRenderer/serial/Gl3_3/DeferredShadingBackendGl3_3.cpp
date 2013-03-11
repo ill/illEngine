@@ -858,115 +858,113 @@ void DeferredShadingBackendGl3_3::renderFinish() {
 }
 
 void renderDebugLightPos(const glm::vec3& position) {
-   glPushMatrix();
+    glPushMatrix();
 
-   glTranslatef(position.x, position.y, position.z);
+    glTranslatef(position.x, position.y, position.z);
 
-   glBegin(GL_LINES);
-      glColor4f(1.0f, 1.0f, 1.0f, 0.5f);
-      glVertex3f(0.0f, 0.0f, 0.0f);
-      glColor4f(1.0f, 1.0f, 1.0f, 0.0f);
-      glVertex3f(1.0f, 0.0f, 0.0f);
+    glBegin(GL_LINES);
+    glColor4f(1.0f, 1.0f, 1.0f, 0.5f);
+    glVertex3f(0.0f, 0.0f, 0.0f);
+    glColor4f(1.0f, 1.0f, 1.0f, 0.0f);
+    glVertex3f(1.0f, 0.0f, 0.0f);
 
-      glColor4f(1.0f, 1.0f, 1.0f, 0.5f);
-      glVertex3f(0.0f, 0.0f, 0.0f);
-      glColor4f(1.0f, 1.0f, 1.0f, 0.0f);
-      glVertex3f(-1.0f, 0.0f, 0.0f);
+    glColor4f(1.0f, 1.0f, 1.0f, 0.5f);
+    glVertex3f(0.0f, 0.0f, 0.0f);
+    glColor4f(1.0f, 1.0f, 1.0f, 0.0f);
+    glVertex3f(-1.0f, 0.0f, 0.0f);
 
-      glColor4f(1.0f, 1.0f, 1.0f, 0.5f);
-      glVertex3f(0.0f, 0.0f, 0.0f);
-      glColor4f(1.0f, 1.0f, 1.0f, 0.0f);
-      glVertex3f(0.0f, 1.0f, 0.0f);
+    glColor4f(1.0f, 1.0f, 1.0f, 0.5f);
+    glVertex3f(0.0f, 0.0f, 0.0f);
+    glColor4f(1.0f, 1.0f, 1.0f, 0.0f);
+    glVertex3f(0.0f, 1.0f, 0.0f);
 
-      glColor4f(1.0f, 1.0f, 1.0f, 0.5f);
-      glVertex3f(0.0f, 0.0f, 0.0f);
-      glColor4f(1.0f, 1.0f, 1.0f, 0.0f);
-      glVertex3f(0.0f, -1.0f, 0.0f);
+    glColor4f(1.0f, 1.0f, 1.0f, 0.5f);
+    glVertex3f(0.0f, 0.0f, 0.0f);
+    glColor4f(1.0f, 1.0f, 1.0f, 0.0f);
+    glVertex3f(0.0f, -1.0f, 0.0f);
 
-      glColor4f(1.0f, 1.0f, 1.0f, 0.5f);
-      glVertex3f(0.0f, 0.0f, 0.0f);
-      glColor4f(1.0f, 1.0f, 1.0f, 0.0f);
-      glVertex3f(0.0f, 0.0f, 1.0f);
+    glColor4f(1.0f, 1.0f, 1.0f, 0.5f);
+    glVertex3f(0.0f, 0.0f, 0.0f);
+    glColor4f(1.0f, 1.0f, 1.0f, 0.0f);
+    glVertex3f(0.0f, 0.0f, 1.0f);
 
-      glColor4f(1.0f, 1.0f, 1.0f, 0.5f);
-      glVertex3f(0.0f, 0.0f, 0.0f);
-      glColor4f(1.0f, 1.0f, 1.0f, 0.0f);
-      glVertex3f(0.0f, 0.0f, -1.0f);
-   glEnd();
+    glColor4f(1.0f, 1.0f, 1.0f, 0.5f);
+    glVertex3f(0.0f, 0.0f, 0.0f);
+    glColor4f(1.0f, 1.0f, 1.0f, 0.0f);
+    glVertex3f(0.0f, 0.0f, -1.0f);
+    glEnd();
 
-   glPopMatrix();
+    glPopMatrix();
 }
 
 void renderDebugPointLight(const glm::vec3& position, const illGraphics::PointLight& light) {
-   renderDebugLightPos(position);
+    renderDebugLightPos(position);
 
-   glPushMatrix();
+    glPushMatrix();
 
-   glTranslatef(position.x, position.y, position.z);
-   glScalef(light.m_attenuationEnd, light.m_attenuationEnd, light.m_attenuationEnd);
+    glTranslatef(position.x, position.y, position.z);
+    glScalef(light.m_attenuationEnd, light.m_attenuationEnd, light.m_attenuationEnd);
 
-   glColor4f(light.m_color.x, light.m_color.y, light.m_color.z, 0.1f);
-   
-   glBegin(GL_LINE_LOOP);
-      glVertex3f(-1.0f, 0.0f, 0.0f);
-      glVertex3f(0.0f, 0.0f, 1.0f);
-      glVertex3f(1.0f, 0.0f, 0.0f);
-      glVertex3f(0.0f, 0.0f, -1.0f);
-   glEnd();
+    glColor4f(light.m_color.x, light.m_color.y, light.m_color.z, 0.1f);
 
-   glBegin(GL_LINE_LOOP);
-      glVertex3f(-1.0f, 0.0f, 0.0f);
-      glVertex3f(0.0f, 1.0f, 0.0f);
-      glVertex3f(1.0f, 0.0f, 0.0f);
-      glVertex3f(0.0f, -1.0f, 0.0f);
-   glEnd();
+    glBegin(GL_LINE_LOOP);
+    glVertex3f(-1.0f, 0.0f, 0.0f);
+    glVertex3f(0.0f, 0.0f, 1.0f);
+    glVertex3f(1.0f, 0.0f, 0.0f);
+    glVertex3f(0.0f, 0.0f, -1.0f);
+    glEnd();
 
-   glBegin(GL_LINE_LOOP);
-      glVertex3f(0.0f, -1.0f, 0.0f);
-      glVertex3f(0.0f, 0.0f, 1.0f);
-      glVertex3f(0.0f, 1.0f, 0.0f);
-      glVertex3f(0.0f, 0.0f, -1.0f);
-   glEnd();
+    glBegin(GL_LINE_LOOP);
+    glVertex3f(-1.0f, 0.0f, 0.0f);
+    glVertex3f(0.0f, 1.0f, 0.0f);
+    glVertex3f(1.0f, 0.0f, 0.0f);
+    glVertex3f(0.0f, -1.0f, 0.0f);
+    glEnd();
 
-   glPopMatrix();
+    glBegin(GL_LINE_LOOP);
+    glVertex3f(0.0f, -1.0f, 0.0f);
+    glVertex3f(0.0f, 0.0f, 1.0f);
+    glVertex3f(0.0f, 1.0f, 0.0f);
+    glVertex3f(0.0f, 0.0f, -1.0f);
+    glEnd();
+
+    glPopMatrix();
 }
 
 void renderDebugSpotLight(const glm::vec3& position, const illGraphics::SpotLight& light) {
-   renderDebugLightPos(position);
+    renderDebugLightPos(position);
 }
 
 void DeferredShadingBackendGl3_3::renderDebugLights(illRendererCommon::RenderQueues& renderQueues, const illGraphics::Camera& camera) {
-   glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    //manually go in to 3D mode while using fixed function pipeline in older OpenGL
+    glMatrixMode(GL_PROJECTION);
+    glLoadIdentity();
 
-   //manually go in to 3D mode while using fixed function pipeline in older OpenGL
-   glMatrixMode(GL_PROJECTION);
-   glLoadIdentity();
+    glMultMatrixf(glm::value_ptr(camera.getProjection()));
 
-   glMultMatrixf(glm::value_ptr(camera.getProjection()));
-   
-   glMatrixMode(GL_MODELVIEW);
-   glLoadIdentity();
-   
-   glMultMatrixf(glm::value_ptr(camera.getModelView()));
-            
-   glUseProgram(0);
+    glMatrixMode(GL_MODELVIEW);
+    glLoadIdentity();
 
-   glActiveTexture(GL_TEXTURE0);
-   glDisable(GL_TEXTURE_2D);
+    glMultMatrixf(glm::value_ptr(camera.getModelView()));
 
-   glActiveTexture(GL_TEXTURE1);
-   glDisable(GL_TEXTURE_2D);
+    glUseProgram(0);
 
-   glActiveTexture(GL_TEXTURE2);
-   glDisable(GL_TEXTURE_2D);
+    glActiveTexture(GL_TEXTURE0);
+    glDisable(GL_TEXTURE_2D);
 
-   glActiveTexture(GL_TEXTURE3);
-   glDisable(GL_TEXTURE_2D);
-   
-   for(auto lightTypeIter = renderQueues.m_lights.begin(); lightTypeIter != renderQueues.m_lights.end(); lightTypeIter++) {
+    glActiveTexture(GL_TEXTURE1);
+    glDisable(GL_TEXTURE_2D);
+
+    glActiveTexture(GL_TEXTURE2);
+    glDisable(GL_TEXTURE_2D);
+
+    glActiveTexture(GL_TEXTURE3);
+    glDisable(GL_TEXTURE_2D);
+
+    for(auto lightTypeIter = renderQueues.m_lights.begin(); lightTypeIter != renderQueues.m_lights.end(); lightTypeIter++) {
         illGraphics::LightBase::Type lightType = lightTypeIter->first;
         auto& lights = lightTypeIter->second;
-        
+
         for(auto lightIter = lights.begin(); lightIter != lights.end(); lightIter++) {
             illGraphics::LightBase * light = lightIter->first;
             auto& lightNodes = lightIter->second;
@@ -985,9 +983,130 @@ void DeferredShadingBackendGl3_3::renderDebugLights(illRendererCommon::RenderQue
                 }
             }
         }
-   }
-      
-   glBindFramebuffer(GL_FRAMEBUFFER, m_gBuffer);
+    }
+}
+
+void renderNodeBounds(const illRendererCommon::GraphicsNode * node) {
+    glColor4f(1.0f, 1.0f, 1.0f, 0.1f);
+
+    Box<> bounds = node->getWorldBoundingVolume();
+
+    glBegin(GL_LINE_LOOP);
+    glVertex3f(bounds.m_min.x, bounds.m_min.y, bounds.m_min.z);
+    glVertex3f(bounds.m_max.x, bounds.m_min.y, bounds.m_min.z);
+    glVertex3f(bounds.m_max.x, bounds.m_max.y, bounds.m_min.z);
+    glVertex3f(bounds.m_min.x, bounds.m_max.y, bounds.m_min.z);
+    glEnd();
+
+    glBegin(GL_LINE_LOOP);
+    glVertex3f(bounds.m_min.x, bounds.m_min.y, bounds.m_max.z);
+    glVertex3f(bounds.m_max.x, bounds.m_min.y, bounds.m_max.z);
+    glVertex3f(bounds.m_max.x, bounds.m_max.y, bounds.m_max.z);
+    glVertex3f(bounds.m_min.x, bounds.m_max.y, bounds.m_max.z);
+    glEnd();
+
+    glBegin(GL_LINES);
+    glVertex3f(bounds.m_min.x, bounds.m_min.y, bounds.m_min.z);
+    glVertex3f(bounds.m_min.x, bounds.m_min.y, bounds.m_max.z);
+
+    glVertex3f(bounds.m_max.x, bounds.m_min.y, bounds.m_min.z);
+    glVertex3f(bounds.m_max.x, bounds.m_min.y, bounds.m_max.z);
+
+    glVertex3f(bounds.m_max.x, bounds.m_max.y, bounds.m_min.z);
+    glVertex3f(bounds.m_max.x, bounds.m_max.y, bounds.m_max.z);
+
+    glVertex3f(bounds.m_min.x, bounds.m_max.y, bounds.m_min.z);
+    glVertex3f(bounds.m_min.x, bounds.m_max.y, bounds.m_max.z);
+    glEnd();
+}
+
+void DeferredShadingBackendGl3_3::renderDebugBounds(illRendererCommon::RenderQueues& renderQueues, const illGraphics::Camera& camera) {
+    //manually go in to 3D mode while using fixed function pipeline in older OpenGL
+    glMatrixMode(GL_PROJECTION);
+    glLoadIdentity();
+
+    glMultMatrixf(glm::value_ptr(camera.getProjection()));
+
+    glMatrixMode(GL_MODELVIEW);
+    glLoadIdentity();
+
+    glMultMatrixf(glm::value_ptr(camera.getModelView()));
+
+    glUseProgram(0);
+
+    glActiveTexture(GL_TEXTURE0);
+    glDisable(GL_TEXTURE_2D);
+
+    glActiveTexture(GL_TEXTURE1);
+    glDisable(GL_TEXTURE_2D);
+
+    glActiveTexture(GL_TEXTURE2);
+    glDisable(GL_TEXTURE_2D);
+
+    glActiveTexture(GL_TEXTURE3);
+    glDisable(GL_TEXTURE_2D);
+
+    for(auto shaderIter = renderQueues.m_solidStaticMeshes.begin(); shaderIter != renderQueues.m_solidStaticMeshes.end(); shaderIter++) {
+        auto& materials = shaderIter->second;
+        
+        for(auto materialIter = materials.begin(); materialIter != materials.end(); materialIter++) {            
+            auto& meshes = materialIter->second;
+
+            for(auto meshIter = meshes.begin(); meshIter != meshes.end(); meshIter++) {
+                auto& meshNodes = meshIter->second;
+
+                for(auto nodeIter = meshNodes.begin(); nodeIter !=  meshNodes.end(); nodeIter++) {
+                    const illRendererCommon::RenderQueues::StaticMeshInfo& meshInfo = *nodeIter;
+
+                    if(m_debugOcclusion) {
+                        glMatrixMode(GL_PROJECTION);
+                        glLoadIdentity();
+
+                        glMultMatrixf(glm::value_ptr(m_occlusionCamera->getProjection()));
+
+                        glMatrixMode(GL_MODELVIEW);
+                        glLoadIdentity();
+
+                        glMultMatrixf(glm::value_ptr(m_occlusionCamera->getModelView()));
+
+                        glViewport(camera.getViewportCorner().x, camera.getViewportCorner().y,
+                            camera.getViewportDimensions().x, camera.getViewportDimensions().y / 2);
+                        
+                        renderNodeBounds(nodeIter->m_node);
+                        
+                        glMatrixMode(GL_PROJECTION);
+                        glLoadIdentity();
+
+                        glMultMatrixf(glm::value_ptr(camera.getProjection()));
+
+                        glMatrixMode(GL_MODELVIEW);
+                        glLoadIdentity();
+
+                        glMultMatrixf(glm::value_ptr(camera.getModelView()));
+
+                        glViewport(camera.getViewportCorner().x, camera.getViewportCorner().y + camera.getViewportDimensions().y / 2,
+                            camera.getViewportDimensions().x, camera.getViewportDimensions().y / 2);
+                    }
+
+                    renderNodeBounds(nodeIter->m_node);
+                }
+            }
+        }
+    }
+
+    for(auto lightTypeIter = renderQueues.m_lights.begin(); lightTypeIter != renderQueues.m_lights.end(); lightTypeIter++) {        
+        auto& lights = lightTypeIter->second;
+
+        for(auto lightIter = lights.begin(); lightIter != lights.end(); lightIter++) {            
+            auto& lightNodes = lightIter->second;
+
+            for(auto nodeIter = lightNodes.begin(); nodeIter != lightNodes.end(); nodeIter++) {
+                const illRendererCommon::LightNode * node = *nodeIter;
+
+                renderNodeBounds(node);
+            }
+        }
+    }
 }
 
 void DeferredShadingBackendGl3_3::render(illRendererCommon::RenderQueues& renderQueues, const illGraphics::Camera& camera) {
@@ -1002,7 +1121,7 @@ void DeferredShadingBackendGl3_3::render(illRendererCommon::RenderQueues& render
     
     renderGbuffer(renderQueues, camera);
 
-    if(m_debugMode == DebugMode::NONE || m_debugMode == DebugMode::LIGHT_POS || m_debugMode == DebugMode::DIFFUSE_ACCUMULATION || m_debugMode == DebugMode::SPECULAR_ACCUMULATION) {
+    if(m_debugMode == DebugMode::NONE || m_debugMode == DebugMode::DIFFUSE_ACCUMULATION || m_debugMode == DebugMode::SPECULAR_ACCUMULATION) {
         //set up the FBO for rendering to the diffuse buffer
         GLenum mrt[3] = {GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1};
 
@@ -1030,10 +1149,6 @@ void DeferredShadingBackendGl3_3::render(illRendererCommon::RenderQueues& render
         glDepthFunc(GL_LEQUAL);
 
         renderEmissivePass(renderQueues, camera);
-
-        if(m_debugMode == DebugMode::LIGHT_POS) {
-            renderDebugLights(renderQueues, camera);
-        }
 
         //set up the FBO for rendering to both the specular and diffuse buffers
         glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, m_renderTextures[REN_DIFFUSE_ACCUMULATION], 0);
@@ -1090,6 +1205,14 @@ void DeferredShadingBackendGl3_3::render(illRendererCommon::RenderQueues& render
             renderDebugTexture(m_renderTextures[REN_SPECULAR]);
             break;
         }
+    }
+
+    if(m_debugLights) {
+        renderDebugLights(renderQueues, camera);
+    }
+
+    if(m_debugBounds) {
+        renderDebugBounds(renderQueues, camera);
     }
 }
 

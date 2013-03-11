@@ -37,6 +37,7 @@ private:
     void renderFinish();
 
     void renderDebugLights(illRendererCommon::RenderQueues& renderQueues, const illGraphics::Camera& camera);
+    void renderDebugBounds(illRendererCommon::RenderQueues& renderQueues, const illGraphics::Camera& camera);
 
     GLuint m_gBuffer;
 

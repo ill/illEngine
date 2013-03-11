@@ -66,7 +66,11 @@ public:
     Gets the grid cell positions for a range of world positions
     */
     inline Box<unsigned int> cellBoundsForWorldBounds(Box<W> bounds) const {
+        assert(bounds.isNormalized());
+
         m_volumeBounds.constrain(bounds);
+
+        assert(bounds.isNormalized());
 
         return bounds.grid<unsigned int>(m_cellDimensions);
     }
@@ -75,6 +79,7 @@ public:
     Returns a box iterator for some world bounds.
     */
     inline BoxIterator<unsigned int> boxIterForWorldBounds(const Box<W>& bounds) const {
+        assert(bounds.isNormalized());
         return boxIterForCellBounds(cellBoundsForWorldBounds(bounds));
     }
 
@@ -82,6 +87,8 @@ public:
     Returns a box omit iterator for some world bounds.
     */
     inline BoxOmitIterator<unsigned int> boxOmitIterForWorldBounds(const Box<W>& bounds, const Box<W>& omitBounds) const {
+        assert(bounds.isNormalized());
+        assert(omitBounds.isNormalized());
         return boxOmitIterForCellBounds(cellBoundsForWorldBounds(bounds), cellBoundsForWorldBounds(omitBounds));
     }
 
@@ -89,6 +96,7 @@ public:
     Returns a box iterator for some cell bounds.
     */
     inline BoxIterator<unsigned int> boxIterForCellBounds(const Box<unsigned int>& bounds) const {
+        assert(bounds.isNormalized());
         return BoxIterator<unsigned int>(bounds);
     }
 
@@ -96,6 +104,8 @@ public:
     Returns a box omit iterator for some cell bounds.
     */
     inline BoxOmitIterator<unsigned int> boxOmitIterForCellBounds(const Box<unsigned int>& bounds, const Box<unsigned int>& omitBounds) const {
+        assert(bounds.isNormalized());
+        assert(omitBounds.isNormalized());
         return BoxOmitIterator<unsigned int>(bounds, omitBounds);
     }
 

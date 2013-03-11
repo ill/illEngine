@@ -15,7 +15,9 @@ public:
     DeferredShadingBackend(illGraphics::GraphicsBackend * backend)
         : RendererBackend(backend),
         m_debugMode(DebugMode::NONE),
-        m_debugOcclusion(false)
+        m_debugOcclusion(false),
+        m_debugLights(false),
+        m_debugBounds(false)
     {}
 
     /**
@@ -47,12 +49,7 @@ public:
     //TODO: make a debug version of the renderer separate from the real renderer
     enum class DebugMode {
         NONE,
-
-        LIGHT_POS,
-
-        WIRE,
-        SOLID,
-
+        
         DEPTH,
         NORMAL,
         DIFFUSE,
@@ -63,6 +60,8 @@ public:
     };
 
     bool m_debugOcclusion;
+    bool m_debugBounds;
+    bool m_debugLights;
     const illGraphics::Camera * m_occlusionCamera;
     DebugMode m_debugMode;
 };

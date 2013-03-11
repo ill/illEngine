@@ -70,6 +70,19 @@ struct Box {
         return res;
     }
 
+    /**
+    Checks if the box is normalized, meaning are all coordinate components of m_min are less than m_max
+    */
+    inline bool isNormalized() const {
+        for(unsigned int coord = 0; coord < 3; coord++) {
+            if(m_min[coord] > m_max[coord]) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
     inline glm::detail::tvec3<T> getDimensions() const {
         return m_max - m_min;
     }
@@ -134,8 +147,18 @@ struct Box {
                 changed = true;
             }
 
+            if(other.m_max[coord] < m_min[coord]) {
+                other.m_max[coord] = m_min[coord];
+                changed = true;
+            }
+
             if(other.m_max[coord] > m_max[coord]) {
                 other.m_max[coord] = m_max[coord];
+                changed = true;
+            }
+
+            if(other.m_min[coord] > m_max[coord]) {
+                other.m_min[coord] = m_max[coord];
                 changed = true;
             }
         }
