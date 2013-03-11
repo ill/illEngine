@@ -6,6 +6,7 @@
 #include "Graphics/serial/Camera/Camera.h"
 
 #include "RendererCommon/serial/StaticMeshNode.h"
+#include "RendererCommon/serial/LightNode.h"
 
 namespace illDeferredShadingRenderer {
 
@@ -104,6 +105,53 @@ void DeferredShadingBackendGl3_3::initialize(const glm::uvec2 screenResolution) 
 
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
+    //load the light shaders
+    m_internalShaderProgramLoader = new illGraphics::ShaderProgramLoader(m_graphicsBackend, NULL);
+
+    {
+        RefCountPtr<illGraphics::Shader> lightVertexShader(new illGraphics::Shader());
+        lightVertexShader->loadInternal(m_graphicsBackend, "shaders/deferredPhongLighting.vert", GL_VERTEX_SHADER, "");
+
+        //point light
+        {
+            std::vector<RefCountPtr<illGraphics::Shader> > shaders;
+            shaders.push_back(lightVertexShader);
+
+            illGraphics::Shader * fragShader = new illGraphics::Shader();
+            fragShader->loadInternal(m_graphicsBackend, "shaders/deferredPhongLighting.frag", GL_FRAGMENT_SHADER, "#define POINT_LIGHT");
+
+            shaders.push_back(RefCountPtr<illGraphics::Shader>(fragShader));
+            m_deferredPointLightProgram.loadInternal(m_internalShaderProgramLoader, shaders);
+        }
+
+        //spot light
+        {
+            std::vector<RefCountPtr<illGraphics::Shader> > shaders;
+            shaders.push_back(lightVertexShader);
+
+            illGraphics::Shader * fragShader = new illGraphics::Shader();
+            fragShader->loadInternal(m_graphicsBackend, "shaders/deferredPhongLighting.frag", GL_FRAGMENT_SHADER, "#define SPOT_LIGHT");
+
+            shaders.push_back(RefCountPtr<illGraphics::Shader>(fragShader));
+            m_deferredSpotLightProgram.loadInternal(m_internalShaderProgramLoader, shaders);
+        }
+
+        //direction light
+        /*{
+            std::vector<RefCountPtr<illGraphics::Shader> > shaders;
+            shaders.push_back(lightVertexShader);
+
+            illGraphics::Shader * fragShader = new illGraphics::Shader();
+            fragShader->loadInternal(m_graphicsBackend, "shaders/deferredPhongLighting.frag", GL_FRAGMENT_SHADER, "#define DIRECTIONAL_LIGHT");
+
+            shaders.push_back(RefCountPtr<illGraphics::Shader>(fragShader));
+            m_deferredDirectionLightProgram.loadInternal(m_internalShaderProgramLoader, shaders);
+        }*/
+    }
+
+    //load the light volumes
+    //TODO: for now just rendering a giant box using immediate mode
+
     ERROR_CHECK_OPENGL;
 
     m_state = State::INITIALIZED;
@@ -119,6 +167,8 @@ void DeferredShadingBackendGl3_3::uninitialize() {
 
     m_deferredPointLightProgram.unload();
     m_deferredSpotLightProgram.unload();
+
+    delete m_internalShaderProgramLoader;
 
     m_state = State::INITIALIZED;
 }
@@ -270,20 +320,11 @@ void renderDebugTexture(GLuint texture) {
     glEnd();
 }
 
-void DeferredShadingBackendGl3_3::render(illRendererCommon::RenderQueues& renderQueues, const illGraphics::Camera& camera) {
-    //disable depth mask
-    glDepthMask(GL_FALSE);
-
-    //enable color mask
-    glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
-
-    //enable depth func equal
-    glDepthFunc(GL_EQUAL);
-
+void DeferredShadingBackendGl3_3::renderGbuffer(illRendererCommon::RenderQueues& renderQueues, const illGraphics::Camera& camera) {
     //the unanimated solid meshes
     for(auto shaderIter = renderQueues.m_solidStaticMeshes.begin(); shaderIter != renderQueues.m_solidStaticMeshes.end(); shaderIter++) {
         const illGraphics::ShaderProgram * program = shaderIter->first;
-        auto& meshes = shaderIter->second;
+        auto& materials = shaderIter->second;
 
         GLuint prog = getProgram(*program);
         glUseProgram(prog);
@@ -295,9 +336,9 @@ void DeferredShadingBackendGl3_3::render(illRendererCommon::RenderQueues& render
         GLint normAttrib = getProgramAttribLocation(prog, "normalIn");
         glEnableVertexAttribArray(normAttrib);
 
-        for(auto materialIter = meshes.begin(); materialIter != meshes.end(); materialIter++) {
+        for(auto materialIter = materials.begin(); materialIter != materials.end(); materialIter++) {
             const illGraphics::Material * material = materialIter->first;
-            auto meshes = materialIter->second;
+            auto& meshes = materialIter->second;
 
             //pass material colors
             glUniform3fv(getProgramUniformLocation(prog, "diffuseColor"), 1, glm::value_ptr(material->getLoadArgs().m_diffuseBlend));
@@ -352,18 +393,16 @@ void DeferredShadingBackendGl3_3::render(illRendererCommon::RenderQueues& render
 
             for(auto meshIter = meshes.begin(); meshIter != meshes.end(); meshIter++) {
                 const illGraphics::Mesh * mesh = meshIter->first;
-                auto meshNodes = meshIter->second;
+                auto& meshNodes = meshIter->second;
 
                 for(auto nodeIter = meshNodes.begin(); nodeIter !=  meshNodes.end(); nodeIter++) {
                     const illRendererCommon::RenderQueues::StaticMeshInfo& meshInfo = *nodeIter;
-
-                    glm::mat4 modelViewProjection = camera.getModelViewProjection() * meshInfo.m_node->getTransform();
-
+                    
                     glUniformMatrix4fv(getProgramUniformLocation(prog, "modelViewProjection"), 
-                        1, false, glm::value_ptr(modelViewProjection));
+                        1, false, glm::value_ptr(camera.getModelViewProjection() * meshInfo.m_node->getTransform()));
 
                     glUniformMatrix3fv(getProgramUniformLocation(prog, "normalMat"), 
-                        1, false, glm::value_ptr(glm::mat3(modelViewProjection)));
+                        1, false, glm::value_ptr(glm::mat3(camera.getModelView() * meshInfo.m_node->getTransform())));
 
                     //bind VBO
                     {
@@ -420,8 +459,504 @@ void DeferredShadingBackendGl3_3::render(illRendererCommon::RenderQueues& render
         glDisableVertexAttribArray(posAttrib);
         glDisableVertexAttribArray(normAttrib);
     }
+}
+
+void DeferredShadingBackendGl3_3::renderAmbientPass(illRendererCommon::RenderQueues& renderQueues, const illGraphics::Camera& camera) {
+    /*glUseProgram(m_ambientPassProgram->getShaderProgram());
+   
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_2D, m_renderTextures[REN_DIFFUSE]);
+
+    glUniform1i(m_ambientPassProgram->getUniformLocation("diffuseBuffer"), 0);
+    glUniform3f(m_ambientPassProgram->getUniformLocation("ambientColor"), 0.1f, 0.1f, 0.1f);
+
+    glBegin(GL_QUADS);
+        glTexCoord2f(1.0f, 0.0f);
+        glVertex2f(1.0f, 0.0f);
+
+        glTexCoord2f(1.0f, 1.0f);
+        glVertex2f(1.0f, 1.0f);
+
+        glTexCoord2f(0.0f, 1.0f);
+        glVertex2f(0.0f, 1.0f);
+
+        glTexCoord2f(0.0f, 0.0f);
+        glVertex2f(0.0f, 0.0f);
+    glEnd();*/
+}
+
+void DeferredShadingBackendGl3_3::renderEmissivePass(illRendererCommon::RenderQueues& renderQueues, const illGraphics::Camera& camera) {
+}
+
+void DeferredShadingBackendGl3_3::renderLights(illRendererCommon::RenderQueues& renderQueues, const illGraphics::Camera& camera) {
+    //figure out the normalized planes sent to the shader for retreiving position from depth    
+    float planes[2] = {
+        camera.getFarVal() / (camera.getFarVal() - camera.getNearVal()),
+        (camera.getFarVal() * camera.getNearVal()) / (camera.getFarVal() - camera.getNearVal()) //normally this is negated in a left handed coordinate system
+    };
+
+    //set the g buffer textures
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_2D, m_renderTextures[REN_DEPTH]);            //TODO: Optimize this...
+
+    glActiveTexture(GL_TEXTURE1);
+    glBindTexture(GL_TEXTURE_2D, m_renderTextures[REN_NORMAL]);
+
+    glActiveTexture(GL_TEXTURE2);
+    glBindTexture(GL_TEXTURE_2D, m_renderTextures[REN_DIFFUSE]);
+
+    glActiveTexture(GL_TEXTURE3);
+    glBindTexture(GL_TEXTURE_2D, m_renderTextures[REN_SPECULAR]);
+
+    for(auto lightTypeIter = renderQueues.m_lights.begin(); lightTypeIter != renderQueues.m_lights.end(); lightTypeIter++) {
+        illGraphics::LightBase::Type lightType = lightTypeIter->first;
+        auto& lights = lightTypeIter->second;
+        
+        GLuint prog;
+        illGraphics::Mesh * lightVolume;
+
+        switch(lightType) {
+        case illGraphics::LightBase::Type::POINT:
+            prog = getProgram(m_deferredPointLightProgram);
+            lightVolume = &m_pointLightVolume;
+            break;
+
+        case illGraphics::LightBase::Type::SPOT:
+            prog = getProgram(m_deferredSpotLightProgram);
+            lightVolume = &m_spotLightVolume;
+            break;
+
+        /*case illGraphics::LightBase::Type::DIRECTIONAL: TODO
+            prog = getProgram(m_deferredDirectionalLightProgram);
+            lightVolume = &m_quad;
+            break;*/
+        }
+
+        glUseProgram(prog);
+
+        glUniform2fv(getProgramUniformLocation(prog, "planes"), 1, planes);
+        
+        glUniform1i(getProgramUniformLocation(prog, "depthBuffer"), 0);
+        glUniform1i(getProgramUniformLocation(prog, "normalBuffer"), 1);
+        glUniform1i(getProgramUniformLocation(prog, "diffuseBuffer"), 2);
+        glUniform1i(getProgramUniformLocation(prog, "specularBuffer"), 3);
+
+        for(auto lightIter = lights.begin(); lightIter != lights.end(); lightIter++) {
+            illGraphics::LightBase * light = lightIter->first;
+            auto& lightNodes = lightIter->second;
+
+            glUniform1f(getProgramUniformLocation(prog, "intensity"), light->m_intensity);
+            glUniform3fv(getProgramUniformLocation(prog, "lightColor"), 1, glm::value_ptr(light->m_color));
+
+            glm::vec3 volumeScale;
+
+            switch(lightType) {
+            case illGraphics::LightBase::Type::POINT:
+                glUniform1f(getProgramUniformLocation(prog, "attenuationStart"), 
+                    static_cast<illGraphics::PointLight*>(light)->m_attenuationStart);
+
+                glUniform1f(getProgramUniformLocation(prog, "attenuationEnd"), 
+                    static_cast<illGraphics::PointLight*>(light)->m_attenuationEnd);
+
+                volumeScale = glm::vec3(static_cast<illGraphics::PointLight*>(light)->m_attenuationEnd);
+
+                break;
+
+            case illGraphics::LightBase::Type::SPOT:
+                glUniform1f(getProgramUniformLocation(prog, "attenuationStart"), 
+                    static_cast<illGraphics::SpotLight*>(light)->m_attenuationStart);
+
+                glUniform1f(getProgramUniformLocation(prog, "attenuationEnd"), 
+                    static_cast<illGraphics::SpotLight*>(light)->m_attenuationEnd);
+
+                glUniform1f(getProgramUniformLocation(prog, "coneStart"), 
+                    static_cast<illGraphics::SpotLight*>(light)->m_coneStart);
+
+                glUniform1f(getProgramUniformLocation(prog, "coneEnd"), 
+                    static_cast<illGraphics::SpotLight*>(light)->m_coneEnd);
+
+                volumeScale = glm::vec3(static_cast<illGraphics::SpotLight*>(light)->m_attenuationEnd);
+
+                break;
+
+            /*case illGraphics::LightBase::Type::DIRECTIONAL: TODO
+                break;*/
+            }
+
+            for(auto nodeIter = lightNodes.begin(); nodeIter != lightNodes.end(); nodeIter++) {
+                const illRendererCommon::LightNode * node = *nodeIter;
+                
+                glm::mat4 modelView = glm::scale(camera.getModelView() * node->getTransform(), volumeScale);
+                
+                glUniformMatrix4fv(getProgramUniformLocation(prog, "modelViewProjection"), 
+                    1, false, glm::value_ptr(glm::scale(camera.getModelViewProjection() * node->getTransform(), volumeScale)));
+                
+                glUniformMatrix4fv(getProgramUniformLocation(prog, "modelView"), 
+                    1, false, glm::value_ptr(modelView));
+
+                /*glUniformMatrix4fv(getProgramUniformLocation(prog, "modelViewProjection"), 
+                    1, false, glm::value_ptr(camera.getModelViewProjection()));
+
+                glUniformMatrix4fv(getProgramUniformLocation(prog, "modelView"), 
+                    1, false, glm::value_ptr(camera.getModelView()));*/
+
+                /*glm::vec3 lightPosEye = glm::vec3(camera.getModelView() * glm::vec4(getTransformPosition(node->getTransform()), 1.0f));
+                glm::mat4 transform = glm::translate(getTransformPosition(node->getTransform()))
+                    * glm::scale(glm::vec3(static_cast<illGraphics::PointLight*>(light)->m_attenuationEnd));
+
+                transform = camera.getModelView() * transform;
+
+                glUniformMatrix4fv(getProgramUniformLocation(prog, "modelViewMat"), 1, false, glm::value_ptr(transform));
+                glUniformMatrix4fv(getProgramUniformLocation(prog, "projectionMat"), 1, false, glm::value_ptr(camera.getProjection()));
+                glUniform3fv(getProgramUniformLocation(prog, "lightPosition"), 1, glm::value_ptr(lightPosEye));*/
+
+                switch(lightType) {
+                case illGraphics::LightBase::Type::POINT:
+                case illGraphics::LightBase::Type::SPOT:
+                    /*glUniform3fv(getProgramUniformLocation(prog, "lightPosition"), 
+                        1, glm::value_ptr(camera.getModelView() * glm::vec4(getTransformPosition(node->getTransform()), 1.0f)));*/
+                    glUniform3fv(getProgramUniformLocation(prog, "lightPosition"), 
+                        1, glm::value_ptr(getTransformPosition(camera.getModelView() * node->getTransform())));
+
+                    /*
+                    if light volume intersects far plane, back face culling, otherwise front face culling
+                    assuming the light center and attenuation end as sphere radius will suffice as a good test, 
+                    unless your light is HUGE or the draw distance is TINY
+                    in that case, you're doing it wrong!!!!
+                    */
+                    if(camera.getViewFrustum().m_far.distance(getTransformPosition(node->getTransform())) 
+                            < static_cast<illGraphics::PointLight*>(light)->m_attenuationEnd) {
+                        glCullFace(GL_BACK);
+                    }
+                    else {
+                        glCullFace(GL_FRONT);
+                    }
+
+                    break;
+
+                case illGraphics::LightBase::Type::DIRECTIONAL:
+                    //TODO:
+                    break;
+                }
+
+                //TODO: clearly I don't plan on using a box drawn in immediate mode for long, I will draw the light volume shapes soon with PROPER VBOs
+                
+                //glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+
+                glBegin(GL_QUADS);
+                glVertex3f(1.0f, -1.0f, 1.0f);
+                glVertex3f(1.0f, 1.0f, 1.0f);
+                glVertex3f(-1.0f, 1.0f, 1.0f);
+                glVertex3f(-1.0f, -1.0f, 1.0f);
+
+                glVertex3f(-1.0f, -1.0f, -1.0f);
+                glVertex3f(-1.0f, 1.0f, -1.0f);
+                glVertex3f(1.0f, 1.0f, -1.0f);
+                glVertex3f(1.0f, -1.0f, -1.0f);
+
+                glVertex3f(-1.0f, -1.0f, 1.0f);
+                glVertex3f(-1.0f, 1.0f, 1.0f);
+                glVertex3f(-1.0f, 1.0f, -1.0f);
+                glVertex3f(-1.0f, -1.0f, -1.0f);
+
+                glVertex3f(1.0f, -1.0f, -1.0f);
+                glVertex3f(1.0f, 1.0f, -1.0f);
+                glVertex3f(1.0f, 1.0f, 1.0f);
+                glVertex3f(1.0f, -1.0f, 1.0f);
+
+                glVertex3f(1.0f, 1.0f, 1.0f);
+                glVertex3f(1.0f, 1.0f, -1.0f);
+                glVertex3f(-1.0f, 1.0f, -1.0f);
+                glVertex3f(-1.0f, 1.0f, 1.0f);
+
+                glVertex3f(-1.0f, -1.0f, -1.0f);
+                glVertex3f(1.0f, -1.0f, -1.0f);
+                glVertex3f(1.0f, -1.0f, 1.0f);
+                glVertex3f(-1.0f, -1.0f, 1.0f);
+                glEnd();
+
+                //glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+            }
+        }
+    }
+}
+
+void DeferredShadingBackendGl3_3::renderFinish() {
+    //Combine accumulation buffers
+    //TODO: heh for now just do this with the fixed function pipeline... Later write a shader since fixed function pipeline is gone in GL 3.3
+    glMatrixMode(GL_PROJECTION);
+    glLoadIdentity();
+
+    glOrtho(0.0f, 1.0f,
+        0.0f, 1.0f,
+        -1.0f, 1.0f);
+
+    glMatrixMode(GL_MODELVIEW);
+    glLoadIdentity();
+
+    glUseProgram(0);
+
+    glActiveTexture(GL_TEXTURE1);
+    glDisable(GL_TEXTURE_2D);
+
+    glActiveTexture(GL_TEXTURE2);
+    glDisable(GL_TEXTURE_2D);
+
+    glActiveTexture(GL_TEXTURE3);
+    glDisable(GL_TEXTURE_2D);
+
+    glActiveTexture(GL_TEXTURE0);
+    glEnable(GL_TEXTURE_2D);
+
+    glColor3f(1.0f, 1.0f, 1.0f);
+
+    glBindTexture(GL_TEXTURE_2D, m_renderTextures[REN_DIFFUSE_ACCUMULATION]);
+
+    glBegin(GL_QUADS);
+    glTexCoord2f(0.0f, 0.0f);
+    glVertex2f(0.0f, 0.0f);
+
+    glTexCoord2f(0.0f, 1.0f);
+    glVertex2f(0.0f, 1.0f);
+
+    glTexCoord2f(1.0f, 1.0f);
+    glVertex2f(1.0f, 1.0f);
+
+    glTexCoord2f(1.0f, 0.0f);
+    glVertex2f(1.0f, 0.0f);
+    glEnd();
+
+    glBindTexture(GL_TEXTURE_2D, m_renderTextures[REN_SPECULAR_ACCUMULATION]);
+
+    glBegin(GL_QUADS);
+    glTexCoord2f(0.0f, 0.0f);
+    glVertex2f(0.0f, 0.0f);
+
+    glTexCoord2f(0.0f, 1.0f);
+    glVertex2f(0.0f, 1.0f);
+
+    glTexCoord2f(1.0f, 1.0f);
+    glVertex2f(1.0f, 1.0f);
+
+    glTexCoord2f(1.0f, 0.0f);
+    glVertex2f(1.0f, 0.0f);
+    glEnd();
+}
+
+void renderDebugLightPos(const glm::vec3& position) {
+   glPushMatrix();
+
+   glTranslatef(position.x, position.y, position.z);
+
+   glBegin(GL_LINES);
+      glColor4f(1.0f, 1.0f, 1.0f, 0.5f);
+      glVertex3f(0.0f, 0.0f, 0.0f);
+      glColor4f(1.0f, 1.0f, 1.0f, 0.0f);
+      glVertex3f(1.0f, 0.0f, 0.0f);
+
+      glColor4f(1.0f, 1.0f, 1.0f, 0.5f);
+      glVertex3f(0.0f, 0.0f, 0.0f);
+      glColor4f(1.0f, 1.0f, 1.0f, 0.0f);
+      glVertex3f(-1.0f, 0.0f, 0.0f);
+
+      glColor4f(1.0f, 1.0f, 1.0f, 0.5f);
+      glVertex3f(0.0f, 0.0f, 0.0f);
+      glColor4f(1.0f, 1.0f, 1.0f, 0.0f);
+      glVertex3f(0.0f, 1.0f, 0.0f);
+
+      glColor4f(1.0f, 1.0f, 1.0f, 0.5f);
+      glVertex3f(0.0f, 0.0f, 0.0f);
+      glColor4f(1.0f, 1.0f, 1.0f, 0.0f);
+      glVertex3f(0.0f, -1.0f, 0.0f);
+
+      glColor4f(1.0f, 1.0f, 1.0f, 0.5f);
+      glVertex3f(0.0f, 0.0f, 0.0f);
+      glColor4f(1.0f, 1.0f, 1.0f, 0.0f);
+      glVertex3f(0.0f, 0.0f, 1.0f);
+
+      glColor4f(1.0f, 1.0f, 1.0f, 0.5f);
+      glVertex3f(0.0f, 0.0f, 0.0f);
+      glColor4f(1.0f, 1.0f, 1.0f, 0.0f);
+      glVertex3f(0.0f, 0.0f, -1.0f);
+   glEnd();
+
+   glPopMatrix();
+}
+
+void renderDebugPointLight(const glm::vec3& position, const illGraphics::PointLight& light) {
+   renderDebugLightPos(position);
+
+   glPushMatrix();
+
+   glTranslatef(position.x, position.y, position.z);
+   glScalef(light.m_attenuationEnd, light.m_attenuationEnd, light.m_attenuationEnd);
+
+   glColor4f(light.m_color.x, light.m_color.y, light.m_color.z, 0.1f);
+   
+   glBegin(GL_LINE_LOOP);
+      glVertex3f(-1.0f, 0.0f, 0.0f);
+      glVertex3f(0.0f, 0.0f, 1.0f);
+      glVertex3f(1.0f, 0.0f, 0.0f);
+      glVertex3f(0.0f, 0.0f, -1.0f);
+   glEnd();
+
+   glBegin(GL_LINE_LOOP);
+      glVertex3f(-1.0f, 0.0f, 0.0f);
+      glVertex3f(0.0f, 1.0f, 0.0f);
+      glVertex3f(1.0f, 0.0f, 0.0f);
+      glVertex3f(0.0f, -1.0f, 0.0f);
+   glEnd();
+
+   glBegin(GL_LINE_LOOP);
+      glVertex3f(0.0f, -1.0f, 0.0f);
+      glVertex3f(0.0f, 0.0f, 1.0f);
+      glVertex3f(0.0f, 1.0f, 0.0f);
+      glVertex3f(0.0f, 0.0f, -1.0f);
+   glEnd();
+
+   glPopMatrix();
+}
+
+void renderDebugSpotLight(const glm::vec3& position, const illGraphics::SpotLight& light) {
+   renderDebugLightPos(position);
+}
+
+void DeferredShadingBackendGl3_3::renderDebugLights(illRendererCommon::RenderQueues& renderQueues, const illGraphics::Camera& camera) {
+   glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+   //manually go in to 3D mode while using fixed function pipeline in older OpenGL
+   glMatrixMode(GL_PROJECTION);
+   glLoadIdentity();
+
+   glMultMatrixf(glm::value_ptr(camera.getProjection()));
+   
+   glMatrixMode(GL_MODELVIEW);
+   glLoadIdentity();
+   
+   glMultMatrixf(glm::value_ptr(camera.getModelView()));
+            
+   glUseProgram(0);
+
+   glActiveTexture(GL_TEXTURE0);
+   glDisable(GL_TEXTURE_2D);
+
+   glActiveTexture(GL_TEXTURE1);
+   glDisable(GL_TEXTURE_2D);
+
+   glActiveTexture(GL_TEXTURE2);
+   glDisable(GL_TEXTURE_2D);
+
+   glActiveTexture(GL_TEXTURE3);
+   glDisable(GL_TEXTURE_2D);
+   
+   for(auto lightTypeIter = renderQueues.m_lights.begin(); lightTypeIter != renderQueues.m_lights.end(); lightTypeIter++) {
+        illGraphics::LightBase::Type lightType = lightTypeIter->first;
+        auto& lights = lightTypeIter->second;
+        
+        for(auto lightIter = lights.begin(); lightIter != lights.end(); lightIter++) {
+            illGraphics::LightBase * light = lightIter->first;
+            auto& lightNodes = lightIter->second;
+
+            for(auto nodeIter = lightNodes.begin(); nodeIter != lightNodes.end(); nodeIter++) {
+                const illRendererCommon::LightNode * node = *nodeIter;
+
+                switch(lightType) {
+                case illGraphics::LightBase::Type::POINT:
+                    renderDebugPointLight(getTransformPosition(node->getTransform()), *static_cast<illGraphics::PointLight *>(light));
+                    break;
+
+                case illGraphics::LightBase::Type::SPOT:
+                    renderDebugPointLight(getTransformPosition(node->getTransform()), *static_cast<illGraphics::SpotLight *>(light));
+                    break;
+                }
+            }
+        }
+   }
+      
+   glBindFramebuffer(GL_FRAMEBUFFER, m_gBuffer);
+}
+
+void DeferredShadingBackendGl3_3::render(illRendererCommon::RenderQueues& renderQueues, const illGraphics::Camera& camera) {
+    //disable depth mask
+    glDepthMask(GL_FALSE);
+
+    //enable color mask
+    glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
+
+    //enable depth func equal
+    glDepthFunc(GL_EQUAL);
+    
+    renderGbuffer(renderQueues, camera);
 
     if(m_debugMode == DebugMode::NONE || m_debugMode == DebugMode::LIGHT_POS || m_debugMode == DebugMode::DIFFUSE_ACCUMULATION || m_debugMode == DebugMode::SPECULAR_ACCUMULATION) {
+        //set up the FBO for rendering to the diffuse buffer
+        GLenum mrt[3] = {GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1};
+
+        glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, m_renderTextures[REN_DIFFUSE_ACCUMULATION], 0);
+        glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT1, GL_TEXTURE_2D, 0, 0);
+        glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT2, GL_TEXTURE_2D, 0, 0);
+        glDrawBuffers(1, mrt);
+        glClear(GL_COLOR_BUFFER_BIT);
+
+        //disable depth test
+        glDisable(GL_DEPTH_TEST);
+
+        renderAmbientPass(renderQueues, camera);
+
+        //set up the FBO for rendering to the specular buffer
+        glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, m_renderTextures[REN_SPECULAR_ACCUMULATION], 0);
+        glClear(GL_COLOR_BUFFER_BIT);
+
+        //enable additive blend
+        glEnable(GL_BLEND);
+        glBlendFunc(GL_SRC_ALPHA, GL_ONE);
+
+        //enable depth test func less equal
+        glEnable(GL_DEPTH_TEST);
+        glDepthFunc(GL_LEQUAL);
+
+        renderEmissivePass(renderQueues, camera);
+
+        if(m_debugMode == DebugMode::LIGHT_POS) {
+            renderDebugLights(renderQueues, camera);
+        }
+
+        //set up the FBO for rendering to both the specular and diffuse buffers
+        glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, m_renderTextures[REN_DIFFUSE_ACCUMULATION], 0);
+        glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT1, GL_TEXTURE_2D, m_renderTextures[REN_SPECULAR_ACCUMULATION], 0);
+        glDrawBuffers(2, mrt);
+         
+        //TODO: for now disable depth test
+        glDisable(GL_DEPTH_TEST);
+
+        renderLights(renderQueues, camera);
+
+        //TODO: forward rendering of blended stuff
+        //TODO: post processing
+
+        if(m_debugMode != DebugMode::DIFFUSE_ACCUMULATION && m_debugMode != DebugMode::SPECULAR_ACCUMULATION) {
+            //disable face culling
+            glDisable(GL_CULL_FACE);
+
+            //disable depth test
+            glDisable(GL_DEPTH_TEST);
+
+            //draw to screen again
+            glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+            renderFinish();
+        }
+        else {
+            switch(m_debugMode) {
+            case DebugMode::DIFFUSE_ACCUMULATION:
+                renderDebugTexture(m_renderTextures[REN_DIFFUSE_ACCUMULATION]);
+                break;
+
+            case DebugMode::SPECULAR_ACCUMULATION:
+                renderDebugTexture(m_renderTextures[REN_SPECULAR_ACCUMULATION]);
+                break;
+            }
+        }
     }
     else {
         switch(m_debugMode) {

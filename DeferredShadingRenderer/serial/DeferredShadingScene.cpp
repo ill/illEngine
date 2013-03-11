@@ -22,15 +22,13 @@ void DeferredShadingScene::render(const illGraphics::Camera& camera) {
         frustumIterator.forward();
 
         //TODO: cell querying stuff
-
-        //TODO: avoid duplicates by checking frame counter
-
+        
         //add all nodes in the cell to the render queues
         {
             auto& currCell = getSceneNodeCell(currentCell);
 
             for(auto cellIter = currCell.begin(); cellIter != currCell.end(); cellIter++) {
-                (*cellIter)->render(renderQueues);
+                (*cellIter)->render(renderQueues, m_frameCounter);
             }
         }
 
@@ -38,7 +36,7 @@ void DeferredShadingScene::render(const illGraphics::Camera& camera) {
             auto& currCell = getStaticNodeCell(currentCell);
 
             for(size_t arrayInd = 0; arrayInd < currCell.size(); arrayInd++) {
-                currCell[arrayInd]->render(renderQueues);
+                currCell[arrayInd]->render(renderQueues, m_frameCounter);
             }
         }
 
@@ -47,6 +45,8 @@ void DeferredShadingScene::render(const illGraphics::Camera& camera) {
     }
 
     static_cast<DeferredShadingBackend *>(m_rendererBackend)->render(renderQueues, camera);
+
+    ++m_frameCounter;
 }
 
 }

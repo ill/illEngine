@@ -31,10 +31,14 @@ public:
     @param aspect The aspect ratio of the camera's view, which is usually width / height of the viewport.
         When lights compute shadow volumes they usually need an aspect ratio of 1.
     @param fov The vertical field of view.
-    @param nearVal The near plane of the camera viewing.  This needs to be greater than zero.  Determines the view frustum in the end.
-    @param farVal The far plane of the camera viewing.  Determines the view frustum in the end.
+    @param nearVal The near plane of the camera viewing.  Controls distance from eye before objects are visible.
+        This needs to be greater than zero.  Determines the view frustum in the end.
+    @param farVal The far plane of the camera viewing.  Controls draw distance.  Determines the view frustum in the end.
     */
     inline void setPerspectiveTransform(const glm::mat4& transform, glm::mediump_float aspect = DEFAULT_ASPECT, glm::mediump_float fov = DEFAULT_FOV, glm::mediump_float nearVal = DEFAULT_NEAR, glm::mediump_float farVal = DEFAULT_FAR) {
+        m_nearVal = nearVal;
+        m_farVal = farVal;
+        
         m_transform = transform;
         m_modelView = glm::affineInverse(m_transform);
         m_projection = glm::perspective(fov, aspect, nearVal, farVal);
@@ -54,6 +58,9 @@ public:
     @param farVal The far plane
     */
     inline void setOrthoTransform(const glm::mat4& transform, glm::mediump_float left, glm::mediump_float right, glm::mediump_float bottom, glm::mediump_float top, glm::mediump_float nearVal = 0.0f, glm::mediump_float farVal = 1.0f) {
+        m_nearVal = nearVal;
+        m_farVal = farVal;
+
         m_transform = transform;
         m_modelView = glm::affineInverse(m_transform);
         m_projection = glm::ortho(left, right, bottom, top, nearVal, farVal);
@@ -137,6 +144,22 @@ public:
         ptADestination = glm::unProject(glm::vec3(windowCoords, 0.0f), m_modelView, m_projection, glm::ivec4(m_viewportCorner, m_viewportDimensions));
         ptBDestination = glm::unProject(glm::vec3(windowCoords, 1.0f), m_modelView, m_projection, glm::ivec4(m_viewportCorner, m_viewportDimensions));
     }
+
+    /**
+    Gets the near plane distance that was passed in setPerspectiveTransform or setOrthoTransform.    
+    To get the actual planes themselves get them from the view frustum with getFrustum().
+    */
+    inline glm::mediump_float getNearVal() const {
+        return m_nearVal;
+    }
+
+    /**
+    Gets the far plane distance that was passed in setPerspectiveTransform or setOrthoTransform.
+    To get the actual planes themselves get them from the view frustum with getFrustum().
+    */
+    inline glm::mediump_float getFarVal() const {
+        return m_farVal;
+    }
     
 private:
     glm::mat4 m_transform;              ///<the rotation, position, scale that defines the camera position and orientation
@@ -149,6 +172,9 @@ private:
 
     glm::ivec2 m_viewportCorner;        ///<the viewport corner
     glm::ivec2 m_viewportDimensions;    ///<the viewport width and height relative to the corner
+
+    glm::mediump_float m_nearVal;       ///<the near plane distance
+    glm::mediump_float m_farVal;        ///<far plane distance
 };
 
 }

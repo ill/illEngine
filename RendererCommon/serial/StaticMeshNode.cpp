@@ -4,7 +4,15 @@
 
 namespace illRendererCommon {
 
-void StaticMeshNode::render(RenderQueues& renderQueues) {
+void StaticMeshNode::render(RenderQueues& renderQueues, uint64_t frameCounter) {
+    //avoid duplicates
+    if(m_frameCounter <= frameCounter) {
+        m_frameCounter = frameCounter + 1;
+    }
+    else {
+        return;
+    }
+
     assert(!m_mesh.isNull());
     assert(!m_material.isNull());
     

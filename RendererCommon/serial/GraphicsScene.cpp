@@ -18,7 +18,7 @@ void GraphicsScene::getLights(const Box<>& boundingBox, std::set<LightNode*>& de
                 assert(node->getType() == GraphicsNode::Type::LIGHT);
 
                 if(node->m_accessCounter <= m_accessCounter) {
-                    ++node->m_accessCounter;
+                    node->m_accessCounter = m_accessCounter + 1;
 
                     if(boundingBox.intersects(node->getWorldBoundingVolume())) {
                         destination.insert(node);
@@ -36,7 +36,7 @@ void GraphicsScene::getLights(const Box<>& boundingBox, std::set<LightNode*>& de
                 assert(node->getType() == GraphicsNode::Type::LIGHT);
 
                 if(node->m_accessCounter <= m_accessCounter) {
-                    ++node->m_accessCounter;
+                    node->m_accessCounter = m_accessCounter + 1;
 
                     if(boundingBox.intersects(node->getWorldBoundingVolume())) {
                         destination.insert(node);

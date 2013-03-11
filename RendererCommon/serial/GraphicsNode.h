@@ -27,7 +27,7 @@ public:
         }
     }
 
-    virtual void render(RenderQueues& renderQueues) = 0;
+    virtual void render(RenderQueues& renderQueues, uint64_t frameCounter) = 0;
 
     inline glm::vec3 getPosition() const {
         return getTransformPosition(m_transform);
@@ -87,16 +87,16 @@ protected:
         }
     }
 
+    /**
+    This is so visibility culling queries don't return duplicate results when an object intersects multiple cells.
+    */
+    uint64_t m_frameCounter;
+
 private:
     /**
     This is so scene queries don't return duplicate results when an object intersects multiple cells.
     */
     uint64_t m_accessCounter;
-
-    /**
-    This is so visibility culling queries don't return duplicate results when an object intersects multiple cells.
-    */
-    uint64_t m_frameCounter;
 
     glm::mat4 m_transform;
 

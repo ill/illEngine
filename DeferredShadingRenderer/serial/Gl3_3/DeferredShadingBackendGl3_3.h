@@ -7,13 +7,15 @@
 #include "GlCommon/serial/GlBackend.h"
 
 #include "Graphics/serial/Material/ShaderProgram.h"
+#include "Graphics/serial/Model/Mesh.h"
 
 namespace illDeferredShadingRenderer {
 
 class DeferredShadingBackendGl3_3 : public DeferredShadingBackend {
 public:
     DeferredShadingBackendGl3_3(GlCommon::GlBackend * glBackend)
-        : DeferredShadingBackend(glBackend)
+        : DeferredShadingBackend(glBackend),
+        m_internalShaderProgramLoader(NULL)
     {}
 
     virtual void initialize(const glm::uvec2 screenResolution);
@@ -26,6 +28,16 @@ public:
     virtual void render(illRendererCommon::RenderQueues& renderQueues, const illGraphics::Camera& camera);
 
 private:
+    void renderGbuffer(illRendererCommon::RenderQueues& renderQueues, const illGraphics::Camera& camera);
+    void renderAmbientPass(illRendererCommon::RenderQueues& renderQueues, const illGraphics::Camera& camera);
+    void renderEmissivePass(illRendererCommon::RenderQueues& renderQueues, const illGraphics::Camera& camera);
+    void renderLights(illRendererCommon::RenderQueues& renderQueues, const illGraphics::Camera& camera);
+    //TODO: all the other render tasks
+    //TODO: post processing
+    void renderFinish();
+
+    void renderDebugLights(illRendererCommon::RenderQueues& renderQueues, const illGraphics::Camera& camera);
+
     GLuint m_gBuffer;
 
     enum RenderTextureType {
@@ -42,8 +54,17 @@ private:
 
     GLuint m_renderTextures[REN_LAST];
 
+    illGraphics::ShaderProgramLoader * m_internalShaderProgramLoader;
     illGraphics::ShaderProgram m_deferredPointLightProgram;
     illGraphics::ShaderProgram m_deferredSpotLightProgram;
+    illGraphics::ShaderProgram m_deferredDirectionLightProgram;
+
+    //TODO: have these be some kind of utility meshes?
+    //I might use geometry shaders later, maybe...
+    illGraphics::Mesh m_pointLightVolume;
+    illGraphics::Mesh m_spotLightVolume;
+    illGraphics::Mesh m_box;
+    illGraphics::Mesh m_quad;
 };
 
 }

@@ -81,9 +81,11 @@ struct RenderQueues {
         m_unsolidDepthsortedStaticMeshes;
 
     /**
-    Lights to be drawn in deferred shading sorted by light type.
+    Lights to be drawn in deferred shading sorted by light type and light.
+    This should make lights instanceable.
     */
-    std::unordered_map<const illGraphics::LightBase::Type, std::vector<const LightNode *>> m_lights;
+    std::unordered_map<const illGraphics::LightBase::Type, 
+        std::unordered_map<illGraphics::LightBase *, std::vector<const LightNode *>>> m_lights;
 };
 
 }
