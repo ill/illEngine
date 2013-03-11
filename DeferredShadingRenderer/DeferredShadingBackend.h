@@ -14,7 +14,8 @@ class DeferredShadingBackend : public illRendererCommon::RendererBackend {
 public:
     DeferredShadingBackend(illGraphics::GraphicsBackend * backend)
         : RendererBackend(backend),
-        m_debugMode(DebugMode::NONE)
+        m_debugMode(DebugMode::NONE),
+        m_debugOcclusion(false)
     {}
 
     /**
@@ -43,6 +44,7 @@ public:
     virtual void render(illRendererCommon::RenderQueues& renderQueues, const illGraphics::Camera& camera) = 0;
     
     //different debug modes
+    //TODO: make a debug version of the renderer separate from the real renderer
     enum class DebugMode {
         NONE,
 
@@ -60,6 +62,8 @@ public:
         SPECULAR_ACCUMULATION
     };
 
+    bool m_debugOcclusion;
+    const illGraphics::Camera * m_occlusionCamera;
     DebugMode m_debugMode;
 };
 
