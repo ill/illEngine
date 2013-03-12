@@ -10,7 +10,7 @@
 
 namespace illDeferredShadingRenderer {
 
-void DeferredShadingBackendGl3_3::initialize(const glm::uvec2 screenResolution) {
+void DeferredShadingBackendGl3_3::initialize(const glm::uvec2 screenResolution, illGraphics::ShaderProgramManager * shaderProgramManager) {
     uninitialize();
 
     glGenFramebuffers(1, &m_gBuffer);
@@ -148,9 +148,12 @@ void DeferredShadingBackendGl3_3::initialize(const glm::uvec2 screenResolution) 
             m_deferredDirectionLightProgram.loadInternal(m_internalShaderProgramLoader, shaders);
         }*/
     }
+    
+    m_volumeRenderProgram = shaderProgramManager->getResource(illGraphics::ShaderProgram::SHPRG_POSITIONS | illGraphics::ShaderProgram::SHPRG_FORWARD);
 
     //load the light volumes
-    //TODO: for now just rendering a giant box using immediate mode
+    m_box.setFrontentDataInternal(new MeshData<>(Box<>(glm::vec3(-0.5f), glm::vec3(0.5f)), MF_POSITION)); 
+    m_box.frontendBackendTransferInternal(m_graphicsBackend);
 
     ERROR_CHECK_OPENGL;
 
@@ -187,19 +190,9 @@ void DeferredShadingBackendGl3_3::setupFrame() {
     GLenum mrt[3] = {GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1, GL_COLOR_ATTACHMENT2};
     glDrawBuffers(3, mrt);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-}
 
-void DeferredShadingBackendGl3_3::setupViewport(const illGraphics::Camera& camera) {
-    glViewport(camera.getViewportCorner().x, camera.getViewportCorner().y, camera.getViewportDimensions().x, camera.getViewportDimensions().y);
+    //prepare for depth passes
 
-    //TODO, make this function take an argument for the viewport, and also set up the backend to be doing stuff to do with the viewport and occlusion queries
-}
-
-void DeferredShadingBackendGl3_3::retreiveCellQueries(size_t viewPort) {
-    //TODO: this doesn't work yet
-}
-
-void DeferredShadingBackendGl3_3::depthPass(illRendererCommon::RenderQueues& renderQueues, const illGraphics::Camera& camera) {
     //disable blend
     glDisable(GL_BLEND);
 
@@ -209,10 +202,107 @@ void DeferredShadingBackendGl3_3::depthPass(illRendererCommon::RenderQueues& ren
     //enable depth func less
     glEnable(GL_DEPTH_TEST);
     glDepthFunc(GL_LESS);
-   
-    //enable backface culling
+
+    //set up backface culling
     glCullFace(GL_BACK);
+}
+
+void DeferredShadingBackendGl3_3::setupViewport(const illGraphics::Camera& camera) {
+    glViewport(camera.getViewportCorner().x, camera.getViewportCorner().y, camera.getViewportDimensions().x, camera.getViewportDimensions().y);
+
+    //TODO, make this function take an argument for the viewport, and also set up the backend to be doing stuff to do with the viewport and occlusion queries
+}
+
+void DeferredShadingBackendGl3_3::retreiveCellQueries(std::unordered_map<size_t, Array<uint64_t>>& lastViewedFrames, uint64_t lastFrameCounter) {
+    for(auto iter = m_cellQueries.begin(); iter != m_cellQueries.end(); iter++) {
+        CellQuery& cellQuery = *iter;
+
+        GLint result;
+        glGetQueryObjectiv(cellQuery.m_query, GL_QUERY_RESULT, &result);
+
+        if(result) {
+            lastViewedFrames.at(cellQuery.m_viewport)[cellQuery.m_cellArrayIndex] = lastFrameCounter;
+        }
+
+        //TODO: figure out if deleting queries as soon as I used them is a good idea
+        glDeleteQueries(1, &cellQuery.m_query);
+    }
+}
+
+void * DeferredShadingBackendGl3_3::occlusionQueryCell(const illGraphics::Camera& camera, const glm::vec3& cellCenter, const glm::vec3& cellSize,
+        unsigned int cellArrayIndex, size_t viewport) {
+    //generate the occlusion query for the cell
+    m_cellQueries.emplace_back();
+    
+    glGenQueries(1, &m_cellQueries.back().m_query);
+    m_cellQueries.back().m_cellArrayIndex = cellArrayIndex;
+    m_cellQueries.back().m_viewport = viewport;
+
+    //just disable face culling for this super simple box being drawn
+    glDisable(GL_CULL_FACE);
+
+    //disable depth write
+    //glColorMask(GL_TRUE, GL_FALSE, GL_FALSE, GL_TRUE);    //debug draw some red to the normals buffer
+    glDepthMask(GL_FALSE);
+
+    if(m_debugOcclusion) {
+        glViewport(camera.getViewportCorner().x, camera.getViewportCorner().y + camera.getViewportDimensions().y / 2,
+            camera.getViewportDimensions().x, camera.getViewportDimensions().y / 2);
+    }
+
+    //for now using immediate mode
+    GLuint prog = getProgram(*m_volumeRenderProgram.get());
+
+    glUseProgram(prog);
+    
+    GLint posAttrib = getProgramAttribLocation(prog, "positionIn");
+    glEnableVertexAttribArray(posAttrib);
+
+    //bind VBO
+    {
+        GLuint buffer = *((GLuint *) m_box.getMeshBackendData() + 0);
+        glBindBuffer(GL_ARRAY_BUFFER, buffer);
+    }
+
+    //setup positions
+    glVertexAttribPointer(posAttrib, 3, GL_FLOAT, GL_FALSE, (GLsizei) m_box.getMeshFrontentData()->getVertexSize(), (char *)NULL + m_box.getMeshFrontentData()->getPositionOffset());                
+    
+    //bind IBO
+    {
+        GLuint buffer = *((GLuint *) m_box.getMeshBackendData() + 1);
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, buffer);
+    }
+
+    glm::mat4 boxTransform = glm::scale(glm::translate(cellCenter), cellSize);
+
+    glUniformMatrix4fv(getProgramUniformLocation(prog, "modelViewProjection"), 1, false, glm::value_ptr(camera.getModelViewProjection() * boxTransform));
+
+    glBeginQuery(GL_ANY_SAMPLES_PASSED/*_CONSERVATIVE*/, m_cellQueries.back().m_query);
+    
+    glDrawRangeElements(GL_TRIANGLES, 0, m_box.getMeshFrontentData()->getNumTri() * 3, m_box.getMeshFrontentData()->getNumTri() * 3, GL_UNSIGNED_SHORT, (char *)NULL);
+
+    glEndQuery(GL_ANY_SAMPLES_PASSED/*_CONSERVATIVE*/);
+    
+    glDisableVertexAttribArray(posAttrib);
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+
+    if(m_debugOcclusion) {
+        glViewport(camera.getViewportCorner().x, camera.getViewportCorner().y, camera.getViewportDimensions().x, camera.getViewportDimensions().y);
+    }
+
+    //returns a pointer to the query name in OpenGL, depthPass will just typecast this this
+    return &m_cellQueries.back().m_query;
+}
+
+void DeferredShadingBackendGl3_3::depthPass(illRendererCommon::RenderQueues& renderQueues, const illGraphics::Camera& camera, void * cellOcclusionQuery) {
+    //enable depth write
+    glDepthMask(GL_TRUE);
+    
+    //enable backface culling
     glEnable(GL_CULL_FACE);
+
+    glBeginConditionalRender(*(GLuint *) cellOcclusionQuery, GL_ANY_SAMPLES_PASSED/*_CONSERVATIVE*/);//TODO: Does conservative not work here?
 
     //the unanimated solid meshes
     for(auto shaderIter = renderQueues.m_depthPassSolidStaticMeshes.begin(); shaderIter != renderQueues.m_depthPassSolidStaticMeshes.end(); shaderIter++) {
@@ -280,6 +370,11 @@ void DeferredShadingBackendGl3_3::depthPass(illRendererCommon::RenderQueues& ren
 
         glDisableVertexAttribArray(posAttrib);
     }
+
+    glEndConditionalRender();
+
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 
     renderQueues.m_depthPassSolidStaticMeshes.clear();
 
@@ -492,6 +587,9 @@ void DeferredShadingBackendGl3_3::renderGbuffer(illRendererCommon::RenderQueues&
         glDisableVertexAttribArray(posAttrib);
         glDisableVertexAttribArray(normAttrib);
     }
+
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 
     if(m_debugOcclusion) {
         glViewport(camera.getViewportCorner().x, camera.getViewportCorner().y, camera.getViewportDimensions().x, camera.getViewportDimensions().y);
@@ -789,6 +887,9 @@ void DeferredShadingBackendGl3_3::renderLights(illRendererCommon::RenderQueues& 
             }
         }
     }
+
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 
     if(m_debugOcclusion) {
         glViewport(camera.getViewportCorner().x, camera.getViewportCorner().y, camera.getViewportDimensions().x, camera.getViewportDimensions().y);

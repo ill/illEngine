@@ -1,6 +1,9 @@
 #ifndef ILL_DEFERRED_SHADING_BACKEND_GL3_3_H_
 #define ILL_DEFERRED_SHADING_BACKEND_GL3_3_H_
 
+#include <unordered_map>
+#include <vector>
+
 #include <GL/glew.h>
 
 #include "DeferredShadingRenderer/DeferredShadingBackend.h"
@@ -11,6 +14,8 @@
 
 namespace illDeferredShadingRenderer {
 
+//TODO: there's quite a bit of code in here that is shareable between different renderer types, I'll probably redesign all of this a bit later
+
 class DeferredShadingBackendGl3_3 : public DeferredShadingBackend {
 public:
     DeferredShadingBackendGl3_3(GlCommon::GlBackend * glBackend)
@@ -18,16 +23,26 @@ public:
         m_internalShaderProgramLoader(NULL)
     {}
 
-    virtual void initialize(const glm::uvec2 screenResolution);
+    virtual void initialize(const glm::uvec2 screenResolution, illGraphics::ShaderProgramManager * shaderProgramManager);
     virtual void uninitialize();
 
     virtual void setupFrame();
     virtual void setupViewport(const illGraphics::Camera& camera);
-    virtual void retreiveCellQueries(size_t viewPort);
-    virtual void depthPass(illRendererCommon::RenderQueues& renderQueues, const illGraphics::Camera& camera);
+    virtual void retreiveCellQueries(std::unordered_map<size_t, Array<uint64_t>>& lastViewedFrames, uint64_t lastFrameCounter);
+
+    virtual void * occlusionQueryCell(const illGraphics::Camera& camera, const glm::vec3& cellCenter, const glm::vec3& cellSize,
+        unsigned int cellArrayIndex, size_t viewport);
+    virtual void depthPass(illRendererCommon::RenderQueues& renderQueues, const illGraphics::Camera& camera, void * cellOcclusionQuery);
     virtual void render(illRendererCommon::RenderQueues& renderQueues, const illGraphics::Camera& camera);
 
 private:
+    //data storing an occlusion query for a cell
+    struct CellQuery {
+        size_t m_viewport;
+        GLuint m_query;
+        unsigned int m_cellArrayIndex;
+    };
+
     void renderGbuffer(illRendererCommon::RenderQueues& renderQueues, const illGraphics::Camera& camera);
     void renderAmbientPass(illRendererCommon::RenderQueues& renderQueues, const illGraphics::Camera& camera);
     void renderEmissivePass(illRendererCommon::RenderQueues& renderQueues, const illGraphics::Camera& camera);
@@ -59,6 +74,7 @@ private:
     illGraphics::ShaderProgram m_deferredPointLightProgram;
     illGraphics::ShaderProgram m_deferredSpotLightProgram;
     illGraphics::ShaderProgram m_deferredDirectionLightProgram;
+    RefCountPtr<illGraphics::ShaderProgram> m_volumeRenderProgram;
 
     //TODO: have these be some kind of utility meshes?
     //I might use geometry shaders later, maybe...
@@ -66,6 +82,8 @@ private:
     illGraphics::Mesh m_spotLightVolume;
     illGraphics::Mesh m_box;
     illGraphics::Mesh m_quad;
+
+    std::vector<CellQuery> m_cellQueries;
 };
 
 }

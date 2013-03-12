@@ -254,7 +254,7 @@ void BitmapFont::readChars(illFileSystem::File * file, size_t size, unsigned int
     m_mesh.unload();
     m_mesh.setFrontentDataInternal(new MeshData<>(numChars << 1, numChars << 2, MF_POSITION | MF_TEX_COORD));
     
-    uint16_t * indeces = m_mesh.getMeshFrontentData()->getIndeces();
+    uint16_t * indeces = m_mesh.getMeshFrontentData()->getIndices();
 
     for(unsigned int currChar = 0; currChar < numChars; currChar++) {
         unsigned char character;

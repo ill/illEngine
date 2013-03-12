@@ -5,6 +5,8 @@
 #include <cassert>
 #include <glm/glm.hpp>
 
+#include "Util/Geometry/Box.h"
+
 /**
 The vertex features used by this mesh.  Positions will most likely always be present, but everything else is optional.
 */
@@ -116,90 +118,117 @@ public:
     The rgba vertex color.
     */
     typedef glm::detail::tvec4<T> Color;
-
-    /**
-    A mesh may need multiple triangle groups, for example if it's a multimaterial mesh and needs separate draw calls per material
-    */
-    //struct TriangleGroup {
-    //    /**
-    //    Offset into the vertex index buffer object that starts this triangle group.
-    //    This should be the starting triangle multiplied by 3 since triangles are defined in groups of 3 vertices.
-    //    */
-    //    unsigned int m_indexOffset;
-
-    //    /**
-    //    How many vertex indeces this triangle group consists of.
-    //    This should be the number of triangles multiplied by 3 since triangles are defined in groups of 3 vertices.
-    //    */
-    //    unsigned int m_elementCount;
-    //};
-
+    
     /**
     Creates the mesh.
     @param numTri The number of triangles in the mesh.
     @param numVert The number of vertices in the mesh.  Not necessairly numTri multiplied by 3 since there can be shared vertices.
-    @param numGroups The number of triangle groups.  This would correspond to the number of materials in a multimaterial mesh for example.
     @param features Which features are stored in the verteces.
     By default it creates a mesh that stores positions, normals, tangents, and texture coordinates.
     @param allocate Whether or not the data for the mesh should be allocated on the CPU side.
     */
-    MeshData(uint32_t numTri, uint32_t numVert, /*uint8_t numGroups,*/ FeaturesMask features = MF_POSITION | MF_NORMAL | MF_TANGENT | MF_TEX_COORD, bool allocate = true)
+    MeshData(uint32_t numTri, uint32_t numVert, FeaturesMask features = MF_POSITION | MF_NORMAL | MF_TANGENT | MF_TEX_COORD, bool allocate = true)
         : m_numVert(numVert),
         m_data(NULL),
         m_numTri(numTri),
-        m_indeces(NULL),
-        //m_numGroups(numGroups),
+        m_indices(NULL),
         m_features(features)
     {
-        free();
+        initialize(allocate);
+    }
 
-        m_positionOffset = 0;
+    /**
+    Creates the mesh for a box.
 
-        m_normalOffset = m_positionOffset;
-        if(hasPositions()) {
-            m_normalOffset += sizeof(Position);
-        }
+    TODO: at the moment creating the positions is the only thing supported
+    */
+    MeshData(const Box<T>& box, FeaturesMask features, bool allocate = true)
+        : m_numVert(8),
+        m_data(NULL),
+        m_numTri(12),
+        m_indices(NULL),
+        m_features(features)
+    {
+        initialize(allocate);
 
-        m_tangentOffset = m_normalOffset;
-        m_bitangentOffset = m_tangentOffset + sizeof(glm::detail::tvec3<T>);
-        if(hasNormals()) {
-            m_tangentOffset += sizeof(Normal);
-            m_bitangentOffset += sizeof(Normal);
-        }
+        getPosition(0) = glm::vec3(box.m_min.x, box.m_min.y, box.m_min.z);
+        getPosition(1) = glm::vec3(box.m_max.x, box.m_min.y, box.m_min.z);
+        getPosition(2) = glm::vec3(box.m_max.x, box.m_max.y, box.m_min.z);
+        getPosition(3) = glm::vec3(box.m_min.x, box.m_max.y, box.m_min.z);
 
-        m_blendIndexOffset = m_tangentOffset;
-        m_blendWeightOffset = m_blendIndexOffset + sizeof(glm::detail::tvec4<T>);
-        if(hasTangents()) {
-            m_blendIndexOffset += sizeof(TangentData);
-            m_blendWeightOffset += sizeof(TangentData);
-        }
+        getPosition(4) = glm::vec3(box.m_min.x, box.m_min.y, box.m_max.z);
+        getPosition(5) = glm::vec3(box.m_max.x, box.m_min.y, box.m_max.z);
+        getPosition(6) = glm::vec3(box.m_max.x, box.m_max.y, box.m_max.z);
+        getPosition(7) = glm::vec3(box.m_min.x, box.m_max.y, box.m_max.z);
 
-        m_texCoordOffset = m_blendIndexOffset;
-        if(hasBlendData()) {
-            m_texCoordOffset += sizeof(BlendData);
-        }
+        //face 0 tri 0
+        m_indices[0] = 0;
+        m_indices[1] = 1;
+        m_indices[2] = 2;
 
-        m_colorOffset = m_texCoordOffset;
-        if(hasTexCoords()) {
-            m_colorOffset += sizeof(TexCoord);
-        }
+        //face 0 tri 1
+        m_indices[3] = 2;
+        m_indices[4] = 3;
+        m_indices[5] = 0;
 
-        m_vertexSize = m_colorOffset;
-        if(hasColors()) {
-            m_vertexSize += sizeof(Color);
-        }
 
-        //m_triangleGroups = new TriangleGroup[m_numGroups];
+        //face 1 tri 0
+        m_indices[6] = 0;
+        m_indices[7] = 4;
+        m_indices[8] = 3;
 
-        if(allocate) {
-            this->allocate();
-        }
+        //face 1 tri 1
+        m_indices[9] = 3;
+        m_indices[10] = 4;
+        m_indices[11] = 7;
+
+
+        //face 2 tri 0
+        m_indices[12] = 7;
+        m_indices[13] = 6;
+        m_indices[14] = 4;
+
+        //face 2 tri 1
+        m_indices[15] = 4;
+        m_indices[16] = 5;
+        m_indices[17] = 6;
+
+
+        //face 3 tri 0
+        m_indices[18] = 6;
+        m_indices[19] = 2;
+        m_indices[20] = 5;
+
+        //face 3 tri 1
+        m_indices[21] = 5;
+        m_indices[22] = 2;
+        m_indices[23] = 1;
+
+
+        //face 4 tri 0
+        m_indices[24] = 1;
+        m_indices[25] = 0;
+        m_indices[26] = 4;
+
+        //face 4 tri 1
+        m_indices[27] = 4;
+        m_indices[28] = 5;
+        m_indices[29] = 1;
+
+
+        //face 5 tri 0
+        m_indices[30] = 3;
+        m_indices[31] = 2;
+        m_indices[32] = 6;
+
+        //face 5 tri 1
+        m_indices[33] = 6;
+        m_indices[34] = 7;
+        m_indices[35] = 3;
     }
 
     ~MeshData() {
         free();
-
-        //delete[] m_triangleGroups;
     }
 
     /**
@@ -209,7 +238,7 @@ public:
         free();
 
         m_data = new uint8_t[m_numVert * m_vertexSize];
-        m_indeces = new I[m_numTri * 3];
+        m_indices = new I[m_numTri * 3];
     }
 
     /**
@@ -219,10 +248,10 @@ public:
     */
     inline void free() {
         delete[] m_data;
-        delete[] m_indeces;
+        delete[] m_indices;
 
         m_data = NULL;
-        m_indeces = NULL;
+        m_indices = NULL;
     }
 
     /**
@@ -614,8 +643,8 @@ public:
     Get a pointer to the indeces.
     This is useful for uploading the data to the GPU vertex buffer object.
     */
-    inline I * getIndeces() const {
-        return m_indeces;
+    inline I * getIndices() const {
+        return m_indices;
     }
 
     /**
@@ -650,11 +679,55 @@ public:
     }*/
 
 private:
+    void initialize(bool allocate) {
+        free();
+
+        m_positionOffset = 0;
+
+        m_normalOffset = m_positionOffset;
+        if(hasPositions()) {
+            m_normalOffset += sizeof(Position);
+        }
+
+        m_tangentOffset = m_normalOffset;
+        m_bitangentOffset = m_tangentOffset + sizeof(glm::detail::tvec3<T>);
+        if(hasNormals()) {
+            m_tangentOffset += sizeof(Normal);
+            m_bitangentOffset += sizeof(Normal);
+        }
+
+        m_blendIndexOffset = m_tangentOffset;
+        m_blendWeightOffset = m_blendIndexOffset + sizeof(glm::detail::tvec4<T>);
+        if(hasTangents()) {
+            m_blendIndexOffset += sizeof(TangentData);
+            m_blendWeightOffset += sizeof(TangentData);
+        }
+
+        m_texCoordOffset = m_blendIndexOffset;
+        if(hasBlendData()) {
+            m_texCoordOffset += sizeof(BlendData);
+        }
+
+        m_colorOffset = m_texCoordOffset;
+        if(hasTexCoords()) {
+            m_colorOffset += sizeof(TexCoord);
+        }
+
+        m_vertexSize = m_colorOffset;
+        if(hasColors()) {
+            m_vertexSize += sizeof(Color);
+        }
+
+        if(allocate) {
+            this->allocate();
+        }
+    }
+
     uint32_t m_numVert;
     uint8_t * m_data;
 
     uint32_t m_numTri;
-    I * m_indeces;
+    I * m_indices;
 
     //uint8_t m_numGroups;
     //TriangleGroup * m_triangleGroups;

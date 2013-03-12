@@ -1,9 +1,8 @@
 #ifndef ILL_DEFERRED_SHADING_SCENE_H_
 #define ILL_DEFERRED_SHADING_SCENE_H_
 
-#include <unordered_set>
-#include <cstring>
-
+#include <unordered_map>
+#include "Util/serial/Array.h"
 #include "Util/Geometry/GridVolume3D.h"
 #include "RendererCommon/serial/GraphicsScene.h"
 
@@ -21,25 +20,35 @@ public:
             meshManager, materialManager, 
             cellDimensions, cellNumber, interactionCellDimensions, interactionCellNumber, true)
     {
-        m_lastVisibleFrame = new uint64_t[cellNumber.x * cellNumber.y * cellNumber.z];
-
-        memset(m_lastVisibleFrame, 0, sizeof(uint64_t) * cellNumber.x * cellNumber.y * cellNumber.z);
-
         m_renderQueues.m_queueLights = true;
         m_renderQueues.m_getSolidAffectingLights = false;
     }
     
     virtual ~DeferredShadingScene() {
-        delete[] m_lastVisibleFrame;
     }
 
-    virtual void render(const illGraphics::Camera& camera);
+    virtual void render(const illGraphics::Camera& camera, size_t viewport);
+
+    /**
+    For every main viewport you will use, you must register it first.
+    This is so the scene can keep track of occlusion queries per viewport.
+
+    If you have just one viewport just call this once.
+    If you multiplayer split screen or something, call this for every viewport you will use.
+
+    This will return to you a new viewport id and will allocate
+    memory to hold data about occlusion queries.
+    */
+    size_t registerViewport();
+
+    /**
+    When no longer using a viewport, free it.
+    */
+    void freeViewport(size_t viewport);
 
 protected:
-    /**
-    For each cell, what was the last frame that this cell was visible
-    */
-    uint64_t * m_lastVisibleFrame;
+    size_t m_returnViewportId;  //the next viewport id that will be returned
+    std::unordered_map<size_t, Array<uint64_t>> m_lastVisibleFrames;
 };
 
 }

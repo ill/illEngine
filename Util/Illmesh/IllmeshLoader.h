@@ -52,7 +52,7 @@ struct IllmeshLoader {
 
         //read the IBO
         for(unsigned int index = 0, iboIndex = 0; index < m_numInd; index++, iboIndex++) {
-            m_openFile->readL16(*(mesh.getIndeces() + iboIndex));
+            m_openFile->readL16(*(mesh.getIndices() + iboIndex));
         }
     }
 
