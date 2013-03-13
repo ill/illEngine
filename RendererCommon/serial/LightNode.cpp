@@ -2,10 +2,10 @@
 
 namespace illRendererCommon {
 
-void LightNode::render(RenderQueues& renderQueues, uint64_t frameCounter) {    
+void LightNode::render(RenderQueues& renderQueues, uint64_t renderAccessCounter) {    
     //avoid duplicates
-    if(m_frameCounter <= frameCounter) {
-        m_frameCounter = frameCounter + 1;
+    if(m_renderAccessCounter <= renderAccessCounter) {
+        m_renderAccessCounter = renderAccessCounter + 1;
     }
     else {
         return;

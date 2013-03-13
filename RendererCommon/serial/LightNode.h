@@ -22,7 +22,7 @@ public:
         delete m_light;
     }
 
-    virtual void render(RenderQueues& renderQueues, uint64_t frameCounter);
+    virtual void render(RenderQueues& renderQueues, uint64_t renderAccessCounter);
 
 private:
     illGraphics::LightBase * m_light;

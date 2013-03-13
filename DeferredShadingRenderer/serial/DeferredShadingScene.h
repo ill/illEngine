@@ -18,7 +18,9 @@ public:
             glm::vec3& interactionCellDimensions, const glm::uvec3& interactionCellNumber)
         : GraphicsScene(rendererBackend, 
             meshManager, materialManager, 
-            cellDimensions, cellNumber, interactionCellDimensions, interactionCellNumber, true)
+            cellDimensions, cellNumber, interactionCellDimensions, interactionCellNumber, true),
+        m_frameCounter(0),
+        m_returnViewportId(0)
     {
         m_renderQueues.m_queueLights = true;
         m_renderQueues.m_getSolidAffectingLights = false;
@@ -26,6 +28,8 @@ public:
     
     virtual ~DeferredShadingScene() {
     }
+
+    virtual void setupFrame();
 
     virtual void render(const illGraphics::Camera& camera, size_t viewport);
 
@@ -46,7 +50,11 @@ public:
     */
     void freeViewport(size_t viewport);
 
+    bool m_performCull;
+
 protected:
+    uint64_t m_frameCounter;
+
     size_t m_returnViewportId;  //the next viewport id that will be returned
     std::unordered_map<size_t, Array<uint64_t>> m_lastVisibleFrames;
 };

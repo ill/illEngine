@@ -58,6 +58,11 @@ public:
     }
     
     /**
+    Call this each frame before making any render calls to prepare the scene for rendering the next frame.
+    */
+    virtual void setupFrame() {}
+
+    /**
     Render a scene from a camera angle.  This interacts with the renderer backend directly.
     @param camera The camera angle to render from.
     @param viewport The viewport number.  Renderers that use occlusion queries need to 
@@ -136,7 +141,7 @@ protected:
         m_materialManager(materialManager),
         m_rendererBackend(rendererBackend),
         m_accessCounter(0),
-        m_frameCounter(1),
+        m_renderAccessCounter(0),
         m_grid(cellDimensions, cellNumber),
         m_interactionGrid(interactionCellDimensions, interactionCellNumber),
         m_trackLightsInVisibilityGrid(trackLightsInVisibilityGrid)
@@ -195,9 +200,9 @@ protected:
     mutable uint64_t m_accessCounter;
 
     /**
-    The counter keeps track of the current frame.
+    The counter works like accessCounter but works on visibility queries.
     */
-    mutable uint64_t m_frameCounter;
+    mutable uint64_t m_renderAccessCounter;
     
     /**
     The 3D uniform grid for the scene.

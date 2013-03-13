@@ -190,7 +190,11 @@ void DeferredShadingBackendGl3_3::setupFrame() {
     GLenum mrt[3] = {GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1, GL_COLOR_ATTACHMENT2};
     glDrawBuffers(3, mrt);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+}
 
+void DeferredShadingBackendGl3_3::setupViewport(const illGraphics::Camera& camera) {
+    glViewport(camera.getViewportCorner().x, camera.getViewportCorner().y, camera.getViewportDimensions().x, camera.getViewportDimensions().y);
+    
     //prepare for depth passes
 
     //disable blend
@@ -201,42 +205,42 @@ void DeferredShadingBackendGl3_3::setupFrame() {
 
     //enable depth func less
     glEnable(GL_DEPTH_TEST);
-    glDepthFunc(GL_LESS);
+    glDepthFunc(GL_LEQUAL);
 
     //set up backface culling
     glCullFace(GL_BACK);
 }
 
-void DeferredShadingBackendGl3_3::setupViewport(const illGraphics::Camera& camera) {
-    glViewport(camera.getViewportCorner().x, camera.getViewportCorner().y, camera.getViewportDimensions().x, camera.getViewportDimensions().y);
-
-    //TODO, make this function take an argument for the viewport, and also set up the backend to be doing stuff to do with the viewport and occlusion queries
-}
-
-void DeferredShadingBackendGl3_3::retreiveCellQueries(std::unordered_map<size_t, Array<uint64_t>>& lastViewedFrames, uint64_t lastFrameCounter) {
+void DeferredShadingBackendGl3_3::retreiveCellQueries(std::unordered_map<size_t, Array<uint64_t>>& lastViewedFrames, uint64_t lastFrameCounter) {    
     for(auto iter = m_cellQueries.begin(); iter != m_cellQueries.end(); iter++) {
         CellQuery& cellQuery = *iter;
 
-        GLint result;
-        glGetQueryObjectiv(cellQuery.m_query, GL_QUERY_RESULT, &result);
+        if(m_performCull) {
+            GLint result;
+            glGetQueryObjectiv(cellQuery.m_query, GL_QUERY_RESULT, &result);
 
-        if(result) {
-            lastViewedFrames.at(cellQuery.m_viewport)[cellQuery.m_cellArrayIndex] = lastFrameCounter;
+            if(result) {
+                lastViewedFrames.at(cellQuery.m_viewport)[cellQuery.m_cellArrayIndex] = lastFrameCounter;
+            }
         }
 
-        //TODO: figure out if deleting queries as soon as I used them is a good idea
+        //TODO: figure out if deleting queries as soon as I used them is bad for performance, maintaining my own pool might be kindof useless though since GL does it too
         glDeleteQueries(1, &cellQuery.m_query);
     }
+
+    m_cellQueries.clear();
 }
 
 void * DeferredShadingBackendGl3_3::occlusionQueryCell(const illGraphics::Camera& camera, const glm::vec3& cellCenter, const glm::vec3& cellSize,
         unsigned int cellArrayIndex, size_t viewport) {
     //generate the occlusion query for the cell
-    m_cellQueries.emplace_back();
+    if(m_performCull) {
+        m_cellQueries.emplace_back();
     
-    glGenQueries(1, &m_cellQueries.back().m_query);
-    m_cellQueries.back().m_cellArrayIndex = cellArrayIndex;
-    m_cellQueries.back().m_viewport = viewport;
+        glGenQueries(1, &m_cellQueries.back().m_query);
+        m_cellQueries.back().m_cellArrayIndex = cellArrayIndex;
+        m_cellQueries.back().m_viewport = viewport;
+    }
 
     //just disable face culling for this super simple box being drawn
     glDisable(GL_CULL_FACE);
@@ -277,11 +281,15 @@ void * DeferredShadingBackendGl3_3::occlusionQueryCell(const illGraphics::Camera
 
     glUniformMatrix4fv(getProgramUniformLocation(prog, "modelViewProjection"), 1, false, glm::value_ptr(camera.getModelViewProjection() * boxTransform));
 
-    glBeginQuery(GL_ANY_SAMPLES_PASSED/*_CONSERVATIVE*/, m_cellQueries.back().m_query);
+    if(m_performCull) {
+        glBeginQuery(/*GL_SAMPLES_PASSED*/GL_ANY_SAMPLES_PASSED_CONSERVATIVE, m_cellQueries.back().m_query);
+    }
     
     glDrawRangeElements(GL_TRIANGLES, 0, m_box.getMeshFrontentData()->getNumTri() * 3, m_box.getMeshFrontentData()->getNumTri() * 3, GL_UNSIGNED_SHORT, (char *)NULL);
 
-    glEndQuery(GL_ANY_SAMPLES_PASSED/*_CONSERVATIVE*/);
+    if(m_performCull) {
+        glEndQuery(/*GL_SAMPLES_PASSED*/GL_ANY_SAMPLES_PASSED_CONSERVATIVE);
+    }
     
     glDisableVertexAttribArray(posAttrib);
     glBindBuffer(GL_ARRAY_BUFFER, 0);
@@ -292,7 +300,7 @@ void * DeferredShadingBackendGl3_3::occlusionQueryCell(const illGraphics::Camera
     }
 
     //returns a pointer to the query name in OpenGL, depthPass will just typecast this this
-    return &m_cellQueries.back().m_query;
+    return m_performCull ? &m_cellQueries.back().m_query : NULL;
 }
 
 void DeferredShadingBackendGl3_3::depthPass(illRendererCommon::RenderQueues& renderQueues, const illGraphics::Camera& camera, void * cellOcclusionQuery) {
@@ -302,7 +310,9 @@ void DeferredShadingBackendGl3_3::depthPass(illRendererCommon::RenderQueues& ren
     //enable backface culling
     glEnable(GL_CULL_FACE);
 
-    glBeginConditionalRender(*(GLuint *) cellOcclusionQuery, GL_ANY_SAMPLES_PASSED/*_CONSERVATIVE*/);//TODO: Does conservative not work here?
+    if(m_performCull) {
+        glBeginConditionalRender(*(GLuint *) cellOcclusionQuery, GL_ANY_SAMPLES_PASSED/*_CONSERVATIVE*/);//TODO: Does conservative not work here?
+    }
 
     //the unanimated solid meshes
     for(auto shaderIter = renderQueues.m_depthPassSolidStaticMeshes.begin(); shaderIter != renderQueues.m_depthPassSolidStaticMeshes.end(); shaderIter++) {
@@ -371,7 +381,9 @@ void DeferredShadingBackendGl3_3::depthPass(illRendererCommon::RenderQueues& ren
         glDisableVertexAttribArray(posAttrib);
     }
 
-    glEndConditionalRender();
+    if(m_performCull) {
+        glEndConditionalRender();
+    }
 
     glBindBuffer(GL_ARRAY_BUFFER, 0);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);

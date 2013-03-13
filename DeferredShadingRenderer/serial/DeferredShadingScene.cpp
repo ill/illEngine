@@ -7,10 +7,13 @@
 
 namespace illDeferredShadingRenderer {
 
-void DeferredShadingScene::render(const illGraphics::Camera& camera, size_t viewport) {
+void DeferredShadingScene::setupFrame() {
     static_cast<DeferredShadingBackend *>(m_rendererBackend)->retreiveCellQueries(m_lastVisibleFrames, m_frameCounter);
-    
     static_cast<DeferredShadingBackend *>(m_rendererBackend)->setupFrame();
+    ++m_frameCounter;
+}
+
+void DeferredShadingScene::render(const illGraphics::Camera& camera, size_t viewport) {    
     static_cast<DeferredShadingBackend *>(m_rendererBackend)->setupViewport(camera);
 
     //get the frustum iterator
@@ -28,13 +31,13 @@ void DeferredShadingScene::render(const illGraphics::Camera& camera, size_t view
         frustumIterator.forward();
 
         //if cell was visible last frame
-        if(m_lastVisibleFrames.at(viewport)[currentCell] == m_frameCounter) {
+        if(m_lastVisibleFrames.at(viewport)[currentCell] == m_frameCounter - 1 || !m_performCull) {
             //add all nodes in the cell to the render queues
             {
                 auto& currCell = getSceneNodeCell(currentCell);
 
                 for(auto cellIter = currCell.begin(); cellIter != currCell.end(); cellIter++) {
-                    (*cellIter)->render(m_renderQueues, m_frameCounter);
+                    (*cellIter)->render(m_renderQueues, m_renderAccessCounter);
                 }
             }
 
@@ -42,7 +45,7 @@ void DeferredShadingScene::render(const illGraphics::Camera& camera, size_t view
                 auto& currCell = getStaticNodeCell(currentCell);
 
                 for(size_t arrayInd = 0; arrayInd < currCell.size(); arrayInd++) {
-                    currCell[arrayInd]->render(m_renderQueues, m_frameCounter);
+                    currCell[arrayInd]->render(m_renderQueues, m_renderAccessCounter);
                 }
             }
 
@@ -53,7 +56,7 @@ void DeferredShadingScene::render(const illGraphics::Camera& camera, size_t view
 
     static_cast<DeferredShadingBackend *>(m_rendererBackend)->render(m_renderQueues, camera);
 
-    ++m_frameCounter;
+    ++m_renderAccessCounter;
 
     m_renderQueues.m_depthPassSolidStaticMeshes.clear();
     m_renderQueues.m_lights.clear();

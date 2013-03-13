@@ -27,7 +27,7 @@ public:
         }
     }
 
-    virtual void render(RenderQueues& renderQueues, uint64_t frameCounter) = 0;
+    virtual void render(RenderQueues& renderQueues, uint64_t renderAccessCounter) = 0;
 
     inline glm::vec3 getPosition() const {
         return getTransformPosition(m_transform);
@@ -72,7 +72,7 @@ protected:
             const glm::mat4& transform, const Box<>& boundingVol,
             Type type, State initialState = State::IN_SCENE)
         : m_accessCounter(0),
-        m_frameCounter(0),
+        m_renderAccessCounter(0),
         m_transform(transform),
         m_boundingVol(boundingVol),
         m_scene(scene),
@@ -90,7 +90,7 @@ protected:
     /**
     This is so visibility culling queries don't return duplicate results when an object intersects multiple cells.
     */
-    uint64_t m_frameCounter;
+    uint64_t m_renderAccessCounter;
 
 private:
     /**
