@@ -1185,7 +1185,7 @@ void DeferredShadingBackendGl3_3::renderDebugBounds(illRendererCommon::RenderQue
                         glViewport(camera.getViewportCorner().x, camera.getViewportCorner().y,
                             camera.getViewportDimensions().x, camera.getViewportDimensions().y / 2);
                         
-                        renderNodeBounds(nodeIter->m_node);
+                        //renderNodeBounds(nodeIter->m_node);
                         
                         glMatrixMode(GL_PROJECTION);
                         glLoadIdentity();
@@ -1201,7 +1201,7 @@ void DeferredShadingBackendGl3_3::renderDebugBounds(illRendererCommon::RenderQue
                             camera.getViewportDimensions().x, camera.getViewportDimensions().y / 2);
                     }
 
-                    renderNodeBounds(nodeIter->m_node);
+                    //renderNodeBounds(nodeIter->m_node);
                 }
             }
         }
@@ -1215,6 +1215,36 @@ void DeferredShadingBackendGl3_3::renderDebugBounds(illRendererCommon::RenderQue
 
             for(auto nodeIter = lightNodes.begin(); nodeIter != lightNodes.end(); nodeIter++) {
                 const illRendererCommon::LightNode * node = *nodeIter;
+
+                if(m_debugOcclusion) {
+                    glMatrixMode(GL_PROJECTION);
+                    glLoadIdentity();
+
+                    glMultMatrixf(glm::value_ptr(m_occlusionCamera->getProjection()));
+
+                    glMatrixMode(GL_MODELVIEW);
+                    glLoadIdentity();
+
+                    glMultMatrixf(glm::value_ptr(m_occlusionCamera->getModelView()));
+
+                    glViewport(camera.getViewportCorner().x, camera.getViewportCorner().y,
+                        camera.getViewportDimensions().x, camera.getViewportDimensions().y / 2);
+                        
+                    renderNodeBounds(node);
+                        
+                    glMatrixMode(GL_PROJECTION);
+                    glLoadIdentity();
+
+                    glMultMatrixf(glm::value_ptr(camera.getProjection()));
+
+                    glMatrixMode(GL_MODELVIEW);
+                    glLoadIdentity();
+
+                    glMultMatrixf(glm::value_ptr(camera.getModelView()));
+
+                    glViewport(camera.getViewportCorner().x, camera.getViewportCorner().y + camera.getViewportDimensions().y / 2,
+                        camera.getViewportDimensions().x, camera.getViewportDimensions().y / 2);
+                }
 
                 renderNodeBounds(node);
             }
@@ -1232,6 +1262,9 @@ void DeferredShadingBackendGl3_3::render(illRendererCommon::RenderQueues& render
     //enable depth func equal
     glDepthFunc(GL_EQUAL);
     
+    //reenable face culling
+    glEnable(GL_CULL_FACE);
+
     renderGbuffer(renderQueues, camera);
 
     if(m_debugMode == DebugMode::NONE || m_debugMode == DebugMode::DIFFUSE_ACCUMULATION || m_debugMode == DebugMode::SPECULAR_ACCUMULATION) {
