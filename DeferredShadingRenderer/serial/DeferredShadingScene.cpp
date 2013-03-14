@@ -20,17 +20,31 @@ void DeferredShadingScene::render(const illGraphics::Camera& camera, size_t view
     MeshEdgeList<> meshEdgeList = camera.getViewFrustum().getMeshEdgeList();
     ConvexMeshIterator<> frustumIterator = getGridVolume().meshIteratorForMesh(&meshEdgeList, camera.getViewFrustum().m_direction);
 
+    bool needsQuerySetup = true;
+
     while(!frustumIterator.atEnd()) {
         unsigned int currentCell = getGridVolume().indexForCell(frustumIterator.getCurrentPosition());
 
+        //check if cell is empty
+        if(getSceneNodeCell(currentCell).empty() && getStaticNodeCell(currentCell).size() == 0) {
+            frustumIterator.forward();
+            continue;
+        }
+
         //do an occlusion query for the cell
+        if(needsQuerySetup) {
+            static_cast<DeferredShadingBackend *>(m_rendererBackend)->setupCellQuery();
+            needsQuerySetup = false;
+        }
+
         void * cellQuery = static_cast<DeferredShadingBackend *>(m_rendererBackend)->occlusionQueryCell(
-            camera, vec3cast<unsigned int, glm::mediump_float>(frustumIterator.getCurrentPosition()) * getGridVolume().getCellDimensions() + getGridVolume().getCellDimensions() * 0.5f, 
+            camera, vec3cast<unsigned int, glm::mediump_float>(frustumIterator.getCurrentPosition()) * getGridVolume().getCellDimensions() 
+                + getGridVolume().getCellDimensions() * 0.5f, 
             getGridVolume().getCellDimensions(), currentCell, viewport);
 
         frustumIterator.forward();
 
-        //if cell was visible last frame
+        //if cell was visible last frame and has objects in it
         if(m_lastVisibleFrames.at(viewport)[currentCell] == m_frameCounter - 1 || !m_performCull) {
             //add all nodes in the cell to the render queues
             {
@@ -48,6 +62,9 @@ void DeferredShadingScene::render(const illGraphics::Camera& camera, size_t view
                     currCell[arrayInd]->render(m_renderQueues, m_renderAccessCounter);
                 }
             }
+
+            static_cast<DeferredShadingBackend *>(m_rendererBackend)->endCellQuery();
+            needsQuerySetup = true;
 
             //draw objects for the depth pass
             static_cast<DeferredShadingBackend *>(m_rendererBackend)->depthPass(m_renderQueues, camera, cellQuery);

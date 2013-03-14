@@ -30,6 +30,8 @@ public:
     virtual void setupViewport(const illGraphics::Camera& camera);
     virtual void retreiveCellQueries(std::unordered_map<size_t, Array<uint64_t>>& lastViewedFrames, uint64_t lastFrameCounter);
 
+    virtual void setupCellQuery();
+    virtual void endCellQuery();
     virtual void * occlusionQueryCell(const illGraphics::Camera& camera, const glm::vec3& cellCenter, const glm::vec3& cellSize,
         unsigned int cellArrayIndex, size_t viewport);
     virtual void depthPass(illRendererCommon::RenderQueues& renderQueues, const illGraphics::Camera& camera, void * cellOcclusionQuery);

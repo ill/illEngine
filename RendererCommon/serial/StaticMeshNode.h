@@ -17,7 +17,7 @@ public:
             State initialState = State::IN_SCENE)
         : GraphicsNode(scene, transform, boundingVol, Type::MESH, initialState),
         m_meshId(meshId),
-        m_materialId(meshId)
+        m_materialId(materialId)
     {}
 
     virtual ~StaticMeshNode() {}

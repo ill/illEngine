@@ -65,6 +65,19 @@ public:
     virtual void retreiveCellQueries(std::unordered_map<size_t, Array<uint64_t>>& lastViewedFrames, uint64_t lastFrameCounter) = 0;
     
     /**
+    Sets up state to be doing cell queries.
+    Call this right before starting to do an occlusionQueryCell call either for the first time or
+    after having done a depth pass call.  No need to keep calling this over and over between subsequent
+    cell queries since the state is already set up.
+    */
+    virtual void setupCellQuery() = 0;
+
+    /**
+    Call this to end cell query state if you're about to do an occlusionQueryCell call.
+    */
+    virtual void endCellQuery() = 0;
+
+    /**
     Creates an occlusion query for a scene cell and returns a pointer to the data of the occlusion query
     for the CPU side to pass back to the depth pass function later for that cell.
 

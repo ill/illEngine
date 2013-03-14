@@ -50,7 +50,7 @@ public:
     Gets the array index for a grid cell position
     */
     inline unsigned int indexForCell(const glm::uvec3& index) const {
-        return index.x + m_cellNumber.x * (index.y + m_cellNumber.z * index.z);
+        return index.x + m_cellNumber.x * (index.y + m_cellNumber.y * index.z);
     }
 
     /**

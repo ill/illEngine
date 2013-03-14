@@ -65,12 +65,7 @@ void Material::reload(MaterialLoader * rendererBackend) {
         shaderMask |= ShaderProgram::SHPRG_NORMAL_MAP;
         normalsNeeded = true;
     }
-
-    //if any textures are used that may benefit from normals and no lighting isn't on
-    if(normalsNeeded && !m_loadArgs.m_noLighting) {
-        shaderMask |= ShaderProgram::SHPRG_NORMALS;
-    }
-
+    
     //check if should do forward rendering instead of deferred shading
     if(m_loader->m_forceForwardRendering || m_loadArgs.m_forceForwardRendering || m_loadArgs.m_blendMode != MaterialLoadArgs::BlendMode::NONE) {
         shaderMask |= ShaderProgram::SHPRG_FORWARD;
@@ -78,6 +73,14 @@ void Material::reload(MaterialLoader * rendererBackend) {
         if(!m_loadArgs.m_noLighting) {
             shaderMask |= ShaderProgram::SHPRG_FORWARD_LIGHT;
         }
+    }
+    else {
+        normalsNeeded = true;   //normals are needed for deferred shading
+    }
+
+    //if any textures or lighting are used that may benefit from normals and no lighting isn't on
+    if(normalsNeeded && !m_loadArgs.m_noLighting) {
+        shaderMask |= ShaderProgram::SHPRG_NORMALS;
     }
         
     //TODO: billboarding mode

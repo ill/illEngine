@@ -205,7 +205,7 @@ void DeferredShadingBackendGl3_3::setupViewport(const illGraphics::Camera& camer
 
     //enable depth func less
     glEnable(GL_DEPTH_TEST);
-    glDepthFunc(GL_LEQUAL);
+    glDepthFunc(GL_LESS);
 
     //set up backface culling
     glCullFace(GL_BACK);
@@ -231,17 +231,7 @@ void DeferredShadingBackendGl3_3::retreiveCellQueries(std::unordered_map<size_t,
     m_cellQueries.clear();
 }
 
-void * DeferredShadingBackendGl3_3::occlusionQueryCell(const illGraphics::Camera& camera, const glm::vec3& cellCenter, const glm::vec3& cellSize,
-        unsigned int cellArrayIndex, size_t viewport) {
-    //generate the occlusion query for the cell
-    if(m_performCull) {
-        m_cellQueries.emplace_back();
-    
-        glGenQueries(1, &m_cellQueries.back().m_query);
-        m_cellQueries.back().m_cellArrayIndex = cellArrayIndex;
-        m_cellQueries.back().m_viewport = viewport;
-    }
-
+void DeferredShadingBackendGl3_3::setupCellQuery() {
     //just disable face culling for this super simple box being drawn
     glDisable(GL_CULL_FACE);
 
@@ -249,12 +239,6 @@ void * DeferredShadingBackendGl3_3::occlusionQueryCell(const illGraphics::Camera
     //glColorMask(GL_TRUE, GL_FALSE, GL_FALSE, GL_TRUE);    //debug draw some red to the normals buffer
     glDepthMask(GL_FALSE);
 
-    if(m_debugOcclusion) {
-        glViewport(camera.getViewportCorner().x, camera.getViewportCorner().y + camera.getViewportDimensions().y / 2,
-            camera.getViewportDimensions().x, camera.getViewportDimensions().y / 2);
-    }
-
-    //for now using immediate mode
     GLuint prog = getProgram(*m_volumeRenderProgram.get());
 
     glUseProgram(prog);
@@ -276,10 +260,33 @@ void * DeferredShadingBackendGl3_3::occlusionQueryCell(const illGraphics::Camera
         GLuint buffer = *((GLuint *) m_box.getMeshBackendData() + 1);
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, buffer);
     }
+}
 
+void DeferredShadingBackendGl3_3::endCellQuery() {
+    glDisableVertexAttribArray(getProgramAttribLocation(getProgram(*m_volumeRenderProgram.get()), "positionIn"));
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+}
+
+void * DeferredShadingBackendGl3_3::occlusionQueryCell(const illGraphics::Camera& camera, const glm::vec3& cellCenter, const glm::vec3& cellSize,
+        unsigned int cellArrayIndex, size_t viewport) {
+    //generate the occlusion query for the cell
+    if(m_performCull) {
+        m_cellQueries.emplace_back();
+    
+        glGenQueries(1, &m_cellQueries.back().m_query);
+        m_cellQueries.back().m_cellArrayIndex = cellArrayIndex;
+        m_cellQueries.back().m_viewport = viewport;
+    }
+
+    if(m_debugOcclusion) {
+        glViewport(camera.getViewportCorner().x, camera.getViewportCorner().y + camera.getViewportDimensions().y / 2,
+            camera.getViewportDimensions().x, camera.getViewportDimensions().y / 2);
+    }
+    
     glm::mat4 boxTransform = glm::scale(glm::translate(cellCenter), cellSize);
 
-    glUniformMatrix4fv(getProgramUniformLocation(prog, "modelViewProjection"), 1, false, glm::value_ptr(camera.getModelViewProjection() * boxTransform));
+    glUniformMatrix4fv(getProgramUniformLocation(getProgram(*m_volumeRenderProgram.get()), "modelViewProjection"), 1, false, glm::value_ptr(camera.getModelViewProjection() * boxTransform));
 
     if(m_performCull) {
         glBeginQuery(/*GL_SAMPLES_PASSED*/GL_ANY_SAMPLES_PASSED_CONSERVATIVE, m_cellQueries.back().m_query);
@@ -291,14 +298,6 @@ void * DeferredShadingBackendGl3_3::occlusionQueryCell(const illGraphics::Camera
         glEndQuery(/*GL_SAMPLES_PASSED*/GL_ANY_SAMPLES_PASSED_CONSERVATIVE);
     }
     
-    glDisableVertexAttribArray(posAttrib);
-    glBindBuffer(GL_ARRAY_BUFFER, 0);
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
-
-    if(m_debugOcclusion) {
-        glViewport(camera.getViewportCorner().x, camera.getViewportCorner().y, camera.getViewportDimensions().x, camera.getViewportDimensions().y);
-    }
-
     //returns a pointer to the query name in OpenGL, depthPass will just typecast this this
     return m_performCull ? &m_cellQueries.back().m_query : NULL;
 }
@@ -538,20 +537,24 @@ void DeferredShadingBackendGl3_3::renderGbuffer(illRendererCommon::RenderQueues&
                         (GLsizei) mesh->getMeshFrontentData()->getVertexSize(), (char *)NULL + mesh->getMeshFrontentData()->getPositionOffset());
 
                     //setup tex coords
-                    glVertexAttribPointer(texCoordAttrib, 2, GL_FLOAT, GL_FALSE, 
-                        (GLsizei) mesh->getMeshFrontentData()->getVertexSize(), (char *)NULL + mesh->getMeshFrontentData()->getTexCoordOffset());
+                    if(texCoordAttrib >= 0) {
+                        glVertexAttribPointer(texCoordAttrib, 2, GL_FLOAT, GL_FALSE, 
+                            (GLsizei) mesh->getMeshFrontentData()->getVertexSize(), (char *)NULL + mesh->getMeshFrontentData()->getTexCoordOffset());
+                    }
 
                     //setup normals
                     glVertexAttribPointer(normAttrib, 3, GL_FLOAT, GL_FALSE, 
                         (GLsizei) mesh->getMeshFrontentData()->getVertexSize(), (char *)NULL + mesh->getMeshFrontentData()->getNormalOffset());
                     
                     //setup tangents
-                    glVertexAttribPointer(tangentsAttrib, 3, GL_FLOAT, GL_FALSE, 
-                        (GLsizei) mesh->getMeshFrontentData()->getVertexSize(), (char *)NULL + mesh->getMeshFrontentData()->getTangentOffset());
+                    if(tangentsAttrib >= 0) {
+                        glVertexAttribPointer(tangentsAttrib, 3, GL_FLOAT, GL_FALSE, 
+                            (GLsizei) mesh->getMeshFrontentData()->getVertexSize(), (char *)NULL + mesh->getMeshFrontentData()->getTangentOffset());
 
-                    //setup bitangents
-                    glVertexAttribPointer(bitangentsAttrib, 3, GL_FLOAT, GL_FALSE, 
-                        (GLsizei) mesh->getMeshFrontentData()->getVertexSize(), (char *)NULL + mesh->getMeshFrontentData()->getBitangentOffset());
+                        //setup bitangents
+                        glVertexAttribPointer(bitangentsAttrib, 3, GL_FLOAT, GL_FALSE, 
+                            (GLsizei) mesh->getMeshFrontentData()->getVertexSize(), (char *)NULL + mesh->getMeshFrontentData()->getBitangentOffset());
+                    }
 
                     //TODO: skinning
 
@@ -574,10 +577,10 @@ void DeferredShadingBackendGl3_3::renderGbuffer(illRendererCommon::RenderQueues&
                     }
 
                     glUniformMatrix4fv(getProgramUniformLocation(prog, "modelViewProjection"), 
-                            1, false, glm::value_ptr(camera.getModelViewProjection() * meshInfo.m_node->getTransform()));
+                        1, false, glm::value_ptr(camera.getModelViewProjection() * meshInfo.m_node->getTransform()));
 
-                        glUniformMatrix3fv(getProgramUniformLocation(prog, "normalMat"), 
-                            1, false, glm::value_ptr(glm::mat3(camera.getModelView() * meshInfo.m_node->getTransform())));
+                    glUniformMatrix3fv(getProgramUniformLocation(prog, "normalMat"), 
+                        1, false, glm::value_ptr(glm::mat3(camera.getModelView() * meshInfo.m_node->getTransform())));
 
                     glDrawRangeElements(GL_TRIANGLES, 0, 
                         mesh->getMeshFrontentData()->getNumTri() * 3, mesh->getMeshFrontentData()->getNumTri() * 3, GL_UNSIGNED_SHORT, (char *)NULL);
@@ -1131,6 +1134,30 @@ void renderNodeBounds(const illRendererCommon::GraphicsNode * node) {
     glVertex3f(bounds.m_min.x, bounds.m_max.y, bounds.m_min.z);
     glVertex3f(bounds.m_min.x, bounds.m_max.y, bounds.m_max.z);
     glEnd();
+
+    //render the origin
+    glPushMatrix();
+    glMultMatrixf(glm::value_ptr(node->getTransform()));
+
+    //debug draw the axes
+    glBegin(GL_LINES);
+    //x Red
+        glColor4f(1.0f, 0.0f, 0.0f, 0.5f);
+        glVertex3f(0.0f, 0.0f, 0.0f);
+        glVertex3f(1.0f, 0.0f, 0.0f);
+
+    //y Green
+        glColor4f(0.0f, 1.0f, 0.0f, 0.5f);
+        glVertex3f(0.0f, 0.0f, 0.0f);
+        glVertex3f(0.0f, 1.0f, 0.0f);
+
+    //z Blue
+        glColor4f(0.0f, 0.0f, 1.0f, 0.5f);
+        glVertex3f(0.0f, 0.0f, 0.0f);
+        glVertex3f(0.0f, 0.0f, 1.0f);
+    glEnd();
+
+    glPopMatrix();
 }
 
 void DeferredShadingBackendGl3_3::renderDebugBounds(illRendererCommon::RenderQueues& renderQueues, const illGraphics::Camera& camera) {
@@ -1185,7 +1212,7 @@ void DeferredShadingBackendGl3_3::renderDebugBounds(illRendererCommon::RenderQue
                         glViewport(camera.getViewportCorner().x, camera.getViewportCorner().y,
                             camera.getViewportDimensions().x, camera.getViewportDimensions().y / 2);
                         
-                        //renderNodeBounds(nodeIter->m_node);
+                        renderNodeBounds(nodeIter->m_node);
                         
                         glMatrixMode(GL_PROJECTION);
                         glLoadIdentity();
@@ -1201,7 +1228,7 @@ void DeferredShadingBackendGl3_3::renderDebugBounds(illRendererCommon::RenderQue
                             camera.getViewportDimensions().x, camera.getViewportDimensions().y / 2);
                     }
 
-                    //renderNodeBounds(nodeIter->m_node);
+                    renderNodeBounds(nodeIter->m_node);
                 }
             }
         }
@@ -1230,7 +1257,7 @@ void DeferredShadingBackendGl3_3::renderDebugBounds(illRendererCommon::RenderQue
                     glViewport(camera.getViewportCorner().x, camera.getViewportCorner().y,
                         camera.getViewportDimensions().x, camera.getViewportDimensions().y / 2);
                         
-                    renderNodeBounds(node);
+                    //renderNodeBounds(node);
                         
                     glMatrixMode(GL_PROJECTION);
                     glLoadIdentity();
@@ -1246,7 +1273,7 @@ void DeferredShadingBackendGl3_3::renderDebugBounds(illRendererCommon::RenderQue
                         camera.getViewportDimensions().x, camera.getViewportDimensions().y / 2);
                 }
 
-                renderNodeBounds(node);
+                //renderNodeBounds(node);
             }
         }
     }
