@@ -2,7 +2,7 @@
 
 #include "DeferredShadingRenderer/serial/DeferredShadingScene.h"
 #include "DeferredShadingRenderer/DeferredShadingBackend.h"
-#include "Util/Geometry/ConvexMeshIterator.h"
+#include "Util/Geometry/Iterators/MultiConvexMeshIterator.h"
 #include "Graphics/serial/Camera/Camera.h"
 
 namespace illDeferredShadingRenderer {
@@ -18,7 +18,11 @@ void DeferredShadingScene::render(const illGraphics::Camera& camera, size_t view
 
     //get the frustum iterator
     MeshEdgeList<> meshEdgeList = camera.getViewFrustum().getMeshEdgeList();
-    ConvexMeshIterator<> frustumIterator = getGridVolume().meshIteratorForMesh(&meshEdgeList, camera.getViewFrustum().m_direction);
+    MultiConvexMeshIterator<> frustumIterator;
+    
+    getGridVolume().orderedMeshIteratorForMesh(frustumIterator, &meshEdgeList,
+        camera.getViewFrustum().m_nearTipPoint,
+        camera.getViewFrustum().m_direction);
 
     bool needsQuerySetup = true;
 

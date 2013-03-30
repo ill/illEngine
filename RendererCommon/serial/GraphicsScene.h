@@ -8,8 +8,8 @@
 #include "Util/serial/Array.h"
 #include "Util/Geometry/GridVolume3D.h"
 #include "Util/Geometry/Sphere.h"
-#include "Util/Geometry/BoxIterator.h"
-#include "Util/Geometry/BoxOmitIterator.h"
+#include "Util/Geometry/Iterators/BoxIterator.h"
+#include "Util/Geometry/Iterators/BoxOmitIterator.h"
 #include "RendererCommon/serial/GraphicsNode.h"
 
 #include "Logging/logging.h"

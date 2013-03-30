@@ -1,6 +1,6 @@
 #include <cassert>
 #include "GraphicsScene.h"
-#include "Util/Geometry/ConvexMeshIterator.h"
+#include "Util/Geometry/Iterators/ConvexMeshIterator.h"
 #include "LightNode.h"
 
 namespace illRendererCommon {

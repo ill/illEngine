@@ -2,11 +2,11 @@
 #define ILL_CONVEX_MESH_ITERATOR_H_
 
 #include <algorithm>
-#include <stdexcept>
 #include <unordered_set>
 #include <unordered_map>
 #include <list>
 
+#include "Logging/logging.h"
 #include "Util/serial/StaticList.h"
 #include "Util/geometry/MeshEdgeList.h"
 #include "Util/geometry/geomUtil.h"
@@ -29,11 +29,17 @@ public:
         m_atEnd(true)
     {}
 
-    ConvexMeshIterator(MeshEdgeList<W>* meshEdgeList, const glm::detail::tvec3<W>& direction, const Box<P>& bounds, const glm::detail::tvec3<W>& cellDimensions) {
-        initialize(meshEdgeList, direction, bounds, cellDimensions);
+    ConvexMeshIterator(MeshEdgeList<W>* meshEdgeList, 
+            const glm::detail::tvec3<uint8_t>& dimensionOrder, const glm::detail::tvec3<int8_t>& directionSign, 
+            const Box<P>& bounds, const glm::detail::tvec3<W>& cellDimensions) {
+        initialize(meshEdgeList, dimensionOrder, directionSign, bounds, cellDimensions);
     }
 
-    void initialize(MeshEdgeList<W>* meshEdgeList, const glm::detail::tvec3<W>& direction, const Box<P>& bounds, const glm::detail::tvec3<W>& cellDimensions) {
+    void initialize(MeshEdgeList<W>* meshEdgeList, 
+            const glm::detail::tvec3<uint8_t>& dimensionOrder, const glm::detail::tvec3<int8_t>& directionSign,
+            const Box<P>& bounds, const glm::detail::tvec3<W>& cellDimensions) {
+        m_dimensionOrder = dimensionOrder;
+        m_directionSign = directionSign;
         m_meshEdgeList = meshEdgeList;
         m_bounds = bounds;
         m_atEnd = false;
@@ -45,11 +51,7 @@ public:
         //initialize world bounds, they're based on the grid not the world bounds of the volume itself
         m_worldBounds.m_min = vec3cast<P, W>(m_bounds.m_min) * cellDimensions;
         m_worldBounds.m_max = vec3cast<P, W>(m_bounds.m_max + glm::detail::tvec3<P>((P) 1)) * cellDimensions - (W)0.001;        //When using floats, you have 7 significant figures of precision
-
-        //initialize remapping of world to algorithm space
-        m_dimensionOrder = sortDimensions(direction);
-        m_directionSign = vec3cast<glm::mediump_float, int8_t>(signO(direction));
-
+        
         //initialize the inverse dimension mapping
         for(uint8_t inverseDim = 0; inverseDim < 3; inverseDim++) {
             for(int dim = 0; dim < 3; dim++) {
@@ -101,7 +103,7 @@ public:
 
     inline bool forward() {
         if(atEnd()) {
-            throw std::runtime_error("calling forward() on mesh iterator when at end");
+            LOG_FATAL_ERROR("calling forward() on mesh iterator when at end");
         }
 
         if(m_currentPosition.x == m_sliceMax.x) {
@@ -126,7 +128,7 @@ public:
 
     inline glm::detail::tvec3<P> getCurrentPosition() const {
         if(atEnd()) {
-            throw std::runtime_error("calling getCurrentPosition() on mesh iterator when at end");
+            LOG_FATAL_ERROR("calling getCurrentPosition() on mesh iterator when at end");
         }
 
         return algorithmToWorldCell(m_currentPosition);
