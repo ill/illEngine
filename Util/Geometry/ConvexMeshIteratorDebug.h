@@ -56,10 +56,14 @@ public:
         m_atEnd(true)
     {}
 
-    ConvexMeshIteratorDebug(MeshEdgeList<W>* meshEdgeList, const glm::detail::tvec3<W>& direction, const Box<P>& bounds, const glm::detail::tvec3<W>& cellDimensions)
+    ConvexMeshIteratorDebug(MeshEdgeList<W>* meshEdgeList, 
+            const glm::detail::tvec3<uint8_t>& dimensionOrder, const glm::detail::tvec3<int8_t>& directionSign,
+            const Box<P>& bounds, const glm::detail::tvec3<W>& cellDimensions)
         : m_meshEdgeList(meshEdgeList),
         m_bounds(bounds),
-        m_atEnd(false)
+        m_atEnd(false),
+        m_dimensionOrder(dimensionOrder),
+        m_directionSign(directionSign)
     {
         //initialize edges lists
         m_isEdgeChecked = new bool[meshEdgeList->m_edges.size()];
@@ -70,12 +74,12 @@ public:
         m_worldBounds.m_max = vec3cast<P, W>(m_bounds.m_max + glm::detail::tvec3<P>((P) 1)) * cellDimensions - (W)0.001;        //When using floats, you have 7 significant figures of precision
 
         //initialize remapping of world to algorithm space
-        m_dimensionOrder = sortDimensions(direction);
-        m_directionSign = vec3cast<glm::mediump_float, int8_t>(signO(direction));
+        //m_dimensionOrder = sortDimensions(direction);
+        //m_directionSign = vec3cast<glm::mediump_float, int8_t>(signO(direction));
 
         //initialize the inverse dimension mapping
         for(uint8_t inverseDim = 0; inverseDim < 3; inverseDim++) {
-            for(int dim = 0; dim < 3; dim++) {
+            for(uint8_t dim = 0; dim < 3; dim++) {
                 if(m_dimensionOrder[dim] == inverseDim) {
                     m_dimensionOrderInverse[inverseDim] = dim;
                 }
@@ -105,7 +109,7 @@ public:
         //TODO: take this out
         m_meshEdgeList = &m_debugger.m_meshEdgeList;
 
-        m_debugger.m_direction = direction;
+        //m_debugger.m_direction = direction;
         
         //start at the origin in algorithm space
         m_currentPosition = glm::detail::tvec3<P>((P) 0);
