@@ -200,7 +200,7 @@ public:
                     newIterator.m_meshEdgeListCopies[currIter].convexClip(Plane<>(planeNormal, -splitOrigin[0]));
 
                     bounds.m_min[0] = splitOrigin[0];
-                    bounds.m_max[0] = (m_cellDimensions.x * (float)m_cellDimensions.x * 0.5f) - 0.001f;
+                    bounds.m_max[0] = (m_cellDimensions.x * (float)m_cellNumber.x) - 0.001f;
                 }
                 else {
                     //primary negative
@@ -211,7 +211,7 @@ public:
 
                     newIterator.m_meshEdgeListCopies[currIter].convexClip(Plane<>(planeNormal, splitOrigin[0] - 0.001f));
 
-                    bounds.m_min[0] = -m_cellDimensions.x * (float)m_cellDimensions.x * 0.5f;
+                    bounds.m_min[0] = -m_cellDimensions.x * (float)m_cellNumber.x;
                     bounds.m_max[0] = splitOrigin[0] - 0.001f;
                 }
 
@@ -225,7 +225,7 @@ public:
                     newIterator.m_meshEdgeListCopies[currIter].convexClip(Plane<>(planeNormal, -splitOrigin[1]));
 
                     bounds.m_min[1] = splitOrigin[1];
-                    bounds.m_max[1] = (m_cellDimensions.y * (float)m_cellDimensions.y * 0.5f) - 0.001f;
+                    bounds.m_max[1] = (m_cellDimensions.y * (float)m_cellNumber.y) - 0.001f;
                 }
                 else {
                     //secondary negative
@@ -236,7 +236,7 @@ public:
 
                     newIterator.m_meshEdgeListCopies[currIter].convexClip(Plane<>(planeNormal, splitOrigin[1] - 0.001f));
 
-                    bounds.m_min[1] = -m_cellDimensions.y * (float)m_cellDimensions.y * 0.5f;
+                    bounds.m_min[1] = -m_cellDimensions.y * (float)m_cellNumber.y;
                     bounds.m_max[1] = splitOrigin[1] - 0.001f;
                 }
 
@@ -250,7 +250,7 @@ public:
                     newIterator.m_meshEdgeListCopies[currIter].convexClip(Plane<>(planeNormal, -splitOrigin[2]));
 
                     bounds.m_min[2] = splitOrigin[2];
-                    bounds.m_max[2] = (m_cellDimensions.z * (float)m_cellDimensions.z * 0.5f) - 0.001f;
+                    bounds.m_max[2] = (m_cellDimensions.z * (float)m_cellNumber.z) - 0.001f;
                 }
                 else {
                     //tertiary negative
@@ -261,7 +261,7 @@ public:
 
                     newIterator.m_meshEdgeListCopies[currIter].convexClip(Plane<>(planeNormal, splitOrigin[2] - 0.001f));
 
-                    bounds.m_min[2] = -m_cellDimensions.z * (float)m_cellDimensions.z * 0.5f;
+                    bounds.m_min[2] = -m_cellDimensions.z * (float)m_cellNumber.z;
                     bounds.m_max[2] = splitOrigin[2] - 0.001f;
                 }
                 

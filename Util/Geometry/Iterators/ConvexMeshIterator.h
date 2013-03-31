@@ -343,6 +343,8 @@ private:
         //clear other side point buffer
         m_pointList[!m_currentPointList].clear();
         
+        //LOG_DEBUG("Setup Slice Begin");
+
         //find intersection of active edges against other side of slice and add it to the other points list
         for(std::unordered_map<size_t, P>::const_iterator activeEdgeIter = m_activeEdges.begin(); activeEdgeIter != m_activeEdges.end(); activeEdgeIter++) {
             size_t activeEdge = activeEdgeIter->first;
@@ -350,7 +352,23 @@ private:
             assert(m_meshEdgeList->m_points[m_meshEdgeList->m_edges[activeEdge].m_point[0]].z != m_meshEdgeList->m_points[m_meshEdgeList->m_edges[activeEdge].m_point[1]].z);
 
             glm::detail::tvec3<W> intersection = lineInterceptXY(m_meshEdgeList->m_points[m_meshEdgeList->m_edges[activeEdge].m_point[0]], m_meshEdgeList->m_points[m_meshEdgeList->m_edges[activeEdge].m_point[1]], m_sliceEnd);
-                        
+            
+            /*LOG_DEBUG("\nLine(%f, %f, %f) (%f, %f, %f)\nPlane: %f\nIntersection (%f, %f, %f) Fixed (%f, %f)",
+                m_meshEdgeList->m_points[m_meshEdgeList->m_edges[activeEdge].m_point[0]].x,
+                m_meshEdgeList->m_points[m_meshEdgeList->m_edges[activeEdge].m_point[0]].y,
+                m_meshEdgeList->m_points[m_meshEdgeList->m_edges[activeEdge].m_point[0]].z,
+
+                m_meshEdgeList->m_points[m_meshEdgeList->m_edges[activeEdge].m_point[1]].x,
+                m_meshEdgeList->m_points[m_meshEdgeList->m_edges[activeEdge].m_point[1]].y,
+                m_meshEdgeList->m_points[m_meshEdgeList->m_edges[activeEdge].m_point[1]].z,
+
+                m_sliceEnd,
+
+                intersection.x, intersection.y, intersection.z,
+
+                fixRasterPointPrecision(glm::detail::tvec2<W>(intersection.x, intersection.y)).x,
+                fixRasterPointPrecision(glm::detail::tvec2<W>(intersection.x, intersection.y)).y);*/
+
             m_pointList[!m_currentPointList].push_back(fixRasterPointPrecision(glm::detail::tvec2<W>(intersection.x, intersection.y)));
         }
         
@@ -380,7 +398,17 @@ private:
 
         std::vector<glm::detail::tvec2<W>*> sortedPoints;
 
-        assert(m_pointList[0].size() + m_pointList[1].size() >= 3);
+        /*
+        I commented out these next few asserts because I am now supporting rasterizing of
+        degenerate points or lines.  These degenerates can happen due to floating point imprecision.
+        My imprecision fixes end up rounding the points up such that they are now equal.
+
+        Now the correct thing is to have either a polygon with at least 3 sides,
+        or to have both m_sliceRasterizeEdges to have exactly 1 point each with equal y.
+        In some cases this will result in a line, but usually it'll just be a point.
+        */
+
+        //assert(m_pointList[0].size() + m_pointList[1].size() >= 3);
 
         for(uint8_t list = 0; list < 2; list++) {
             for(uint8_t point = 0; point < m_pointList[list].size(); point++) {
@@ -388,7 +416,7 @@ private:
             }
         }
 
-        assert(sortedPoints.size() >= 3);
+        //assert(sortedPoints.size() >= 3);
 
         std::sort(sortedPoints.begin(), sortedPoints.end(), PointComparator());
 
@@ -404,8 +432,8 @@ private:
             convexHull<LEFT_SIDE>(sortedPoints);
         }
         
-        assert(m_sliceRasterizeEdges[LEFT_SIDE].size() >= 2);
-        assert(m_sliceRasterizeEdges[RIGHT_SIDE].size() >= 2);
+        //assert(m_sliceRasterizeEdges[LEFT_SIDE].size() >= 2);
+        //assert(m_sliceRasterizeEdges[RIGHT_SIDE].size() >= 2);
 
         //setup the initial row
         m_activeSliceEdgeIndex[RIGHT_SIDE] = 0;
@@ -425,11 +453,23 @@ private:
         assert(m_currentPosition.y >= 0);
         assert(m_sliceMax.y <= m_algorithmBounds.y);
 
-        setupSliceHelper<LEFT_SIDE>();
+        if(m_sliceRasterizeEdges[LEFT_SIDE].size() >= 2) {
+            setupSliceHelper<LEFT_SIDE>();
+        }
+        else {
+            assert(m_sliceRasterizeEdges[LEFT_SIDE].size() == 1 && m_sliceRasterizeEdges[RIGHT_SIDE].size() == 1);
+            setSliceRowPoint<LEFT_SIDE>(m_sliceRasterizeEdges[LEFT_SIDE][0]->x);
+        }
 
         assert(m_currentPosition.x >= (P) 0);
         
-        setupSliceHelper<RIGHT_SIDE>();
+        if(m_sliceRasterizeEdges[RIGHT_SIDE].size() >= 2) {
+            setupSliceHelper<RIGHT_SIDE>();
+        }
+        else {
+            assert(m_sliceRasterizeEdges[LEFT_SIDE].size() == 1 && m_sliceRasterizeEdges[RIGHT_SIDE].size() == 1);
+            setSliceRowPoint<RIGHT_SIDE>(m_sliceRasterizeEdges[RIGHT_SIDE][0]->x);
+        }
 
         assert(m_sliceMax.x <= m_algorithmBounds.x);
     }
