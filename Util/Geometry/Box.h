@@ -87,6 +87,10 @@ struct Box {
         return m_max - m_min;
     }
 
+    inline glm::detail::tvec3<T> getCenter() const {
+        return (m_min + m_max) * (T)0.5;
+    }
+
     /**
     Returns which grid coordinates the coordinates of the box snap to given dimensions.
     */

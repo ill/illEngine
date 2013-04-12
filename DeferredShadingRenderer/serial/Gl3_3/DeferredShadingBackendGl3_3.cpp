@@ -231,7 +231,27 @@ void DeferredShadingBackendGl3_3::retreiveCellQueries(std::unordered_map<size_t,
     m_cellQueries.clear();
 }
 
-void DeferredShadingBackendGl3_3::setupCellQuery() {
+void DeferredShadingBackendGl3_3::retreiveNodeQueries(uint64_t lastFrameCounter) {
+    for(auto iter = m_nodeQueries.begin(); iter != m_nodeQueries.end(); iter++) {
+        NodeQuery& nodeQuery = *iter;
+
+        if(m_performCull) {
+            GLint result;
+            glGetQueryObjectiv(nodeQuery.m_query, GL_QUERY_RESULT, &result);
+
+            if(result) {
+                nodeQuery.m_node->setLastVisibleFrame(nodeQuery.m_viewport, lastFrameCounter);
+            }
+        }
+
+        //TODO: figure out if deleting queries as soon as I used them is bad for performance, maintaining my own pool might be kindof useless though since GL does it too
+        glDeleteQueries(1, &nodeQuery.m_query);
+    }
+
+    m_nodeQueries.clear();
+}
+
+void DeferredShadingBackendGl3_3::setupQuery() {
     //just disable face culling for this super simple box being drawn
     glDisable(GL_CULL_FACE);
 
@@ -262,44 +282,69 @@ void DeferredShadingBackendGl3_3::setupCellQuery() {
     }
 }
 
-void DeferredShadingBackendGl3_3::endCellQuery() {
+void DeferredShadingBackendGl3_3::endQuery() {
     glDisableVertexAttribArray(getProgramAttribLocation(getProgram(*m_volumeRenderProgram.get()), "positionIn"));
     glBindBuffer(GL_ARRAY_BUFFER, 0);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 }
 
+void renderQueryBox(const illGraphics::Camera& camera, const illGraphics::Mesh& boxMesh, GLuint program, GLuint query, const glm::vec3& boxCenter, const glm::vec3& boxSize) {
+    glm::mat4 boxTransform = glm::scale(glm::translate(boxCenter), boxSize);
+
+    glUniformMatrix4fv(getProgramUniformLocation(program, "modelViewProjection"), 1, false, glm::value_ptr(camera.getModelViewProjection() * boxTransform));
+
+    glBeginQuery(/*GL_SAMPLES_PASSED*/GL_ANY_SAMPLES_PASSED_CONSERVATIVE, query);
+    glDrawRangeElements(GL_TRIANGLES, 0, boxMesh.getMeshFrontentData()->getNumTri() * 3, boxMesh.getMeshFrontentData()->getNumTri() * 3, GL_UNSIGNED_SHORT, (char *)NULL);
+    glEndQuery(/*GL_SAMPLES_PASSED*/GL_ANY_SAMPLES_PASSED_CONSERVATIVE);
+}
+
 void * DeferredShadingBackendGl3_3::occlusionQueryCell(const illGraphics::Camera& camera, const glm::vec3& cellCenter, const glm::vec3& cellSize,
         unsigned int cellArrayIndex, size_t viewport) {
     //generate the occlusion query for the cell
-    if(m_performCull) {
-        m_cellQueries.emplace_back();
-    
-        glGenQueries(1, &m_cellQueries.back().m_query);
-        m_cellQueries.back().m_cellArrayIndex = cellArrayIndex;
-        m_cellQueries.back().m_viewport = viewport;
+    if(!m_performCull) {
+        return NULL;
     }
+
+    m_cellQueries.emplace_back();
+    
+    glGenQueries(1, &m_cellQueries.back().m_query);
+    m_cellQueries.back().m_cellArrayIndex = cellArrayIndex;
+    m_cellQueries.back().m_viewport = viewport;
 
     if(m_debugOcclusion) {
         glViewport(camera.getViewportCorner().x, camera.getViewportCorner().y + camera.getViewportDimensions().y / 2,
             camera.getViewportDimensions().x, camera.getViewportDimensions().y / 2);
     }
     
-    glm::mat4 boxTransform = glm::scale(glm::translate(cellCenter), cellSize);
-
-    glUniformMatrix4fv(getProgramUniformLocation(getProgram(*m_volumeRenderProgram.get()), "modelViewProjection"), 1, false, glm::value_ptr(camera.getModelViewProjection() * boxTransform));
-
-    if(m_performCull) {
-        glBeginQuery(/*GL_SAMPLES_PASSED*/GL_ANY_SAMPLES_PASSED_CONSERVATIVE, m_cellQueries.back().m_query);
-    }
-    
-    glDrawRangeElements(GL_TRIANGLES, 0, m_box.getMeshFrontentData()->getNumTri() * 3, m_box.getMeshFrontentData()->getNumTri() * 3, GL_UNSIGNED_SHORT, (char *)NULL);
-
-    if(m_performCull) {
-        glEndQuery(/*GL_SAMPLES_PASSED*/GL_ANY_SAMPLES_PASSED_CONSERVATIVE);
-    }
+    renderQueryBox(camera, m_box, getProgram(*m_volumeRenderProgram.get()), m_cellQueries.back().m_query, cellCenter, cellSize);
     
     //returns a pointer to the query name in OpenGL, depthPass will just typecast this this
-    return m_performCull ? &m_cellQueries.back().m_query : NULL;
+    return &m_cellQueries.back().m_query;
+}
+
+void * DeferredShadingBackendGl3_3::occlusionQueryNode(const illGraphics::Camera& camera, illRendererCommon::GraphicsNode * node, size_t viewport) {
+    //generate the occlusion query for the cell
+    if(m_performCull) {
+        return NULL;
+    }
+
+    m_nodeQueries.emplace_back();
+    
+    glGenQueries(1, &m_nodeQueries.back().m_query);
+    m_nodeQueries.back().m_node = node;
+    m_nodeQueries.back().m_viewport = viewport;
+
+    if(m_debugOcclusion) {
+        glViewport(camera.getViewportCorner().x, camera.getViewportCorner().y + camera.getViewportDimensions().y / 2,
+            camera.getViewportDimensions().x, camera.getViewportDimensions().y / 2);
+    }
+
+    Box<> nodeBox = node->getWorldBoundingVolume();
+
+    renderQueryBox(camera, m_box, getProgram(*m_volumeRenderProgram.get()), m_cellQueries.back().m_query, nodeBox.getCenter(), nodeBox.getDimensions() * 0.5f);
+    
+    //returns a pointer to the query name in OpenGL, depthPass will just typecast this this
+    return &m_cellQueries.back().m_query;
 }
 
 void DeferredShadingBackendGl3_3::depthPass(illRendererCommon::RenderQueues& renderQueues, const illGraphics::Camera& camera, void * cellOcclusionQuery) {

@@ -19,6 +19,10 @@ typedef uint64_t ShaderProgramId;
 typedef ResourceManager<ShaderProgramId, ShaderProgram, ShaderProgramLoader> ShaderProgramManager;
 }
 
+namespace illRendererCommon {
+class GraphicsNode;
+}
+
 namespace illDeferredShadingRenderer {
 
 class DeferredShadingBackend : public illRendererCommon::RendererBackend {
@@ -65,17 +69,22 @@ public:
     virtual void retreiveCellQueries(std::unordered_map<size_t, Array<uint64_t>>& lastViewedFrames, uint64_t lastFrameCounter) = 0;
     
     /**
-    Sets up state to be doing cell queries.
-    Call this right before starting to do an occlusionQueryCell call either for the first time or
+    TODO: document
+    */
+    virtual void retreiveNodeQueries(uint64_t lastFrameCounter) = 0;
+
+    /**
+    Sets up state to be doing occlusion queries rendered using a box.
+    Call this right before starting to do an occlusionQueryCell or occlusionQueryNode call either for the first time or
     after having done a depth pass call.  No need to keep calling this over and over between subsequent
     cell queries since the state is already set up.
     */
-    virtual void setupCellQuery() = 0;
+    virtual void setupQuery() = 0;
 
     /**
-    Call this to end cell query state if you're about to do an occlusionQueryCell call.
+    Call this to end cell query state if you're done with occlusionQueryCell or occlusionQueryNode calls.
     */
-    virtual void endCellQuery() = 0;
+    virtual void endQuery() = 0;
 
     /**
     Creates an occlusion query for a scene cell and returns a pointer to the data of the occlusion query
@@ -93,6 +102,11 @@ public:
     */
     virtual void * occlusionQueryCell(const illGraphics::Camera& camera, const glm::vec3& cellCenter, const glm::vec3& cellSize,
         unsigned int cellArrayIndex, size_t viewport) = 0;
+
+    /**
+    TODO: document
+    */
+    virtual void * occlusionQueryNode(const illGraphics::Camera& camera, illRendererCommon::GraphicsNode * node, size_t viewport) = 0;
 
     /**
     Do a depth pass of objects currently in the depth pass queue in the passed in render queues.

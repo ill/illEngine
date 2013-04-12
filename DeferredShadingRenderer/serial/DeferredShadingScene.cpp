@@ -9,6 +9,7 @@ namespace illDeferredShadingRenderer {
 
 void DeferredShadingScene::setupFrame() {
     static_cast<DeferredShadingBackend *>(m_rendererBackend)->retreiveCellQueries(m_lastVisibleFrames, m_frameCounter);
+    static_cast<DeferredShadingBackend *>(m_rendererBackend)->retreiveNodeQueries(m_frameCounter);
     static_cast<DeferredShadingBackend *>(m_rendererBackend)->setupFrame();
     ++m_frameCounter;
 }
@@ -37,7 +38,7 @@ void DeferredShadingScene::render(const illGraphics::Camera& camera, size_t view
 
         //do an occlusion query for the cell
         if(needsQuerySetup) {
-            static_cast<DeferredShadingBackend *>(m_rendererBackend)->setupCellQuery();
+            static_cast<DeferredShadingBackend *>(m_rendererBackend)->setupQuery();
             needsQuerySetup = false;
         }
 
@@ -67,7 +68,7 @@ void DeferredShadingScene::render(const illGraphics::Camera& camera, size_t view
                 }
             }
 
-            static_cast<DeferredShadingBackend *>(m_rendererBackend)->endCellQuery();
+            static_cast<DeferredShadingBackend *>(m_rendererBackend)->endQuery();
             needsQuerySetup = true;
 
             //draw objects for the depth pass

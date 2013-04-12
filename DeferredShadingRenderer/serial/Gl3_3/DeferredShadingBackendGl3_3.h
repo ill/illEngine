@@ -29,11 +29,13 @@ public:
     virtual void setupFrame();
     virtual void setupViewport(const illGraphics::Camera& camera);
     virtual void retreiveCellQueries(std::unordered_map<size_t, Array<uint64_t>>& lastViewedFrames, uint64_t lastFrameCounter);
+    virtual void retreiveNodeQueries(uint64_t lastFrameCounter);
 
-    virtual void setupCellQuery();
-    virtual void endCellQuery();
+    virtual void setupQuery();
+    virtual void endQuery();
     virtual void * occlusionQueryCell(const illGraphics::Camera& camera, const glm::vec3& cellCenter, const glm::vec3& cellSize,
         unsigned int cellArrayIndex, size_t viewport);
+    virtual void * occlusionQueryNode(const illGraphics::Camera& camera, illRendererCommon::GraphicsNode * node, size_t viewport);
     virtual void depthPass(illRendererCommon::RenderQueues& renderQueues, const illGraphics::Camera& camera, void * cellOcclusionQuery);
     virtual void render(illRendererCommon::RenderQueues& renderQueues, const illGraphics::Camera& camera);
 
@@ -43,6 +45,12 @@ private:
         size_t m_viewport;
         GLuint m_query;
         unsigned int m_cellArrayIndex;
+    };
+
+    struct NodeQuery {
+        size_t m_viewport;
+        GLuint m_query;
+        illRendererCommon::GraphicsNode * m_node;
     };
 
     void renderGbuffer(illRendererCommon::RenderQueues& renderQueues, const illGraphics::Camera& camera);
@@ -86,6 +94,7 @@ private:
     illGraphics::Mesh m_quad;
 
     std::vector<CellQuery> m_cellQueries;
+    std::vector<NodeQuery> m_nodeQueries;
 };
 
 }
