@@ -20,7 +20,9 @@ public:
             meshManager, materialManager, 
             cellDimensions, cellNumber, interactionCellDimensions, interactionCellNumber, true),
         m_frameCounter(0),
-        m_returnViewportId(0)
+        m_returnViewportId(0),
+        m_performCull(true),
+        m_debugPerObjectCull(false)
     {
         m_renderQueues.m_queueLights = true;
         m_renderQueues.m_getSolidAffectingLights = false;
@@ -51,6 +53,7 @@ public:
     void freeViewport(size_t viewport);
 
     bool m_performCull;
+    bool m_debugPerObjectCull;
 
 protected:
     uint64_t m_frameCounter;

@@ -97,14 +97,14 @@ public:
         return m_occlusionCull;
     }
 
-    inline void setLastVisibleFrame(size_t viewport, uint64_t frame) {
-        m_lastVisibleFrames[viewport] = frame;
+    inline void setLastNonvisibleFrame(size_t viewport, uint64_t frame) const {
+        m_lastNonvisibleFrame[viewport] = frame;
     }
 
-    inline uint64_t getLastVisibleFrame(size_t viewport) const {
-        auto iter = m_lastVisibleFrames.find(viewport);
+    inline uint64_t getLastNonvisibleFrame(size_t viewport) const {
+        auto iter = m_lastNonvisibleFrame.find(viewport);
 
-        if(iter == m_lastVisibleFrames.end()) {
+        if(iter == m_lastNonvisibleFrame.end()) {
             return 0;
         }
         else {
@@ -166,9 +166,9 @@ private:
 
     /**
     If the node uses occlusion queries, this is a map of viewport to the last frame this node
-    passed an occlusion query.
+    failed an occlusion query.
     */
-    std::unordered_map<size_t, uint64_t> m_lastVisibleFrames;
+    mutable std::unordered_map<size_t, uint64_t> m_lastNonvisibleFrame;
 
     friend class GraphicsScene;
 };

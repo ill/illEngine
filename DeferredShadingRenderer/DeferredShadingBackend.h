@@ -117,12 +117,12 @@ public:
     @param cellOcclusionQuery The cell occlusion query returned from the occlusionQueryCell() for the cell this is being called for.
         Just pass that in after doing the occlusionQueryCell call.
     */
-    virtual void depthPass(illRendererCommon::RenderQueues& renderQueues, const illGraphics::Camera& camera, void * cellOcclusionQuery) = 0;
+    virtual void depthPass(illRendererCommon::RenderQueues& renderQueues, const illGraphics::Camera& camera, void * cellOcclusionQuery, size_t viewport) = 0;
 
     /**
     Now the scene is ready to be deferred shaded.
     */
-    virtual void render(illRendererCommon::RenderQueues& renderQueues, const illGraphics::Camera& camera) = 0;
+    virtual void render(illRendererCommon::RenderQueues& renderQueues, const illGraphics::Camera& camera, size_t viewport) = 0;
     
     //different debug modes
     //TODO: make a debug version of the renderer separate from the real renderer
@@ -138,7 +138,7 @@ public:
         SPECULAR_ACCUMULATION
     };
 
-    bool m_performCull;
+    bool m_performCull;    
     bool m_debugOcclusion;
     bool m_debugBounds;
     bool m_debugLights;

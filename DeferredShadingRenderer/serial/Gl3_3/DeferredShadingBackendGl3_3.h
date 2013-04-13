@@ -36,8 +36,8 @@ public:
     virtual void * occlusionQueryCell(const illGraphics::Camera& camera, const glm::vec3& cellCenter, const glm::vec3& cellSize,
         unsigned int cellArrayIndex, size_t viewport);
     virtual void * occlusionQueryNode(const illGraphics::Camera& camera, illRendererCommon::GraphicsNode * node, size_t viewport);
-    virtual void depthPass(illRendererCommon::RenderQueues& renderQueues, const illGraphics::Camera& camera, void * cellOcclusionQuery);
-    virtual void render(illRendererCommon::RenderQueues& renderQueues, const illGraphics::Camera& camera);
+    virtual void depthPass(illRendererCommon::RenderQueues& renderQueues, const illGraphics::Camera& camera, void * cellOcclusionQuery, size_t viewport);
+    virtual void render(illRendererCommon::RenderQueues& renderQueues, const illGraphics::Camera& camera, size_t viewport);
 
 private:
     //data storing an occlusion query for a cell
@@ -50,13 +50,13 @@ private:
     struct NodeQuery {
         size_t m_viewport;
         GLuint m_query;
-        illRendererCommon::GraphicsNode * m_node;
+        const illRendererCommon::GraphicsNode * m_node;
     };
 
     void renderGbuffer(illRendererCommon::RenderQueues& renderQueues, const illGraphics::Camera& camera);
     void renderAmbientPass(illRendererCommon::RenderQueues& renderQueues, const illGraphics::Camera& camera);
     void renderEmissivePass(illRendererCommon::RenderQueues& renderQueues, const illGraphics::Camera& camera);
-    void renderLights(illRendererCommon::RenderQueues& renderQueues, const illGraphics::Camera& camera);
+    void renderLights(illRendererCommon::RenderQueues& renderQueues, const illGraphics::Camera& camera, size_t viewport);
     //TODO: all the other render tasks
     //TODO: post processing
     void renderFinish();

@@ -56,7 +56,17 @@ void DeferredShadingScene::render(const illGraphics::Camera& camera, size_t view
                 auto& currCell = getSceneNodeCell(currentCell);
 
                 for(auto cellIter = currCell.begin(); cellIter != currCell.end(); cellIter++) {
-                    (*cellIter)->render(m_renderQueues, m_renderAccessCounter);
+                    auto node = *cellIter;
+
+                    //TODO: take this out after done with thesis                    
+                    node->setOcclusionCull(m_debugPerObjectCull);
+
+                    if(node->getOcclusionCull() && node->getLastNonvisibleFrame(viewport) == m_frameCounter - 1) {
+                        static_cast<DeferredShadingBackend *>(m_rendererBackend)->occlusionQueryNode(camera, node, viewport);
+                    }
+                    else {
+                        node->render(m_renderQueues, m_renderAccessCounter);
+                    }
                 }
             }
 
@@ -64,7 +74,17 @@ void DeferredShadingScene::render(const illGraphics::Camera& camera, size_t view
                 auto& currCell = getStaticNodeCell(currentCell);
 
                 for(size_t arrayInd = 0; arrayInd < currCell.size(); arrayInd++) {
-                    currCell[arrayInd]->render(m_renderQueues, m_renderAccessCounter);
+                    auto node = currCell[arrayInd];
+
+                    //TODO: take this out after done with thesis                    
+                    node->setOcclusionCull(m_debugPerObjectCull);
+
+                    if(node->getOcclusionCull() && node->getLastNonvisibleFrame(viewport) == m_frameCounter - 1) {
+                        static_cast<DeferredShadingBackend *>(m_rendererBackend)->occlusionQueryNode(camera, node, viewport);
+                    }
+                    else {
+                        node->render(m_renderQueues, m_renderAccessCounter);
+                    }
                 }
             }
 
@@ -72,11 +92,11 @@ void DeferredShadingScene::render(const illGraphics::Camera& camera, size_t view
             needsQuerySetup = true;
 
             //draw objects for the depth pass
-            static_cast<DeferredShadingBackend *>(m_rendererBackend)->depthPass(m_renderQueues, camera, cellQuery);
+            static_cast<DeferredShadingBackend *>(m_rendererBackend)->depthPass(m_renderQueues, camera, cellQuery, viewport);
         }
     }
 
-    static_cast<DeferredShadingBackend *>(m_rendererBackend)->render(m_renderQueues, camera);
+    static_cast<DeferredShadingBackend *>(m_rendererBackend)->render(m_renderQueues, camera, viewport);
 
     ++m_renderAccessCounter;
 
