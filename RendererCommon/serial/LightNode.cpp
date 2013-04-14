@@ -12,11 +12,7 @@ void LightNode::render(RenderQueues& renderQueues, uint64_t renderAccessCounter)
     }
     
     if(renderQueues.m_queueLights) {
-        auto& list = renderQueues.m_lights[m_light->getType()][m_light];
-
-        list.emplace_back();
-        list.back().m_light = this;
-        list.back().m_useOcclusionQuery = getOcclusionCull();
+        renderQueues.m_lights[m_light->getType()][m_light].emplace_back(this);
     }
 }
 

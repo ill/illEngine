@@ -43,14 +43,9 @@ struct RenderQueues {
     Solid static meshes to be drawn in the depth only pass for the currently drawn cell.
     Storing their transforms sorted by mesh.
     */
-    struct DepthPassSolidStaticMeshInfo {
-        bool m_useOcclusionQuery;           ///<Whether or not to generate an occlusion query for this node as well when drawing it
-        const StaticMeshNode * m_node;
-    };
-
     std::unordered_map<const illGraphics::ShaderProgram *, 
         std::unordered_map<const illGraphics::Material *, 
-            std::unordered_map<const illGraphics::Mesh *, std::vector<DepthPassSolidStaticMeshInfo>>>> m_depthPassSolidStaticMeshes;
+            std::unordered_map<const illGraphics::Mesh *, std::vector<const StaticMeshNode *>>>> m_depthPassSolidStaticMeshes;
     
     struct StaticMeshInfo {
         std::set<LightNode *> m_affectingLights;
@@ -89,13 +84,8 @@ struct RenderQueues {
     Lights to be drawn in deferred shading sorted by light type and light.
     This should make lights instanceable.
     */
-    struct LightInfo {
-        bool m_useOcclusionQuery;           ///<Whether or not to generate an occlusion query for this node as well when drawing it
-        const LightNode * m_light;
-    };
-
     std::unordered_map<const illGraphics::LightBase::Type, 
-        std::unordered_map<illGraphics::LightBase *, std::vector<LightInfo>>> m_lights;
+        std::unordered_map<illGraphics::LightBase *, std::vector<const LightNode *>>> m_lights;
 };
 
 }

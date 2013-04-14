@@ -19,13 +19,7 @@ void StaticMeshNode::render(RenderQueues& renderQueues, uint64_t renderAccessCou
     //place the mesh in the appropriate render queue
     switch(m_material->getLoadArgs().m_blendMode) {
     case illGraphics::MaterialLoadArgs::BlendMode::NONE: {
-            {
-                auto& list = renderQueues.m_depthPassSolidStaticMeshes[m_material->getDepthPassProgram()][m_material.get()][m_mesh.get()];
-                
-                list.emplace_back();
-                list.back().m_node = this;
-                list.back().m_useOcclusionQuery = getOcclusionCull();
-            }
+            renderQueues.m_depthPassSolidStaticMeshes[m_material->getDepthPassProgram()][m_material.get()][m_mesh.get()].emplace_back(this);
 
             {
                 auto& list = renderQueues.m_solidStaticMeshes[m_material->getShaderProgram()][m_material.get()][m_mesh.get()];
