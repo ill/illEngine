@@ -33,9 +33,8 @@ public:
     and add itself into the right queue.
 
     @param renderQueues The render queues struct that has all the objects to render queued up.
-    @param renderAccessCounter A counter for helping to prevent duplicates added if a node intersects cell boundaries.
     */
-    virtual void render(RenderQueues& renderQueues, uint64_t renderAccessCounter) = 0;
+    virtual void render(RenderQueues& renderQueues) = 0;
 
     /**
     Gets the world position of the node in the scene.
@@ -112,6 +111,16 @@ public:
         }
     }
 
+    inline bool addedToRenderQueue(uint64_t renderAccessCounter) const {
+        if(m_renderAccessCounter <= renderAccessCounter) {
+            m_renderAccessCounter = renderAccessCounter + 1;
+            return false;
+        }
+        else {
+            return true;
+        }
+    }
+
 protected:
     inline GraphicsNode(GraphicsScene * scene,
             const glm::mat4& transform, const Box<>& boundingVol,
@@ -136,7 +145,7 @@ protected:
     /**
     This is so visibility culling queries don't return duplicate results when an object intersects multiple cells.
     */
-    uint64_t m_renderAccessCounter;
+    mutable uint64_t m_renderAccessCounter;
 
 private:
     /**

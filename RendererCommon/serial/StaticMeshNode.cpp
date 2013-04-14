@@ -4,15 +4,7 @@
 
 namespace illRendererCommon {
 
-void StaticMeshNode::render(RenderQueues& renderQueues, uint64_t renderAccessCounter) {
-    //avoid duplicates
-    if(m_renderAccessCounter <= renderAccessCounter) {
-        m_renderAccessCounter = renderAccessCounter + 1;
-    }
-    else {
-        return;
-    }
-
+void StaticMeshNode::render(RenderQueues& renderQueues) {
     assert(!m_mesh.isNull());
     assert(!m_material.isNull());
     

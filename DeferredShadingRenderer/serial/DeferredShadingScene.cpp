@@ -58,6 +58,10 @@ void DeferredShadingScene::render(const illGraphics::Camera& camera, size_t view
                 for(auto cellIter = currCell.begin(); cellIter != currCell.end(); cellIter++) {
                     auto node = *cellIter;
 
+                    if(node->addedToRenderQueue(m_renderAccessCounter)) {
+                        continue;
+                    }
+
                     //TODO: take this out after done with thesis                    
                     node->setOcclusionCull(m_debugPerObjectCull);
 
@@ -65,7 +69,7 @@ void DeferredShadingScene::render(const illGraphics::Camera& camera, size_t view
                         static_cast<DeferredShadingBackend *>(m_rendererBackend)->occlusionQueryNode(camera, node, viewport);
                     }
                     else {
-                        node->render(m_renderQueues, m_renderAccessCounter);
+                        node->render(m_renderQueues);
                     }
                 }
             }
@@ -76,6 +80,10 @@ void DeferredShadingScene::render(const illGraphics::Camera& camera, size_t view
                 for(size_t arrayInd = 0; arrayInd < currCell.size(); arrayInd++) {
                     auto node = currCell[arrayInd];
 
+                    if(node->addedToRenderQueue(m_renderAccessCounter)) {
+                        continue;
+                    }
+
                     //TODO: take this out after done with thesis                    
                     node->setOcclusionCull(m_debugPerObjectCull);
 
@@ -83,7 +91,7 @@ void DeferredShadingScene::render(const illGraphics::Camera& camera, size_t view
                         static_cast<DeferredShadingBackend *>(m_rendererBackend)->occlusionQueryNode(camera, node, viewport);
                     }
                     else {
-                        node->render(m_renderQueues, m_renderAccessCounter);
+                        node->render(m_renderQueues);
                     }
                 }
             }

@@ -22,7 +22,7 @@ public:
 
     virtual ~StaticMeshNode() {}
 
-    virtual void render(RenderQueues& renderQueues, uint64_t renderAccessCounter);
+    virtual void render(RenderQueues& renderQueues);
 
     inline void load(illGraphics::MeshManager * meshManager, illGraphics::MaterialManager * materialManager) {
         if(m_mesh.isNull()) {
