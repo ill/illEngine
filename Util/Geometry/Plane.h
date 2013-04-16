@@ -54,6 +54,8 @@ struct Plane {
     Returns the distance from from the plane to a point.
     */
     inline T distance(const glm::detail::tvec3<T>& point) const {
+        T test = glm::dot(m_normal, point) + m_distance;
+
         return glm::dot(m_normal, point) + m_distance;
     }
 

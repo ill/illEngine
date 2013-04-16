@@ -163,68 +163,68 @@ public:
 
         //face 0 tri 0
         m_indices[0] = 0;
-        m_indices[1] = 1;
-        m_indices[2] = 2;
+        m_indices[1] = 3;
+        m_indices[2] = 1;
 
         //face 0 tri 1
-        m_indices[3] = 2;
+        m_indices[3] = 1;
         m_indices[4] = 3;
-        m_indices[5] = 0;
+        m_indices[5] = 2;
 
 
         //face 1 tri 0
-        m_indices[6] = 0;
-        m_indices[7] = 4;
-        m_indices[8] = 3;
+        m_indices[6] = 2;
+        m_indices[7] = 6;
+        m_indices[8] = 5;
 
         //face 1 tri 1
-        m_indices[9] = 3;
-        m_indices[10] = 4;
-        m_indices[11] = 7;
+        m_indices[9] = 5;
+        m_indices[10] = 1;
+        m_indices[11] = 2;
 
 
         //face 2 tri 0
-        m_indices[12] = 7;
-        m_indices[13] = 6;
-        m_indices[14] = 4;
+        m_indices[12] = 2;
+        m_indices[13] = 3;
+        m_indices[14] = 7;
 
         //face 2 tri 1
-        m_indices[15] = 4;
-        m_indices[16] = 5;
-        m_indices[17] = 6;
+        m_indices[15] = 7;
+        m_indices[16] = 6;
+        m_indices[17] = 2;
 
 
         //face 3 tri 0
-        m_indices[18] = 6;
-        m_indices[19] = 2;
-        m_indices[20] = 5;
+        m_indices[18] = 5;
+        m_indices[19] = 6;
+        m_indices[20] = 4;
 
         //face 3 tri 1
-        m_indices[21] = 5;
-        m_indices[22] = 2;
-        m_indices[23] = 1;
+        m_indices[21] = 4;
+        m_indices[22] = 6;
+        m_indices[23] = 7;
 
 
         //face 4 tri 0
-        m_indices[24] = 1;
-        m_indices[25] = 0;
-        m_indices[26] = 4;
+        m_indices[24] = 7;
+        m_indices[25] = 3;
+        m_indices[26] = 0;
 
         //face 4 tri 1
-        m_indices[27] = 4;
-        m_indices[28] = 5;
-        m_indices[29] = 1;
+        m_indices[27] = 0;
+        m_indices[28] = 4;
+        m_indices[29] = 7;
 
 
         //face 5 tri 0
-        m_indices[30] = 3;
-        m_indices[31] = 2;
-        m_indices[32] = 6;
+        m_indices[30] = 1;
+        m_indices[31] = 5;
+        m_indices[32] = 0;
 
         //face 5 tri 1
-        m_indices[33] = 6;
-        m_indices[34] = 7;
-        m_indices[35] = 3;
+        m_indices[33] = 0;
+        m_indices[34] = 5;
+        m_indices[35] = 4;
     }
 
     ~MeshData() {

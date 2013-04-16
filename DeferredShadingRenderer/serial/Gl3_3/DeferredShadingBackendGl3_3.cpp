@@ -19,54 +19,54 @@ void DeferredShadingBackendGl3_3::initialize(const glm::uvec2 screenResolution, 
     glActiveTexture(GL_TEXTURE0);
 
     glGenTextures(REN_LAST, m_renderTextures);
-
+    
     glBindTexture(GL_TEXTURE_2D, m_renderTextures[REN_DEPTH]);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT24, screenResolution.x, screenResolution.y, 0, GL_DEPTH_COMPONENT, GL_UNSIGNED_BYTE, NULL);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH32F_STENCIL8, screenResolution.x, screenResolution.y, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);      //TODO: make sure GL_FLOAT is right for this
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
     //glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_MODE, GL_COMPARE_R_TO_TEXTURE);
     //glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_FUNC, GL_LEQUAL);
-    glTexParameteri(GL_TEXTURE_2D, GL_DEPTH_TEXTURE_MODE, GL_LUMINANCE);            //TODO: why do I have this?
-
+    //glTexParameteri(GL_TEXTURE_2D, GL_DEPTH_TEXTURE_MODE, GL_LUMINANCE);            //TODO: why do I have this?
+    
     glBindTexture(GL_TEXTURE_2D, m_renderTextures[REN_NORMAL]);
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB10_A2, screenResolution.x, screenResolution.y, 0, GL_RGBA, GL_UNSIGNED_INT_10_10_10_2, NULL);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);   
-
+    
     glBindTexture(GL_TEXTURE_2D, m_renderTextures[REN_DIFFUSE]);
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, screenResolution.x, screenResolution.y, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-
+    
     glBindTexture(GL_TEXTURE_2D, m_renderTextures[REN_SPECULAR]);
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, screenResolution.x, screenResolution.y, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-
+    
     glBindTexture(GL_TEXTURE_2D, m_renderTextures[REN_DIFFUSE_ACCUMULATION]);
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, screenResolution.x, screenResolution.y, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-
+    
     glBindTexture(GL_TEXTURE_2D, m_renderTextures[REN_SPECULAR_ACCUMULATION]);
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, screenResolution.x, screenResolution.y, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-
-    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, m_renderTextures[REN_DEPTH], 0);
-
+    
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_TEXTURE_2D, m_renderTextures[REN_DEPTH], 0);
+    
     // check FBO status
     GLenum status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
 
@@ -176,12 +176,8 @@ void DeferredShadingBackendGl3_3::uninitialize() {
     m_state = State::INITIALIZED;
 }
 
-void DeferredShadingBackendGl3_3::setupFrame() {
-    //clear the render target datas
+void DeferredShadingBackendGl3_3::setupGbuffer() {
     glBindFramebuffer(GL_FRAMEBUFFER, m_gBuffer);
-    
-    glDepthMask(GL_TRUE);
-    glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
 
     glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, m_renderTextures[REN_NORMAL], 0);
     glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT1, GL_TEXTURE_2D, m_renderTextures[REN_DIFFUSE], 0);
@@ -189,7 +185,17 @@ void DeferredShadingBackendGl3_3::setupFrame() {
 
     GLenum mrt[3] = {GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1, GL_COLOR_ATTACHMENT2};
     glDrawBuffers(3, mrt);
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+}
+
+void DeferredShadingBackendGl3_3::setupFrame() {
+    //clear the render target datas
+    setupGbuffer();
+    
+    glDepthMask(GL_TRUE);
+    glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
+    glStencilMask(0xff);
+
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 }
 
 void DeferredShadingBackendGl3_3::setupViewport(const illGraphics::Camera& camera) {
@@ -209,6 +215,8 @@ void DeferredShadingBackendGl3_3::setupViewport(const illGraphics::Camera& camer
 
     //set up backface culling
     glCullFace(GL_BACK);
+
+    setupGbuffer();
 }
 
 void DeferredShadingBackendGl3_3::retreiveCellQueries(std::unordered_map<size_t, Array<uint64_t>>& lastViewedFrames, uint64_t lastFrameCounter) {    
@@ -262,9 +270,6 @@ void DeferredShadingBackendGl3_3::setupQuery() {
     GLuint prog = getProgram(*m_volumeRenderProgram.get());
 
     glUseProgram(prog);
-    
-    GLint posAttrib = getProgramAttribLocation(prog, "positionIn");
-    glEnableVertexAttribArray(posAttrib);
 
     //bind VBO
     {
@@ -272,14 +277,16 @@ void DeferredShadingBackendGl3_3::setupQuery() {
         glBindBuffer(GL_ARRAY_BUFFER, buffer);
     }
 
-    //setup positions
-    glVertexAttribPointer(posAttrib, 3, GL_FLOAT, GL_FALSE, (GLsizei) m_box.getMeshFrontentData()->getVertexSize(), (char *)NULL + m_box.getMeshFrontentData()->getPositionOffset());                
-    
     //bind IBO
     {
         GLuint buffer = *((GLuint *) m_box.getMeshBackendData() + 1);
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, buffer);
     }
+
+    //setup positions
+    GLint posAttrib = getProgramAttribLocation(prog, "positionIn");
+    glEnableVertexAttribArray(posAttrib);
+    glVertexAttribPointer(posAttrib, 3, GL_FLOAT, GL_FALSE, (GLsizei) m_box.getMeshFrontentData()->getVertexSize(), (char *)NULL + m_box.getMeshFrontentData()->getPositionOffset());
 }
 
 void DeferredShadingBackendGl3_3::endQuery() {
@@ -343,7 +350,7 @@ void * DeferredShadingBackendGl3_3::occlusionQueryNode(const illGraphics::Camera
 
     Box<> nodeBox = node->getWorldBoundingVolume();
 
-    glColorMask(GL_FALSE, GL_FALSE, GL_TRUE, GL_TRUE);    //debug draw some green to the normals buffer
+    glColorMask(GL_FALSE, GL_FALSE, GL_TRUE, GL_TRUE);    //debug draw some blue to the normals buffer
 
     renderQueryBox(camera, m_box, getProgram(*m_volumeRenderProgram.get()), m_cellQueries.back().m_query, nodeBox.getCenter(), nodeBox.getDimensions());
     
@@ -393,16 +400,16 @@ void DeferredShadingBackendGl3_3::depthPass(illRendererCommon::RenderQueues& ren
                         glBindBuffer(GL_ARRAY_BUFFER, buffer);
                     }
 
-                    //setup positions
-                    glVertexAttribPointer(posAttrib, 3, GL_FLOAT, GL_FALSE, (GLsizei) mesh->getMeshFrontentData()->getVertexSize(), (char *)NULL + mesh->getMeshFrontentData()->getPositionOffset());                
-
-                    //TODO: skinning
-
                     //bind IBO
                     {
                         GLuint buffer = *((GLuint *) mesh->getMeshBackendData() + 1);
                         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, buffer);
                     }
+
+                    //setup positions
+                    glVertexAttribPointer(posAttrib, 3, GL_FLOAT, GL_FALSE, (GLsizei) mesh->getMeshFrontentData()->getVertexSize(), (char *)NULL + mesh->getMeshFrontentData()->getPositionOffset());                
+
+                    //TODO: skinning
 
                     //DRAW!!!!
                     if(m_debugOcclusion) {
@@ -702,6 +709,10 @@ void DeferredShadingBackendGl3_3::renderEmissivePass(illRendererCommon::RenderQu
 }
 
 void DeferredShadingBackendGl3_3::renderLights(illRendererCommon::RenderQueues& renderQueues, const illGraphics::Camera& camera, size_t viewport) {
+    if(m_stencilLightingPass) {    
+        glEnable(GL_STENCIL_TEST);
+    }
+    
     //figure out the normalized planes sent to the shader for retreiving position from depth    
     float planes[2] = {
         camera.getFarVal() / (camera.getFarVal() - camera.getNearVal()),
@@ -754,6 +765,9 @@ void DeferredShadingBackendGl3_3::renderLights(illRendererCommon::RenderQueues& 
         glUniform1i(getProgramUniformLocation(prog, "diffuseBuffer"), 2);
         glUniform1i(getProgramUniformLocation(prog, "specularBuffer"), 3);
 
+        GLint posAttrib = getProgramAttribLocation(prog, "positionIn");
+        glEnableVertexAttribArray(posAttrib);
+
         for(auto lightIter = lights.begin(); lightIter != lights.end(); lightIter++) {
             illGraphics::LightBase * light = lightIter->first;
             auto& lightNodes = lightIter->second;
@@ -771,7 +785,21 @@ void DeferredShadingBackendGl3_3::renderLights(illRendererCommon::RenderQueues& 
                 glUniform1f(getProgramUniformLocation(prog, "attenuationEnd"), 
                     static_cast<illGraphics::PointLight*>(light)->m_attenuationEnd);
 
-                volumeScale = glm::vec3(static_cast<illGraphics::PointLight*>(light)->m_attenuationEnd);
+                volumeScale = glm::vec3(static_cast<illGraphics::PointLight*>(light)->m_attenuationEnd) * 2.0f;
+
+                //bind VBO
+                {
+                    GLuint buffer = *((GLuint *) m_box.getMeshBackendData() + 0);
+                    glBindBuffer(GL_ARRAY_BUFFER, buffer);
+                }
+
+                //bind IBO
+                {
+                    GLuint buffer = *((GLuint *) m_box.getMeshBackendData() + 1);
+                    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, buffer);
+                }
+
+                glVertexAttribPointer(posAttrib, 3, GL_FLOAT, GL_FALSE, (GLsizei) m_box.getMeshFrontentData()->getVertexSize(), (char *)NULL + m_box.getMeshFrontentData()->getPositionOffset());
 
                 break;
 
@@ -788,7 +816,22 @@ void DeferredShadingBackendGl3_3::renderLights(illRendererCommon::RenderQueues& 
                 glUniform1f(getProgramUniformLocation(prog, "coneEnd"), 
                     static_cast<illGraphics::SpotLight*>(light)->m_coneEnd);
 
-                volumeScale = glm::vec3(static_cast<illGraphics::SpotLight*>(light)->m_attenuationEnd);
+                volumeScale = glm::vec3(static_cast<illGraphics::SpotLight*>(light)->m_attenuationEnd) * 2.0f;
+
+                //TODO: use a cone shape
+                //bind VBO
+                {
+                    GLuint buffer = *((GLuint *) m_box.getMeshBackendData() + 0);
+                    glBindBuffer(GL_ARRAY_BUFFER, buffer);
+                }
+
+                //bind IBO
+                {
+                    GLuint buffer = *((GLuint *) m_box.getMeshBackendData() + 1);
+                    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, buffer);
+                }
+
+                glVertexAttribPointer(posAttrib, 3, GL_FLOAT, GL_FALSE, (GLsizei) m_box.getMeshFrontentData()->getVertexSize(), (char *)NULL + m_box.getMeshFrontentData()->getPositionOffset());
 
                 break;
 
@@ -821,7 +864,23 @@ void DeferredShadingBackendGl3_3::renderLights(illRendererCommon::RenderQueues& 
                     case illGraphics::LightBase::Type::SPOT:
                         glUniform3fv(getProgramUniformLocation(prog, "lightPosition"), 
                             1, glm::value_ptr(getTransformPosition(m_occlusionCamera->getModelView() * node->getTransform())));
+                        
+                        break;
 
+                    case illGraphics::LightBase::Type::DIRECTIONAL:
+                        //TODO:
+                        break;
+                    }
+
+                    //render stencil prepass
+                    glEnable(GL_DEPTH_TEST);
+                    glDisable(GL_CULL_FACE);
+                    glUniform1i(getProgramUniformLocation(prog, "noLighting"), 1);
+                    glDrawRangeElements(GL_TRIANGLES, 0, m_box.getMeshFrontentData()->getNumTri() * 3, m_box.getMeshFrontentData()->getNumTri() * 3, GL_UNSIGNED_SHORT, (char *)NULL);
+
+                    switch(lightType) {
+                    case illGraphics::LightBase::Type::POINT:
+                    case illGraphics::LightBase::Type::SPOT:
                         /*
                         if light volume intersects far plane, back face culling, otherwise front face culling
                         assuming the light center and attenuation end as sphere radius will suffice as a good test, 
@@ -843,44 +902,12 @@ void DeferredShadingBackendGl3_3::renderLights(illRendererCommon::RenderQueues& 
                         break;
                     }
 
-                    //TODO: clearly I don't plan on using a box drawn in immediate mode for long, I will draw the light volume shapes soon with PROPER VBOs
-                
-                    //glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-
-                    glBegin(GL_QUADS);
-                    glVertex3f(1.0f, -1.0f, 1.0f);
-                    glVertex3f(1.0f, 1.0f, 1.0f);
-                    glVertex3f(-1.0f, 1.0f, 1.0f);
-                    glVertex3f(-1.0f, -1.0f, 1.0f);
-
-                    glVertex3f(-1.0f, -1.0f, -1.0f);
-                    glVertex3f(-1.0f, 1.0f, -1.0f);
-                    glVertex3f(1.0f, 1.0f, -1.0f);
-                    glVertex3f(1.0f, -1.0f, -1.0f);
-
-                    glVertex3f(-1.0f, -1.0f, 1.0f);
-                    glVertex3f(-1.0f, 1.0f, 1.0f);
-                    glVertex3f(-1.0f, 1.0f, -1.0f);
-                    glVertex3f(-1.0f, -1.0f, -1.0f);
-
-                    glVertex3f(1.0f, -1.0f, -1.0f);
-                    glVertex3f(1.0f, 1.0f, -1.0f);
-                    glVertex3f(1.0f, 1.0f, 1.0f);
-                    glVertex3f(1.0f, -1.0f, 1.0f);
-
-                    glVertex3f(1.0f, 1.0f, 1.0f);
-                    glVertex3f(1.0f, 1.0f, -1.0f);
-                    glVertex3f(-1.0f, 1.0f, -1.0f);
-                    glVertex3f(-1.0f, 1.0f, 1.0f);
-
-                    glVertex3f(-1.0f, -1.0f, -1.0f);
-                    glVertex3f(1.0f, -1.0f, -1.0f);
-                    glVertex3f(1.0f, -1.0f, 1.0f);
-                    glVertex3f(-1.0f, -1.0f, 1.0f);
-                    glEnd();
-
-                    //glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-
+                    //render light
+                    glDisable(GL_DEPTH_TEST);
+                    glEnable(GL_CULL_FACE);
+                    glUniform1i(getProgramUniformLocation(prog, "noLighting"), 0);
+                    glDrawRangeElements(GL_TRIANGLES, 0, m_box.getMeshFrontentData()->getNumTri() * 3, m_box.getMeshFrontentData()->getNumTri() * 3, GL_UNSIGNED_SHORT, (char *)NULL);
+                    
                     glViewport(camera.getViewportCorner().x, camera.getViewportCorner().y + camera.getViewportDimensions().y / 2,
                         camera.getViewportDimensions().x, camera.getViewportDimensions().y / 2);
 
@@ -903,13 +930,66 @@ void DeferredShadingBackendGl3_3::renderLights(illRendererCommon::RenderQueues& 
                 case illGraphics::LightBase::Type::SPOT:
                     glUniform3fv(getProgramUniformLocation(prog, "lightPosition"), 
                         1, glm::value_ptr(getTransformPosition(camera.getModelView() * node->getTransform())));
+                        
+                    break;
 
+                case illGraphics::LightBase::Type::DIRECTIONAL:
+                    //TODO:
+                    break;
+                }
+
+                //render stencil prepass
+
+                GLuint query = 0;
+
+                if(m_stencilLightingPass) {
+                    //glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+
+                    glGenQueries(1, &query);
+                    glBeginQuery(/*GL_SAMPLES_PASSED*/GL_ANY_SAMPLES_PASSED, query);
+
+                    if(node->getOcclusionCull()) {
+                        m_nodeQueries.emplace_back();
+    
+                        m_nodeQueries.back().m_query = query;
+                        m_nodeQueries.back().m_node = node;
+                        m_nodeQueries.back().m_viewport = viewport;
+                    }
+
+                    glEnable(GL_DEPTH_TEST);
+                    glDisable(GL_CULL_FACE);
+                    glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
+
+                    //glEnable(GL_STENCIL_TEST);
+                    //glClear(GL_STENCIL_BUFFER_BIT);
+
+                    glStencilFunc(GL_ALWAYS, 0, 0x00);
+
+                    glStencilOpSeparate(GL_BACK, GL_KEEP, GL_INCR_WRAP, GL_KEEP);
+                    glStencilOpSeparate(GL_FRONT, GL_KEEP, GL_DECR_WRAP, GL_KEEP);
+
+                    glUniform1i(getProgramUniformLocation(prog, "noLighting"), 1);
+                    glDrawRangeElements(GL_TRIANGLES, 0, m_box.getMeshFrontentData()->getNumTri() * 3, m_box.getMeshFrontentData()->getNumTri() * 3, GL_UNSIGNED_SHORT, (char *)NULL);
+
+                    glEndQuery(/*GL_SAMPLES_PASSED*/GL_ANY_SAMPLES_PASSED);
+                }
+
+                switch(lightType) {
+                case illGraphics::LightBase::Type::POINT:
+                case illGraphics::LightBase::Type::SPOT:
                     /*
                     if light volume intersects far plane, back face culling, otherwise front face culling
                     assuming the light center and attenuation end as sphere radius will suffice as a good test, 
                     unless your light is HUGE or the draw distance is TINY
                     in that case, you're doing it wrong!!!!
                     */
+                    {
+                    auto dist = camera.getViewFrustum().m_far.distance(getTransformPosition(node->getTransform()));
+                    auto atten = static_cast<illGraphics::PointLight*>(light)->m_attenuationEnd;
+                    bool res = dist < atten;
+                    int x = 5;
+                    }
+
                     if(camera.getViewFrustum().m_far.distance(getTransformPosition(node->getTransform())) 
                             < static_cast<illGraphics::PointLight*>(light)->m_attenuationEnd) {
                         glCullFace(GL_BACK);
@@ -925,63 +1005,73 @@ void DeferredShadingBackendGl3_3::renderLights(illRendererCommon::RenderQueues& 
                     break;
                 }
 
-                //TODO: clearly I don't plan on using a box drawn in immediate mode for long, I will draw the light volume shapes soon with PROPER VBOs
-                
-                //glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+                //TODO: conditional render
+                glBeginConditionalRender(query, GL_ANY_SAMPLES_PASSED/*_CONSERVATIVE*/);
 
-                if(node->getOcclusionCull()) {
-                    m_nodeQueries.emplace_back();
-    
-                    glGenQueries(1, &m_nodeQueries.back().m_query);
-                    m_nodeQueries.back().m_node = node;
-                    m_nodeQueries.back().m_viewport = viewport;
+                //render light
+                glDisable(GL_DEPTH_TEST);
+                glEnable(GL_CULL_FACE);
+                glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
+                //glDisable(GL_STENCIL_TEST);
 
-                    glBeginQuery(/*GL_SAMPLES_PASSED*/GL_ANY_SAMPLES_PASSED, m_nodeQueries.back().m_query);
+                if(m_stencilLightingPass) {
+                    glStencilFunc(GL_NOTEQUAL, 0, 0xFF);
+                    glStencilOp(GL_REPLACE, GL_REPLACE, GL_REPLACE);
                 }
 
-                glBegin(GL_QUADS);
-                glVertex3f(1.0f, -1.0f, 1.0f);
-                glVertex3f(1.0f, 1.0f, 1.0f);
-                glVertex3f(-1.0f, 1.0f, 1.0f);
-                glVertex3f(-1.0f, -1.0f, 1.0f);
+                //glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
-                glVertex3f(-1.0f, -1.0f, -1.0f);
-                glVertex3f(-1.0f, 1.0f, -1.0f);
-                glVertex3f(1.0f, 1.0f, -1.0f);
-                glVertex3f(1.0f, -1.0f, -1.0f);
+                glUniform1i(getProgramUniformLocation(prog, "noLighting"), 0);
+                glDrawRangeElements(GL_TRIANGLES, 0, m_box.getMeshFrontentData()->getNumTri() * 3, m_box.getMeshFrontentData()->getNumTri() * 3, GL_UNSIGNED_SHORT, (char *)NULL);
 
-                glVertex3f(-1.0f, -1.0f, 1.0f);
-                glVertex3f(-1.0f, 1.0f, 1.0f);
-                glVertex3f(-1.0f, 1.0f, -1.0f);
-                glVertex3f(-1.0f, -1.0f, -1.0f);
+                glEndConditionalRender();
 
-                glVertex3f(1.0f, -1.0f, -1.0f);
-                glVertex3f(1.0f, 1.0f, -1.0f);
-                glVertex3f(1.0f, 1.0f, 1.0f);
-                glVertex3f(1.0f, -1.0f, 1.0f);
-
-                glVertex3f(1.0f, 1.0f, 1.0f);
-                glVertex3f(1.0f, 1.0f, -1.0f);
-                glVertex3f(-1.0f, 1.0f, -1.0f);
-                glVertex3f(-1.0f, 1.0f, 1.0f);
-
-                glVertex3f(-1.0f, -1.0f, -1.0f);
-                glVertex3f(1.0f, -1.0f, -1.0f);
-                glVertex3f(1.0f, -1.0f, 1.0f);
-                glVertex3f(-1.0f, -1.0f, 1.0f);
-                glEnd();
+                if(!node->getOcclusionCull()) {
+                    glDeleteQueries(1, &query);
+                }
 
                 //glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 
-                if(node->getOcclusionCull()) {                        
-                    glEndQuery(/*GL_SAMPLES_PASSED*/GL_ANY_SAMPLES_PASSED);
-                }
+                /*glBegin(GL_QUADS);
+                glVertex3f(1.0f, -1.0f, 1.0f);
+                glVertex3f(1.0f, 1.0f, 1.0f);
+                glVertex3f(-1.0f, 1.0f, 1.0f);
+                glVertex3f(-1.0f, -1.0f, 1.0f);
+
+                glVertex3f(-1.0f, -1.0f, -1.0f);
+                glVertex3f(-1.0f, 1.0f, -1.0f);
+                glVertex3f(1.0f, 1.0f, -1.0f);
+                glVertex3f(1.0f, -1.0f, -1.0f);
+
+                glVertex3f(-1.0f, -1.0f, 1.0f);
+                glVertex3f(-1.0f, 1.0f, 1.0f);
+                glVertex3f(-1.0f, 1.0f, -1.0f);
+                glVertex3f(-1.0f, -1.0f, -1.0f);
+
+                glVertex3f(1.0f, -1.0f, -1.0f);
+                glVertex3f(1.0f, 1.0f, -1.0f);
+                glVertex3f(1.0f, 1.0f, 1.0f);
+                glVertex3f(1.0f, -1.0f, 1.0f);
+
+                glVertex3f(1.0f, 1.0f, 1.0f);
+                glVertex3f(1.0f, 1.0f, -1.0f);
+                glVertex3f(-1.0f, 1.0f, -1.0f);
+                glVertex3f(-1.0f, 1.0f, 1.0f);
+
+                glVertex3f(-1.0f, -1.0f, -1.0f);
+                glVertex3f(1.0f, -1.0f, -1.0f);
+                glVertex3f(1.0f, -1.0f, 1.0f);
+                glVertex3f(-1.0f, -1.0f, 1.0f);
+                glEnd();*/
             }
         }
+
+        glDisableVertexAttribArray(posAttrib);
     }
 
     glBindBuffer(GL_ARRAY_BUFFER, 0);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+    glDisable(GL_STENCIL_TEST);
 
     if(m_debugOcclusion) {
         glViewport(camera.getViewportCorner().x, camera.getViewportCorner().y, camera.getViewportDimensions().x, camera.getViewportDimensions().y);
@@ -1289,7 +1379,7 @@ void DeferredShadingBackendGl3_3::renderDebugBounds(illRendererCommon::RenderQue
                         glViewport(camera.getViewportCorner().x, camera.getViewportCorner().y,
                             camera.getViewportDimensions().x, camera.getViewportDimensions().y / 2);
                         
-                        renderNodeBounds(nodeIter->m_node);
+                        //renderNodeBounds(nodeIter->m_node);
                         
                         glMatrixMode(GL_PROJECTION);
                         glLoadIdentity();
@@ -1305,7 +1395,7 @@ void DeferredShadingBackendGl3_3::renderDebugBounds(illRendererCommon::RenderQue
                             camera.getViewportDimensions().x, camera.getViewportDimensions().y / 2);
                     }
 
-                    renderNodeBounds(nodeIter->m_node);
+                    //renderNodeBounds(nodeIter->m_node);
                 }
             }
         }
@@ -1318,7 +1408,7 @@ void DeferredShadingBackendGl3_3::renderDebugBounds(illRendererCommon::RenderQue
             auto& lightNodes = lightIter->second;
 
             for(auto nodeIter = lightNodes.begin(); nodeIter != lightNodes.end(); nodeIter++) {
-                const auto& nodeInfo = *nodeIter;
+                const auto& node = *nodeIter;
 
                 if(m_debugOcclusion) {
                     glMatrixMode(GL_PROJECTION);
@@ -1334,7 +1424,7 @@ void DeferredShadingBackendGl3_3::renderDebugBounds(illRendererCommon::RenderQue
                     glViewport(camera.getViewportCorner().x, camera.getViewportCorner().y,
                         camera.getViewportDimensions().x, camera.getViewportDimensions().y / 2);
                         
-                    //renderNodeBounds(nodeInfo.m_light);
+                    renderNodeBounds(node);
                         
                     glMatrixMode(GL_PROJECTION);
                     glLoadIdentity();
@@ -1350,7 +1440,7 @@ void DeferredShadingBackendGl3_3::renderDebugBounds(illRendererCommon::RenderQue
                         camera.getViewportDimensions().x, camera.getViewportDimensions().y / 2);
                 }
 
-                //renderNodeBounds(node);
+                renderNodeBounds(node);
             }
         }
     }
@@ -1404,10 +1494,7 @@ void DeferredShadingBackendGl3_3::render(illRendererCommon::RenderQueues& render
         glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, m_renderTextures[REN_DIFFUSE_ACCUMULATION], 0);
         glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT1, GL_TEXTURE_2D, m_renderTextures[REN_SPECULAR_ACCUMULATION], 0);
         glDrawBuffers(2, mrt);
-         
-        //TODO: for now disable depth test
-        glDisable(GL_DEPTH_TEST);
-
+                 
         renderLights(renderQueues, camera, viewport);
 
         //TODO: forward rendering of blended stuff

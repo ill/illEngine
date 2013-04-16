@@ -31,6 +31,7 @@ public:
         : RendererBackend(backend),
         m_state(State::UNINITIALIZED),
         m_debugMode(DebugMode::NONE),
+        m_stencilLightingPass(true),
         m_debugOcclusion(false),
         m_debugLights(false),
         m_debugBounds(false),
@@ -138,6 +139,7 @@ public:
         SPECULAR_ACCUMULATION
     };
 
+    bool m_stencilLightingPass;
     bool m_performCull;    
     bool m_debugOcclusion;
     bool m_debugBounds;

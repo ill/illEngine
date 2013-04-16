@@ -53,6 +53,8 @@ private:
         const illRendererCommon::GraphicsNode * m_node;
     };
 
+    void setupGbuffer();
+
     void renderGbuffer(illRendererCommon::RenderQueues& renderQueues, const illGraphics::Camera& camera);
     void renderAmbientPass(illRendererCommon::RenderQueues& renderQueues, const illGraphics::Camera& camera);
     void renderEmissivePass(illRendererCommon::RenderQueues& renderQueues, const illGraphics::Camera& camera);
