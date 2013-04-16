@@ -8,6 +8,8 @@
 #include "RendererCommon/serial/StaticMeshNode.h"
 #include "RendererCommon/serial/LightNode.h"
 
+#define VERIFY_RENDER_STATE
+
 namespace illDeferredShadingRenderer {
 
 void DeferredShadingBackendGl3_3::initialize(const glm::uvec2 screenResolution, illGraphics::ShaderProgramManager * shaderProgramManager) {
@@ -301,6 +303,76 @@ void renderQueryBox(const illGraphics::Camera& camera, const illGraphics::Mesh& 
     glUniformMatrix4fv(getProgramUniformLocation(program, "modelViewProjection"), 1, false, glm::value_ptr(camera.getModelViewProjection() * boxTransform));
 
     glBeginQuery(/*GL_SAMPLES_PASSED*/GL_ANY_SAMPLES_PASSED, query);
+
+#ifdef VERIFY_RENDER_STATE
+    /**
+    Gbuffer FBO bound
+	MRT for normal, diffuse, specular is set
+					
+	viewport dimensions set
+					
+	blend disabled
+					
+	depth test enabled
+	depth func less
+					
+	stencil test disabled
+					
+	cullface off
+					
+	depthmask false
+	colormask false
+					
+	shader prog: volume rendering
+					
+	querybox mesh VBO bound
+	querybox mesh IBO bound			
+	shader prog position attribute array enabled
+	mesh position attrib array data set
+    */
+    {
+        GLboolean val;
+        glGetBooleanv(GL_BLEND, &val);
+        assert(val == GL_FALSE);
+    }
+
+    {
+        GLboolean val;
+        glGetBooleanv(GL_DEPTH_TEST, &val);
+        assert(val == GL_TRUE);
+    }
+
+    {
+        GLint val;
+        glGetIntegerv(GL_DEPTH_FUNC, &val);
+        assert(val == GL_LESS);
+    }
+
+    {
+        GLboolean val;
+        glGetBooleanv(GL_STENCIL_TEST, &val);
+        assert(val == GL_FALSE);
+    }
+
+    {
+        GLboolean val;
+        glGetBooleanv(GL_CULL_FACE, &val);
+        assert(val == GL_FALSE);
+    }
+
+    {
+        GLboolean val;
+        glGetBooleanv(GL_DEPTH_WRITEMASK, &val);
+        assert(val == GL_FALSE);
+    }
+
+    {
+        GLboolean val[4];
+        glGetBooleanv(GL_COLOR_WRITEMASK, val);
+        assert(val[0] == GL_FALSE && val[1] == GL_FALSE && val[2] == GL_FALSE && val[3] == GL_FALSE);
+    }
+#endif
+
     glDrawRangeElements(GL_TRIANGLES, 0, boxMesh.getMeshFrontentData()->getNumTri() * 3, boxMesh.getMeshFrontentData()->getNumTri() * 3, GL_UNSIGNED_SHORT, (char *)NULL);
     glEndQuery(/*GL_SAMPLES_PASSED*/GL_ANY_SAMPLES_PASSED);
 }
@@ -323,7 +395,7 @@ void * DeferredShadingBackendGl3_3::occlusionQueryCell(const illGraphics::Camera
             camera.getViewportDimensions().x, camera.getViewportDimensions().y / 2);
     }
     
-    glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);    //debug draw some purple to the normals buffer
+    //glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);    //debug draw some purple to the normals buffer
 
     renderQueryBox(camera, m_box, getProgram(*m_volumeRenderProgram.get()), m_cellQueries.back().m_query, cellCenter, cellSize);
     
@@ -350,7 +422,7 @@ void * DeferredShadingBackendGl3_3::occlusionQueryNode(const illGraphics::Camera
 
     Box<> nodeBox = node->getWorldBoundingVolume();
 
-    glColorMask(GL_FALSE, GL_FALSE, GL_TRUE, GL_TRUE);    //debug draw some blue to the normals buffer
+    //glColorMask(GL_FALSE, GL_FALSE, GL_TRUE, GL_TRUE);    //debug draw some blue to the normals buffer
 
     renderQueryBox(camera, m_box, getProgram(*m_volumeRenderProgram.get()), m_cellQueries.back().m_query, nodeBox.getCenter(), nodeBox.getDimensions());
     
@@ -435,6 +507,78 @@ void DeferredShadingBackendGl3_3::depthPass(illRendererCommon::RenderQueues& ren
 
                         glBeginQuery(/*GL_SAMPLES_PASSED*/GL_ANY_SAMPLES_PASSED, m_nodeQueries.back().m_query);
                     }
+
+#ifdef VERIFY_RENDER_STATE
+                    /**
+                    Gbuffer FBO bound
+					MRT for normal, diffuse, specular is set
+					
+					viewport dimensions set
+					
+					blend disabled
+					
+					depth test enabled
+					depth func less
+					
+					stencil test disabled
+					
+					cullface back
+					cullface on
+					
+					depthmask true
+					colormask false
+					
+					shader prog: depth pass for mesh
+										
+					mesh VBO bound
+					mesh IBO bound
+					shader prog position attribute array enabled
+					mesh position attrib array data set
+					
+					shader prog modelViewProjection set to transform
+                    */
+                    {
+                        GLboolean val;
+                        glGetBooleanv(GL_BLEND, &val);
+                        assert(val == GL_FALSE);
+                    }
+
+                    {
+                        GLboolean val;
+                        glGetBooleanv(GL_DEPTH_TEST, &val);
+                        assert(val == GL_TRUE);
+                    }
+
+                    {
+                        GLint val;
+                        glGetIntegerv(GL_DEPTH_FUNC, &val);
+                        assert(val == GL_LESS);
+                    }
+
+                    {
+                        GLboolean val;
+                        glGetBooleanv(GL_STENCIL_TEST, &val);
+                        assert(val == GL_FALSE);
+                    }
+
+                    {
+                        GLboolean val;
+                        glGetBooleanv(GL_CULL_FACE, &val);
+                        assert(val == GL_TRUE);
+                    }
+
+                    {
+                        GLboolean val;
+                        glGetBooleanv(GL_DEPTH_WRITEMASK, &val);
+                        assert(val == GL_TRUE);
+                    }
+
+                    {
+                        GLboolean val[4];
+                        glGetBooleanv(GL_COLOR_WRITEMASK, val);
+                        assert(val[0] == GL_FALSE && val[1] == GL_FALSE && val[2] == GL_FALSE && val[3] == GL_FALSE);
+                    }
+#endif
 
                     glDrawRangeElements(GL_TRIANGLES, 0, mesh->getMeshFrontentData()->getNumTri() * 3, mesh->getMeshFrontentData()->getNumTri() * 3, GL_UNSIGNED_SHORT, (char *)NULL);
 
@@ -652,6 +796,80 @@ void DeferredShadingBackendGl3_3::renderGbuffer(illRendererCommon::RenderQueues&
                     glUniformMatrix3fv(getProgramUniformLocation(prog, "normalMat"), 
                         1, false, glm::value_ptr(glm::mat3(camera.getModelView() * meshInfo.m_node->getTransform())));
 
+#ifdef VERIFY_RENDER_STATE
+                    /**
+                    Gbuffer FBO bound
+					MRT for normal, diffuse, specular is set
+					
+					viewport dimensions set
+					
+					blend disabled
+					
+					depth test enabled
+					depth func equal
+					
+					stencil test disabled
+					
+					cullface back
+					cullface on
+					
+					depthmask false
+					colormask true
+					
+					shader prog: mesh rendering
+										
+					mesh VBO bound
+					mesh IBO bound
+					
+					position attrib array
+					normal attrib array
+					tex coord array
+					tangent array
+					bitangent array
+                    */
+                    {
+                        GLboolean val;
+                        glGetBooleanv(GL_BLEND, &val);
+                        assert(val == GL_FALSE);
+                    }
+
+                    {
+                        GLboolean val;
+                        glGetBooleanv(GL_DEPTH_TEST, &val);
+                        assert(val == GL_TRUE);
+                    }
+
+                    {
+                        GLint val;
+                        glGetIntegerv(GL_DEPTH_FUNC, &val);
+                        assert(val == GL_EQUAL);
+                    }
+
+                    {
+                        GLboolean val;
+                        glGetBooleanv(GL_STENCIL_TEST, &val);
+                        assert(val == GL_FALSE);
+                    }
+
+                    {
+                        GLboolean val;
+                        glGetBooleanv(GL_CULL_FACE, &val);
+                        assert(val == GL_TRUE);
+                    }
+
+                    {
+                        GLboolean val;
+                        glGetBooleanv(GL_DEPTH_WRITEMASK, &val);
+                        assert(val == GL_FALSE);
+                    }
+
+                    {
+                        GLboolean val[4];
+                        glGetBooleanv(GL_COLOR_WRITEMASK, val);
+                        assert(val[0] == GL_TRUE && val[1] == GL_TRUE && val[2] == GL_TRUE && val[3] == GL_TRUE);
+                    }
+#endif
+
                     glDrawRangeElements(GL_TRIANGLES, 0, 
                         mesh->getMeshFrontentData()->getNumTri() * 3, mesh->getMeshFrontentData()->getNumTri() * 3, GL_UNSIGNED_SHORT, (char *)NULL);
                 }
@@ -842,88 +1060,86 @@ void DeferredShadingBackendGl3_3::renderLights(illRendererCommon::RenderQueues& 
             for(auto nodeIter = lightNodes.begin(); nodeIter != lightNodes.end(); nodeIter++) {
                 auto node = *nodeIter;
                 
-                if(m_debugOcclusion) {
-                    planes[0] = m_occlusionCamera->getFarVal() / (m_occlusionCamera->getFarVal() - m_occlusionCamera->getNearVal());
-                    planes[1] = (m_occlusionCamera->getFarVal() * m_occlusionCamera->getNearVal()) / (m_occlusionCamera->getFarVal() - m_occlusionCamera->getNearVal()); //normally this is negated in a left handed coordinate system
+                //if(m_debugOcclusion) {
+                //    planes[0] = m_occlusionCamera->getFarVal() / (m_occlusionCamera->getFarVal() - m_occlusionCamera->getNearVal());
+                //    planes[1] = (m_occlusionCamera->getFarVal() * m_occlusionCamera->getNearVal()) / (m_occlusionCamera->getFarVal() - m_occlusionCamera->getNearVal()); //normally this is negated in a left handed coordinate system
 
-                    glUniform2fv(getProgramUniformLocation(prog, "planes"), 1, planes);
+                //    glUniform2fv(getProgramUniformLocation(prog, "planes"), 1, planes);
 
-                    glViewport(camera.getViewportCorner().x, camera.getViewportCorner().y,
-                        camera.getViewportDimensions().x, camera.getViewportDimensions().y / 2);
+                //    glViewport(camera.getViewportCorner().x, camera.getViewportCorner().y,
+                //        camera.getViewportDimensions().x, camera.getViewportDimensions().y / 2);
 
-                    glm::mat4 modelView = glm::scale(m_occlusionCamera->getModelView() * node->getTransform(), volumeScale);
-                
-                    glUniformMatrix4fv(getProgramUniformLocation(prog, "modelViewProjection"), 
-                        1, false, glm::value_ptr(glm::scale(m_occlusionCamera->getModelViewProjection() * node->getTransform(), volumeScale)));
-                
-                    glUniformMatrix4fv(getProgramUniformLocation(prog, "modelView"), 
-                        1, false, glm::value_ptr(modelView));
-                
-                    switch(lightType) {
-                    case illGraphics::LightBase::Type::POINT:
-                    case illGraphics::LightBase::Type::SPOT:
-                        glUniform3fv(getProgramUniformLocation(prog, "lightPosition"), 
-                            1, glm::value_ptr(getTransformPosition(m_occlusionCamera->getModelView() * node->getTransform())));
-                        
-                        break;
+                //    glm::mat4 modelView = glm::scale(m_occlusionCamera->getModelView() * node->getTransform(), volumeScale);
+                //
+                //    glUniformMatrix4fv(getProgramUniformLocation(prog, "modelViewProjection"), 
+                //        1, false, glm::value_ptr(glm::scale(m_occlusionCamera->getModelViewProjection() * node->getTransform(), volumeScale)));
+                //
+                //    glUniformMatrix4fv(getProgramUniformLocation(prog, "modelView"), 
+                //        1, false, glm::value_ptr(modelView));
+                //
+                //    switch(lightType) {
+                //    case illGraphics::LightBase::Type::POINT:
+                //    case illGraphics::LightBase::Type::SPOT:
+                //        glUniform3fv(getProgramUniformLocation(prog, "lightPosition"), 
+                //            1, glm::value_ptr(getTransformPosition(m_occlusionCamera->getModelView() * node->getTransform())));
+                //        
+                //        break;
 
-                    case illGraphics::LightBase::Type::DIRECTIONAL:
-                        //TODO:
-                        break;
-                    }
+                //    case illGraphics::LightBase::Type::DIRECTIONAL:
+                //        //TODO:
+                //        break;
+                //    }
 
-                    //render stencil prepass
-                    glEnable(GL_DEPTH_TEST);
-                    glDisable(GL_CULL_FACE);
-                    glUniform1i(getProgramUniformLocation(prog, "noLighting"), 1);
-                    glDrawRangeElements(GL_TRIANGLES, 0, m_box.getMeshFrontentData()->getNumTri() * 3, m_box.getMeshFrontentData()->getNumTri() * 3, GL_UNSIGNED_SHORT, (char *)NULL);
+                //    //render stencil prepass
+                //    glEnable(GL_DEPTH_TEST);
+                //    glDisable(GL_CULL_FACE);
+                //    glUniform1i(getProgramUniformLocation(prog, "noLighting"), 1);
+                //    glDrawRangeElements(GL_TRIANGLES, 0, m_box.getMeshFrontentData()->getNumTri() * 3, m_box.getMeshFrontentData()->getNumTri() * 3, GL_UNSIGNED_SHORT, (char *)NULL);
 
-                    switch(lightType) {
-                    case illGraphics::LightBase::Type::POINT:
-                    case illGraphics::LightBase::Type::SPOT:
-                        /*
-                        if light volume intersects far plane, back face culling, otherwise front face culling
-                        assuming the light center and attenuation end as sphere radius will suffice as a good test, 
-                        unless your light is HUGE or the draw distance is TINY
-                        in that case, you're doing it wrong!!!!
-                        */
-                        if(m_occlusionCamera->getViewFrustum().m_far.distance(getTransformPosition(node->getTransform())) 
-                                < static_cast<illGraphics::PointLight*>(light)->m_attenuationEnd) {
-                            glCullFace(GL_BACK);
-                        }
-                        else {
-                            glCullFace(GL_FRONT);
-                        }
+                //    switch(lightType) {
+                //    case illGraphics::LightBase::Type::POINT:
+                //    case illGraphics::LightBase::Type::SPOT:
+                //        /*
+                //        if light volume intersects far plane, back face culling, otherwise front face culling
+                //        assuming the light center and attenuation end as sphere radius will suffice as a good test, 
+                //        unless your light is HUGE or the draw distance is TINY
+                //        in that case, you're doing it wrong!!!!
+                //        */
+                //        if(m_occlusionCamera->getViewFrustum().m_far.distance(getTransformPosition(node->getTransform())) 
+                //                < static_cast<illGraphics::PointLight*>(light)->m_attenuationEnd) {
+                //            glCullFace(GL_BACK);
+                //        }
+                //        else {
+                //            glCullFace(GL_FRONT);
+                //        }
 
-                        break;
+                //        break;
 
-                    case illGraphics::LightBase::Type::DIRECTIONAL:
-                        //TODO:
-                        break;
-                    }
+                //    case illGraphics::LightBase::Type::DIRECTIONAL:
+                //        //TODO:
+                //        break;
+                //    }
 
-                    //render light
-                    glDisable(GL_DEPTH_TEST);
-                    glEnable(GL_CULL_FACE);
-                    glUniform1i(getProgramUniformLocation(prog, "noLighting"), 0);
-                    glDrawRangeElements(GL_TRIANGLES, 0, m_box.getMeshFrontentData()->getNumTri() * 3, m_box.getMeshFrontentData()->getNumTri() * 3, GL_UNSIGNED_SHORT, (char *)NULL);
-                    
-                    glViewport(camera.getViewportCorner().x, camera.getViewportCorner().y + camera.getViewportDimensions().y / 2,
-                        camera.getViewportDimensions().x, camera.getViewportDimensions().y / 2);
+                //    //render light
+                //    glDisable(GL_DEPTH_TEST);
+                //    glEnable(GL_CULL_FACE);
+                //    glUniform1i(getProgramUniformLocation(prog, "noLighting"), 0);
+                //    glDrawRangeElements(GL_TRIANGLES, 0, m_box.getMeshFrontentData()->getNumTri() * 3, m_box.getMeshFrontentData()->getNumTri() * 3, GL_UNSIGNED_SHORT, (char *)NULL);
+                //    
+                //    glViewport(camera.getViewportCorner().x, camera.getViewportCorner().y + camera.getViewportDimensions().y / 2,
+                //        camera.getViewportDimensions().x, camera.getViewportDimensions().y / 2);
 
-                    planes[0] = camera.getFarVal() / (camera.getFarVal() - camera.getNearVal());
-                    planes[1] = (camera.getFarVal() * camera.getNearVal()) / (camera.getFarVal() - camera.getNearVal()); //normally this is negated in a left handed coordinate system
+                //    planes[0] = camera.getFarVal() / (camera.getFarVal() - camera.getNearVal());
+                //    planes[1] = (camera.getFarVal() * camera.getNearVal()) / (camera.getFarVal() - camera.getNearVal()); //normally this is negated in a left handed coordinate system
 
-                    glUniform2fv(getProgramUniformLocation(prog, "planes"), 1, planes);
-                }
-
-                glm::mat4 modelView = glm::scale(camera.getModelView() * node->getTransform(), volumeScale);
-                
+                //    glUniform2fv(getProgramUniformLocation(prog, "planes"), 1, planes);
+                //}
+                                
                 glUniformMatrix4fv(getProgramUniformLocation(prog, "modelViewProjection"), 
                     1, false, glm::value_ptr(glm::scale(camera.getModelViewProjection() * node->getTransform(), volumeScale)));
                 
                 glUniformMatrix4fv(getProgramUniformLocation(prog, "modelView"), 
-                    1, false, glm::value_ptr(modelView));
+                    1, false, glm::value_ptr(glm::scale(camera.getModelView() * node->getTransform(), volumeScale)));
                 
                 switch(lightType) {
                 case illGraphics::LightBase::Type::POINT:
@@ -959,16 +1175,90 @@ void DeferredShadingBackendGl3_3::renderLights(illRendererCommon::RenderQueues& 
                     glEnable(GL_DEPTH_TEST);
                     glDisable(GL_CULL_FACE);
                     glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
-
-                    //glEnable(GL_STENCIL_TEST);
-                    //glClear(GL_STENCIL_BUFFER_BIT);
-
+                    
                     glStencilFunc(GL_ALWAYS, 0, 0x00);
 
                     glStencilOpSeparate(GL_BACK, GL_KEEP, GL_INCR_WRAP, GL_KEEP);
                     glStencilOpSeparate(GL_FRONT, GL_KEEP, GL_DECR_WRAP, GL_KEEP);
 
                     glUniform1i(getProgramUniformLocation(prog, "noLighting"), 1);
+
+#ifdef VERIFY_RENDER_STATE
+                    /**
+                    Gbuffer FBO bound
+					MRT for specular and diffuse accumulation
+					
+					viewport dimensions set
+					
+					blend enabled
+					blend func additive
+					
+					depth test enabled
+					depth func lequal
+					
+					stencil test enabled
+					stencil func Always, 0, 0x00
+					stencil op backFacing: keep, increment wrap, keep
+					stencil op frontFacing: keep, decrement wrap, keep
+								
+					cullface off
+					
+					depthmask false
+					colormask false
+					
+					shader prog: light volume rendering
+										
+					mesh VBO bound
+					mesh IBO bound
+					
+					position data set
+                    */
+                    {
+                        GLboolean val;
+                        glGetBooleanv(GL_BLEND, &val);
+                        assert(val == GL_TRUE);
+                    }
+
+                    //TODO: verify blend func
+
+                    {
+                        GLboolean val;
+                        glGetBooleanv(GL_DEPTH_TEST, &val);
+                        assert(val == GL_TRUE);
+                    }
+
+                    {
+                        GLint val;
+                        glGetIntegerv(GL_DEPTH_FUNC, &val);
+                        assert(val == GL_LEQUAL);
+                    }
+
+                    {
+                        GLboolean val;
+                        glGetBooleanv(GL_STENCIL_TEST, &val);
+                        assert(val == GL_TRUE);
+                    }
+
+                    //TODO: verify stencil ops
+
+                    {
+                        GLboolean val;
+                        glGetBooleanv(GL_CULL_FACE, &val);
+                        assert(val == GL_FALSE);
+                    }
+
+                    {
+                        GLboolean val;
+                        glGetBooleanv(GL_DEPTH_WRITEMASK, &val);
+                        assert(val == GL_FALSE);
+                    }
+
+                    {
+                        GLboolean val[4];
+                        glGetBooleanv(GL_COLOR_WRITEMASK, val);
+                        assert(val[0] == GL_FALSE && val[1] == GL_FALSE && val[2] == GL_FALSE && val[3] == GL_FALSE);
+                    }
+#endif
                     glDrawRangeElements(GL_TRIANGLES, 0, m_box.getMeshFrontentData()->getNumTri() * 3, m_box.getMeshFrontentData()->getNumTri() * 3, GL_UNSIGNED_SHORT, (char *)NULL);
 
                     glEndQuery(/*GL_SAMPLES_PASSED*/GL_ANY_SAMPLES_PASSED);
@@ -983,13 +1273,6 @@ void DeferredShadingBackendGl3_3::renderLights(illRendererCommon::RenderQueues& 
                     unless your light is HUGE or the draw distance is TINY
                     in that case, you're doing it wrong!!!!
                     */
-                    {
-                    auto dist = camera.getViewFrustum().m_far.distance(getTransformPosition(node->getTransform()));
-                    auto atten = static_cast<illGraphics::PointLight*>(light)->m_attenuationEnd;
-                    bool res = dist < atten;
-                    int x = 5;
-                    }
-
                     if(camera.getViewFrustum().m_far.distance(getTransformPosition(node->getTransform())) 
                             < static_cast<illGraphics::PointLight*>(light)->m_attenuationEnd) {
                         glCullFace(GL_BACK);
@@ -1012,7 +1295,6 @@ void DeferredShadingBackendGl3_3::renderLights(illRendererCommon::RenderQueues& 
                 glDisable(GL_DEPTH_TEST);
                 glEnable(GL_CULL_FACE);
                 glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
-                //glDisable(GL_STENCIL_TEST);
 
                 if(m_stencilLightingPass) {
                     glStencilFunc(GL_NOTEQUAL, 0, 0xFF);
@@ -1022,6 +1304,76 @@ void DeferredShadingBackendGl3_3::renderLights(illRendererCommon::RenderQueues& 
                 //glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
                 glUniform1i(getProgramUniformLocation(prog, "noLighting"), 0);
+
+#ifdef VERIFY_RENDER_STATE
+                /**
+                Gbuffer FBO bound
+				MRT for specular and diffuse accumulation
+					
+				viewport dimensions set
+					
+				blend enabled
+				blend func additive
+					
+				depth test disabled
+					
+				stencil test enabled
+				stencil func Not Equal, 0, 0xFF
+				stencil op Replace, Replace, Replace (A clever way to clear the stencil buffer)
+									
+				cullface back/front depending on conditions
+				cullface on
+					
+				depthmask false
+				colormask true
+					
+				shader prog: light volume rendering
+										
+				mesh VBO bound
+				mesh IBO bound
+					
+				position data set
+                */
+                {
+                    GLboolean val;
+                    glGetBooleanv(GL_BLEND, &val);
+                    assert(val == GL_TRUE);
+                }
+
+                //TODO: verify blend func
+
+                {
+                    GLboolean val;
+                    glGetBooleanv(GL_DEPTH_TEST, &val);
+                    assert(val == GL_FALSE);
+                }
+                
+                {
+                    GLboolean val;
+                    glGetBooleanv(GL_STENCIL_TEST, &val);
+                    assert(val == GL_TRUE);
+                }
+
+                //TODO: verify stencil ops
+
+                {
+                    GLboolean val;
+                    glGetBooleanv(GL_CULL_FACE, &val);
+                    assert(val == GL_TRUE);
+                }
+
+                {
+                    GLboolean val;
+                    glGetBooleanv(GL_DEPTH_WRITEMASK, &val);
+                    assert(val == GL_FALSE);
+                }
+
+                {
+                    GLboolean val[4];
+                    glGetBooleanv(GL_COLOR_WRITEMASK, val);
+                    assert(val[0] == GL_TRUE && val[1] == GL_TRUE && val[2] == GL_TRUE && val[3] == GL_TRUE);
+                }
+#endif
                 glDrawRangeElements(GL_TRIANGLES, 0, m_box.getMeshFrontentData()->getNumTri() * 3, m_box.getMeshFrontentData()->getNumTri() * 3, GL_UNSIGNED_SHORT, (char *)NULL);
 
                 glEndConditionalRender();
@@ -1503,10 +1855,7 @@ void DeferredShadingBackendGl3_3::render(illRendererCommon::RenderQueues& render
         if(m_debugMode != DebugMode::DIFFUSE_ACCUMULATION && m_debugMode != DebugMode::SPECULAR_ACCUMULATION) {
             //disable face culling
             glDisable(GL_CULL_FACE);
-
-            //disable depth test
-            glDisable(GL_DEPTH_TEST);
-
+            
             //draw to screen again
             glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
