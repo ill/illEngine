@@ -1,14 +1,12 @@
-#ifndef ILL_BOX_ITERATOR_H__
-#define ILL_BOX_ITERATOR_H__
-
-#include "../Box.h"
+#ifndef ILL_ORDERED_BOX_ITERATOR_H_
+#define ILL_ORDERED_BOX_ITERATOR_H_
 
 /**
-Iterates over some box range.
+Iterates over some box range in an order.  Just feed in an unnormalized box and it'll go from min to max.
 @tparam P The precision of the 3d grid volume cell subdivision
 */
 template <typename P = unsigned int>
-class BoxIterator {
+class OrderedBoxIterator {
 public:
     BoxIterator() {}
 

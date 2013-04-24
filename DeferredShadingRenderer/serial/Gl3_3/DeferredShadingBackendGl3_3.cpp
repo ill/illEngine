@@ -10,6 +10,26 @@
 
 //#define VERIFY_RENDER_STATE
 
+inline GLenum getPrimitiveType(MeshData<>::PrimitiveGroup::Type type) {
+    switch(type) {
+    case MeshData<>::PrimitiveGroup::Type::LINES:
+        return GL_LINES;
+    case MeshData<>::PrimitiveGroup::Type::LINE_LOOP:
+        return GL_LINE_LOOP;
+    case MeshData<>::PrimitiveGroup::Type::POINTS:
+        return GL_POINTS;
+    case MeshData<>::PrimitiveGroup::Type::TRIANGLES:
+        return GL_TRIANGLES;
+    case MeshData<>::PrimitiveGroup::Type::TRIANGLE_FAN:
+        return GL_TRIANGLE_FAN;
+    case MeshData<>::PrimitiveGroup::Type::TRIANGLE_STRIP:
+        return GL_TRIANGLE_STRIP;
+    default:
+        LOG_FATAL_ERROR("Unknown Primitive Type");
+        return 0;
+    }
+}
+
 namespace illDeferredShadingRenderer {
 
 void DeferredShadingBackendGl3_3::initialize(const glm::uvec2 screenResolution, illGraphics::ShaderProgramManager * shaderProgramManager) {
@@ -373,7 +393,7 @@ void renderQueryBox(const illGraphics::Camera& camera, const illGraphics::Mesh& 
     }
 #endif
 
-    glDrawRangeElements(GL_TRIANGLES, 0, boxMesh.getMeshFrontentData()->getNumTri() * 3, boxMesh.getMeshFrontentData()->getNumTri() * 3, GL_UNSIGNED_SHORT, (char *)NULL);
+    glDrawRangeElements(GL_TRIANGLES, 0, boxMesh.getMeshFrontentData()->getNumInd(), boxMesh.getMeshFrontentData()->getNumInd(), GL_UNSIGNED_SHORT, (char *)NULL);
     glEndQuery(/*GL_SAMPLES_PASSED*/GL_ANY_SAMPLES_PASSED);
 }
 
@@ -464,7 +484,7 @@ void DeferredShadingBackendGl3_3::depthPass(illRendererCommon::RenderQueues& ren
                 auto meshNodes = meshIter->second;
 
                 for(auto nodeIter = meshNodes.begin(); nodeIter !=  meshNodes.end(); nodeIter++) {
-                    auto node = *nodeIter;
+                    auto& node = *nodeIter;
                     
                     //bind VBO
                     {
@@ -488,21 +508,21 @@ void DeferredShadingBackendGl3_3::depthPass(illRendererCommon::RenderQueues& ren
                         glViewport(camera.getViewportCorner().x, camera.getViewportCorner().y,
                             camera.getViewportDimensions().x, camera.getViewportDimensions().y / 2);
 
-                        glUniformMatrix4fv(getProgramUniformLocation(prog, "modelViewProjection"), 1, false, glm::value_ptr(m_occlusionCamera->getModelViewProjection() * node->getTransform()));
+                        glUniformMatrix4fv(getProgramUniformLocation(prog, "modelViewProjection"), 1, false, glm::value_ptr(m_occlusionCamera->getModelViewProjection() * node.m_node->getTransform()));
 
-                        glDrawRangeElements(GL_TRIANGLES, 0, mesh->getMeshFrontentData()->getNumTri() * 3, mesh->getMeshFrontentData()->getNumTri() * 3, GL_UNSIGNED_SHORT, (char *)NULL);
+                        glDrawRangeElements(GL_TRIANGLES, 0, mesh->getMeshFrontentData()->getNumInd(), mesh->getMeshFrontentData()->getNumInd(), GL_UNSIGNED_SHORT, (char *)NULL);
 
                         glViewport(camera.getViewportCorner().x, camera.getViewportCorner().y + camera.getViewportDimensions().y / 2,
                             camera.getViewportDimensions().x, camera.getViewportDimensions().y / 2);
                     }
 
-                    glUniformMatrix4fv(getProgramUniformLocation(prog, "modelViewProjection"), 1, false, glm::value_ptr(camera.getModelViewProjection() * node->getTransform()));
+                    glUniformMatrix4fv(getProgramUniformLocation(prog, "modelViewProjection"), 1, false, glm::value_ptr(camera.getModelViewProjection() * node.m_node->getTransform()));
 
-                    if(node->getOcclusionCull()) {
+                    if(node.m_node->getOcclusionCull()) {
                         m_nodeQueries.emplace_back();
     
                         glGenQueries(1, &m_nodeQueries.back().m_query);
-                        m_nodeQueries.back().m_node = node;
+                        m_nodeQueries.back().m_node = node.m_node;
                         m_nodeQueries.back().m_viewport = viewport;
 
                         glBeginQuery(/*GL_SAMPLES_PASSED*/GL_ANY_SAMPLES_PASSED, m_nodeQueries.back().m_query);
@@ -580,9 +600,17 @@ void DeferredShadingBackendGl3_3::depthPass(illRendererCommon::RenderQueues& ren
                     }
 #endif
 
-                    glDrawRangeElements(GL_TRIANGLES, 0, mesh->getMeshFrontentData()->getNumTri() * 3, mesh->getMeshFrontentData()->getNumTri() * 3, GL_UNSIGNED_SHORT, (char *)NULL);
+                    {
+                        auto& primitiveGroup = mesh->getMeshFrontentData()->getPrimitiveGroup(node.m_primitiveGroup);
 
-                    if(node->getOcclusionCull()) {                        
+                        GLuint startInd = primitiveGroup.m_beginIndex;
+                        GLuint numInd = primitiveGroup.m_numIndices;
+                        GLuint endInd = startInd + numInd;
+
+                        glDrawRangeElements(getPrimitiveType(primitiveGroup.m_type), startInd, endInd, numInd, GL_UNSIGNED_SHORT, (char *)NULL + startInd * sizeof(uint16_t));
+                    }
+                                        
+                    if(node.m_node->getOcclusionCull()) {                        
                         glEndQuery(/*GL_SAMPLES_PASSED*/GL_ANY_SAMPLES_PASSED);
                     }
                 }
@@ -732,7 +760,7 @@ void DeferredShadingBackendGl3_3::renderGbuffer(illRendererCommon::RenderQueues&
                 auto& meshNodes = meshIter->second;
 
                 for(auto nodeIter = meshNodes.begin(); nodeIter !=  meshNodes.end(); nodeIter++) {
-                    const illRendererCommon::RenderQueues::StaticMeshInfo& meshInfo = *nodeIter;
+                    const auto& meshInfo = *nodeIter;
                     
                     //bind VBO
                     {
@@ -778,23 +806,23 @@ void DeferredShadingBackendGl3_3::renderGbuffer(illRendererCommon::RenderQueues&
                             camera.getViewportDimensions().x, camera.getViewportDimensions().y / 2);
 
                         glUniformMatrix4fv(getProgramUniformLocation(prog, "modelViewProjection"), 
-                            1, false, glm::value_ptr(m_occlusionCamera->getModelViewProjection() * meshInfo.m_node->getTransform()));
+                            1, false, glm::value_ptr(m_occlusionCamera->getModelViewProjection() * meshInfo.m_meshInfo.m_node->getTransform()));
 
                         glUniformMatrix3fv(getProgramUniformLocation(prog, "normalMat"), 
-                            1, false, glm::value_ptr(glm::mat3(m_occlusionCamera->getModelView() * meshInfo.m_node->getTransform())));
+                            1, false, glm::value_ptr(glm::mat3(m_occlusionCamera->getModelView() * meshInfo.m_meshInfo.m_node->getTransform())));
 
                         glDrawRangeElements(GL_TRIANGLES, 0, 
-                            mesh->getMeshFrontentData()->getNumTri() * 3, mesh->getMeshFrontentData()->getNumTri() * 3, GL_UNSIGNED_SHORT, (char *)NULL);
+                            mesh->getMeshFrontentData()->getNumInd(), mesh->getMeshFrontentData()->getNumInd(), GL_UNSIGNED_SHORT, (char *)NULL);
                         
                         glViewport(camera.getViewportCorner().x, camera.getViewportCorner().y + camera.getViewportDimensions().y / 2,
                             camera.getViewportDimensions().x, camera.getViewportDimensions().y / 2);
                     }
 
                     glUniformMatrix4fv(getProgramUniformLocation(prog, "modelViewProjection"), 
-                        1, false, glm::value_ptr(camera.getModelViewProjection() * meshInfo.m_node->getTransform()));
+                        1, false, glm::value_ptr(camera.getModelViewProjection() * meshInfo.m_meshInfo.m_node->getTransform()));
 
                     glUniformMatrix3fv(getProgramUniformLocation(prog, "normalMat"), 
-                        1, false, glm::value_ptr(glm::mat3(camera.getModelView() * meshInfo.m_node->getTransform())));
+                        1, false, glm::value_ptr(glm::mat3(camera.getModelView() * meshInfo.m_meshInfo.m_node->getTransform())));
 
 #ifdef VERIFY_RENDER_STATE
                     /**
@@ -869,9 +897,15 @@ void DeferredShadingBackendGl3_3::renderGbuffer(illRendererCommon::RenderQueues&
                         assert(val[0] == GL_TRUE && val[1] == GL_TRUE && val[2] == GL_TRUE && val[3] == GL_TRUE);
                     }
 #endif
+                    {
+                        auto& primitiveGroup = mesh->getMeshFrontentData()->getPrimitiveGroup(meshInfo.m_meshInfo.m_primitiveGroup);
 
-                    glDrawRangeElements(GL_TRIANGLES, 0, 
-                        mesh->getMeshFrontentData()->getNumTri() * 3, mesh->getMeshFrontentData()->getNumTri() * 3, GL_UNSIGNED_SHORT, (char *)NULL);
+                        GLuint startInd = primitiveGroup.m_beginIndex;
+                        GLuint numInd = primitiveGroup.m_numIndices;
+                        GLuint endInd = startInd + numInd;
+
+                        glDrawRangeElements(getPrimitiveType(primitiveGroup.m_type), startInd, endInd, numInd, GL_UNSIGNED_SHORT, (char *)NULL + startInd * sizeof(uint16_t));
+                    }
                 }
             }
 
@@ -1106,7 +1140,7 @@ void DeferredShadingBackendGl3_3::renderLights(illRendererCommon::RenderQueues& 
 
                         glUniform1i(getProgramUniformLocation(prog, "noLighting"), 1);
   
-                        glDrawRangeElements(GL_TRIANGLES, 0, m_box.getMeshFrontentData()->getNumTri() * 3, m_box.getMeshFrontentData()->getNumTri() * 3, GL_UNSIGNED_SHORT, (char *)NULL);
+                        glDrawRangeElements(GL_TRIANGLES, 0, m_box.getMeshFrontentData()->getNumInd(), m_box.getMeshFrontentData()->getNumInd(), GL_UNSIGNED_SHORT, (char *)NULL);
                     }
 
                     switch(lightType) {
@@ -1147,7 +1181,7 @@ void DeferredShadingBackendGl3_3::renderLights(illRendererCommon::RenderQueues& 
 
                     glUniform1i(getProgramUniformLocation(prog, "noLighting"), 0);
 
-                    glDrawRangeElements(GL_TRIANGLES, 0, m_box.getMeshFrontentData()->getNumTri() * 3, m_box.getMeshFrontentData()->getNumTri() * 3, GL_UNSIGNED_SHORT, (char *)NULL);
+                    glDrawRangeElements(GL_TRIANGLES, 0, m_box.getMeshFrontentData()->getNumInd(), m_box.getMeshFrontentData()->getNumInd(), GL_UNSIGNED_SHORT, (char *)NULL);
                     
                     glViewport(camera.getViewportCorner().x, camera.getViewportCorner().y + camera.getViewportDimensions().y / 2,
                         camera.getViewportDimensions().x, camera.getViewportDimensions().y / 2);
@@ -1282,7 +1316,7 @@ void DeferredShadingBackendGl3_3::renderLights(illRendererCommon::RenderQueues& 
                         assert(val[0] == GL_FALSE && val[1] == GL_FALSE && val[2] == GL_FALSE && val[3] == GL_FALSE);
                     }
 #endif
-                    glDrawRangeElements(GL_TRIANGLES, 0, m_box.getMeshFrontentData()->getNumTri() * 3, m_box.getMeshFrontentData()->getNumTri() * 3, GL_UNSIGNED_SHORT, (char *)NULL);
+                    glDrawRangeElements(GL_TRIANGLES, 0, m_box.getMeshFrontentData()->getNumInd(), m_box.getMeshFrontentData()->getNumInd(), GL_UNSIGNED_SHORT, (char *)NULL);
 
                     glEndQuery(/*GL_SAMPLES_PASSED*/GL_ANY_SAMPLES_PASSED);
                 }
@@ -1397,7 +1431,7 @@ void DeferredShadingBackendGl3_3::renderLights(illRendererCommon::RenderQueues& 
                     assert(val[0] == GL_TRUE && val[1] == GL_TRUE && val[2] == GL_TRUE && val[3] == GL_TRUE);
                 }
 #endif
-                glDrawRangeElements(GL_TRIANGLES, 0, m_box.getMeshFrontentData()->getNumTri() * 3, m_box.getMeshFrontentData()->getNumTri() * 3, GL_UNSIGNED_SHORT, (char *)NULL);
+                glDrawRangeElements(GL_TRIANGLES, 0, m_box.getMeshFrontentData()->getNumInd(), m_box.getMeshFrontentData()->getNumInd(), GL_UNSIGNED_SHORT, (char *)NULL);
 
                 glEndConditionalRender();
 
@@ -1738,7 +1772,7 @@ void DeferredShadingBackendGl3_3::renderDebugBounds(illRendererCommon::RenderQue
                 auto& meshNodes = meshIter->second;
 
                 for(auto nodeIter = meshNodes.begin(); nodeIter !=  meshNodes.end(); nodeIter++) {
-                    const illRendererCommon::RenderQueues::StaticMeshInfo& meshInfo = *nodeIter;
+                    const auto& meshInfo = *nodeIter;
 
                     if(m_debugOcclusion) {
                         glMatrixMode(GL_PROJECTION);
@@ -1754,7 +1788,7 @@ void DeferredShadingBackendGl3_3::renderDebugBounds(illRendererCommon::RenderQue
                         glViewport(camera.getViewportCorner().x, camera.getViewportCorner().y,
                             camera.getViewportDimensions().x, camera.getViewportDimensions().y / 2);
                         
-                        renderNodeBounds(nodeIter->m_node);
+                        renderNodeBounds(meshInfo.m_meshInfo.m_node);
                         
                         glMatrixMode(GL_PROJECTION);
                         glLoadIdentity();
@@ -1770,7 +1804,7 @@ void DeferredShadingBackendGl3_3::renderDebugBounds(illRendererCommon::RenderQue
                             camera.getViewportDimensions().x, camera.getViewportDimensions().y / 2);
                     }
 
-                    renderNodeBounds(nodeIter->m_node);
+                    renderNodeBounds(meshInfo.m_meshInfo.m_node);
                 }
             }
         }

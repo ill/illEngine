@@ -43,13 +43,18 @@ struct RenderQueues {
     Solid static meshes to be drawn in the depth only pass for the currently drawn cell.
     Storing their transforms sorted by mesh.
     */
+    struct StaticMeshInfo {
+        const StaticMeshNode * m_node;
+        uint8_t m_primitiveGroup;
+    };
+
     std::unordered_map<const illGraphics::ShaderProgram *, 
         std::unordered_map<const illGraphics::Material *, 
-            std::unordered_map<const illGraphics::Mesh *, std::vector<const StaticMeshNode *>>>> m_depthPassSolidStaticMeshes;
+            std::unordered_map<const illGraphics::Mesh *, std::vector<StaticMeshInfo>>>> m_depthPassSolidStaticMeshes;
     
-    struct StaticMeshInfo {
+    struct StaticMeshLightInfo {
         std::set<LightNode *> m_affectingLights;
-        const StaticMeshNode * m_node;
+        StaticMeshInfo m_meshInfo;
     };
 
     /**
@@ -58,7 +63,7 @@ struct RenderQueues {
     */
     std::unordered_map<const illGraphics::ShaderProgram *, 
         std::unordered_map<const illGraphics::Material *, 
-            std::unordered_map<const illGraphics::Mesh *, std::vector<StaticMeshInfo>>>>
+            std::unordered_map<const illGraphics::Mesh *, std::vector<StaticMeshLightInfo>>>>
         m_solidStaticMeshes;
 
     /**
@@ -67,7 +72,7 @@ struct RenderQueues {
     */
     std::unordered_map<const illGraphics::ShaderProgram *, 
         std::unordered_map<const illGraphics::Material *, 
-            std::unordered_map<const illGraphics::Mesh *, std::vector<StaticMeshInfo>>>> 
+            std::unordered_map<const illGraphics::Mesh *, std::vector<StaticMeshLightInfo>>>> 
         m_unsolidStaticMeshes;
 
     //TODO: figure out the depth sorted stuff, I probably don't need to sort by state here
@@ -77,7 +82,7 @@ struct RenderQueues {
     */
     std::unordered_map<const illGraphics::ShaderProgram *, 
         std::unordered_map<const illGraphics::Material *, 
-            std::unordered_map<const illGraphics::Mesh *, std::vector<StaticMeshInfo>>>> 
+            std::unordered_map<const illGraphics::Mesh *, std::vector<StaticMeshLightInfo>>>> 
         m_unsolidDepthsortedStaticMeshes;
 
     /**

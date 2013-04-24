@@ -11,13 +11,10 @@ namespace illRendererCommon {
 class StaticMeshNode : public GraphicsNode {
 public:
     inline StaticMeshNode(GraphicsScene * scene,
-            illGraphics::MeshId meshId,
-            illGraphics::MaterialId materialId,
             const glm::mat4& transform, const Box<>& boundingVol,
             State initialState = State::IN_SCENE)
         : GraphicsNode(scene, transform, boundingVol, Type::MESH, initialState),
-        m_meshId(meshId),
-        m_materialId(materialId)
+        m_meshId(-1)
     {}
 
     virtual ~StaticMeshNode() {}
@@ -28,46 +25,39 @@ public:
         if(m_mesh.isNull()) {
             m_mesh = meshManager->getResource(m_meshId);
         }
+        
+        for(auto iter = m_primitiveGroups.begin(); iter != m_primitiveGroups.end(); iter++) {
+            PrimitiveGroupInfo& groupInfo = *iter;
 
-        if(m_material.isNull()) {
-            m_material = materialManager->getResource(m_materialId);
+            if(groupInfo.m_visible && groupInfo.m_material.isNull()) {
+                groupInfo.m_material = materialManager->getResource(groupInfo.m_materialId);
+            }
         }
     }
 
     inline void unload() {
         m_mesh.reset();
-    }
 
-    inline illGraphics::MeshId getMeshId() const {
-        return m_meshId;
+        for(auto iter = m_primitiveGroups.begin(); iter != m_primitiveGroups.end(); iter++) {
+            iter->m_material.reset();
+        }
     }
-
-    inline RefCountPtr<illGraphics::Mesh> getMeshReference() const {
-        return m_mesh;
-    }
-
-    inline const illGraphics::Mesh * getMesh() const {
-        return m_mesh.get();
-    }
-
-    inline illGraphics::MaterialId getMaterialId() const {
-        return m_materialId;
-    }
-
-    inline RefCountPtr<illGraphics::Material> getMaterialReference() const {
-        return m_material;
-    }
-
-    inline const illGraphics::Material * getMaterial() const {
-        return m_material.get();
-    }
-
-private:
+        
     illGraphics::MeshId m_meshId;
     RefCountPtr<illGraphics::Mesh> m_mesh;
 
-    illGraphics::MaterialId m_materialId;
-    RefCountPtr<illGraphics::Material> m_material;
+    struct PrimitiveGroupInfo {
+        PrimitiveGroupInfo()
+            : m_materialId(-1),
+            m_visible(false)
+        {}
+
+        illGraphics::MaterialId m_materialId;
+        RefCountPtr<illGraphics::Material> m_material;
+        bool m_visible;
+    };
+
+    std::vector<PrimitiveGroupInfo> m_primitiveGroups;
 };
 
 }

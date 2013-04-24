@@ -351,7 +351,7 @@ void BitmapFont::readChars(illFileSystem::File * file, size_t size, unsigned int
         file->seekAhead(1);
     }
 
-    for(unsigned int ind = 0; ind < m_mesh.getMeshFrontentData()->getNumTri() * 3; ind++) {
+    for(unsigned int ind = 0; ind < m_mesh.getMeshFrontentData()->getNumInd(); ind++) {
         LOG_DEBUG("ind %u %u", ind, indeces[ind]);
     }
 

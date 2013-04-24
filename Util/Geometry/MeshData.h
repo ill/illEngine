@@ -84,6 +84,39 @@ template <typename T = glm::mediump_float, typename I = uint16_t>
 class MeshData {
 public:
     /**
+    A mesh may have 1 or more groups of primitives.
+    When rendering a mesh, a primitive group may correspond to a draw call.
+    The group is a range of indices in the Index Buffer Object.
+    */
+    struct PrimitiveGroup {
+        /**
+        These correspond to the types of primitives that exist in OpenGL and probably Direct3D and other
+        3D rendering APIs.  The most commonly used one will probably be Triangles.
+        */
+        enum class Type {
+            POINTS,
+            LINES,
+            LINE_LOOP,
+            TRIANGLES,
+            TRIANGLE_STRIP,
+            TRIANGLE_FAN
+
+            /*
+            OpenGL ES doesn't even support Quads, and no one really uses them outside of rendering a textured rectangle anyway.
+            For that just render 2 triangles side by side.
+            */
+        };
+
+        Type m_type;
+        uint32_t m_beginIndex;          ///<The beginning index in the Index Buffer Object        
+        /**
+        The number of indices for the group.  
+        If this is triangles for example, this needs to be the number of triangles * 3 for each point
+        */
+        uint32_t m_numIndices;
+    };
+
+    /**
     Vertex positions
     */
     typedef glm::detail::tvec3<T> Position;
@@ -119,34 +152,49 @@ public:
     */
     typedef glm::detail::tvec4<T> Color;
     
+    MeshData()
+        : m_numVert(0),
+        m_data(NULL),
+        m_numIndices(0),
+        m_indices(NULL),
+        m_numPrimitiveGroups(0),
+        m_primitiveGroups(NULL),
+        m_features(0)
+    {}
+
     /**
     Creates the mesh.
-    @param numTri The number of triangles in the mesh.
+    @param numInd The number of vertex indices in the mesh.
     @param numVert The number of vertices in the mesh.  Not necessairly numTri multiplied by 3 since there can be shared vertices.
+    @param numGroups The number of primitive groups in the mesh.
     @param features Which features are stored in the verteces.
     By default it creates a mesh that stores positions, normals, tangents, and texture coordinates.
     @param allocate Whether or not the data for the mesh should be allocated on the CPU side.
     */
-    MeshData(uint32_t numTri, uint32_t numVert, FeaturesMask features = MF_POSITION | MF_NORMAL | MF_TANGENT | MF_TEX_COORD, bool allocate = true)
+    MeshData(uint32_t numInd, uint32_t numVert, uint8_t numGroups, FeaturesMask features = MF_POSITION | MF_NORMAL | MF_TANGENT | MF_TEX_COORD, bool allocate = true)
         : m_numVert(numVert),
         m_data(NULL),
-        m_numTri(numTri),
+        m_numIndices(numInd),
         m_indices(NULL),
+        m_numPrimitiveGroups(numGroups),
+        m_primitiveGroups(NULL),
         m_features(features)
     {
         initialize(allocate);
     }
 
     /**
-    Creates the mesh for a box.
+    Creates the triangle mesh for a box.
 
     TODO: at the moment creating the positions is the only thing supported
     */
     MeshData(const Box<T>& box, FeaturesMask features, bool allocate = true)
         : m_numVert(8),
         m_data(NULL),
-        m_numTri(12),
+        m_numIndices(36),
         m_indices(NULL),
+        m_numPrimitiveGroups(1),
+        m_primitiveGroups(NULL),
         m_features(features)
     {
         initialize(allocate);
@@ -225,10 +273,15 @@ public:
         m_indices[33] = 0;
         m_indices[34] = 5;
         m_indices[35] = 4;
+
+        m_primitiveGroups[0].m_type = PrimitiveGroup::Type::TRIANGLES;
+        m_primitiveGroups[0].m_beginIndex = 0;
+        m_primitiveGroups[0].m_numIndices = 36;
     }
 
     ~MeshData() {
         free();
+        delete[] m_primitiveGroups;
     }
 
     /**
@@ -238,7 +291,7 @@ public:
         free();
 
         m_data = new uint8_t[m_numVert * m_vertexSize];
-        m_indices = new I[m_numTri * 3];
+        m_indices = new I[m_numIndices];
     }
 
     /**
@@ -248,9 +301,9 @@ public:
     */
     inline void free() {
         delete[] m_data;
-        delete[] m_indices;
-
         m_data = NULL;
+
+        delete[] m_indices;
         m_indices = NULL;
     }
 
@@ -389,6 +442,8 @@ public:
     Returns the size of faces.
     This is just the sice you get from getVertexSize() multiplied by 3.
     Use this as a parameter for any functions that take stride of data between face.
+
+    TODO: make this take a primitive group
     */
     inline size_t getFaceSize() const {
         return m_vertexSize * 3;
@@ -401,6 +456,8 @@ public:
 
     @param faceInd The triangle face index.
     @param vertInd The face vertex index, a value from 0 to 2.
+
+    TODO: make this take a primitive group
     */
     inline Position& getPosition(uint32_t faceInd, uint32_t vertInd) {
         assert(hasPositions());
@@ -417,6 +474,8 @@ public:
     This is invalid if the data has been freed.
 
     @param vertInd The face vertex index in the vertex array.
+
+    TODO: make this take a primitive group
     */
     inline Position& getPosition(uint32_t vertInd) {
         assert(hasPositions());
@@ -433,6 +492,8 @@ public:
 
     @param faceInd The triangle face index.
     @param vertInd The face vertex index, a value from 0 to 2.
+
+    TODO: make this take a primitive group
     */
     inline Normal& getNormal(uint32_t faceInd, uint32_t vertInd) {
         assert(hasNormals());
@@ -449,6 +510,8 @@ public:
     This is invalid if the data has been freed.
 
     @param vertInd The face vertex index in the vertex array.
+
+    TODO: make this take a primitive group
     */
     inline Normal& getNormal(uint32_t vertInd) {
         assert(hasNormals());
@@ -465,6 +528,8 @@ public:
 
     @param faceInd The triangle face index.
     @param vertInd The face vertex index, a value from 0 to 2.
+
+    TODO: make this take a primitive group
     */
     inline TangentData& getTangent(uint32_t faceInd, uint32_t vertInd) {
         assert(hasTangents());
@@ -481,6 +546,8 @@ public:
     This is invalid if the data has been freed.
 
     @param vertInd The face vertex index in the vertex array.
+
+    TODO: make this take a primitive group
     */
     inline TangentData& getTangent(uint32_t vertInd) {
         assert(hasTangents());
@@ -497,6 +564,8 @@ public:
 
     @param faceInd The triangle face index.
     @param vertInd The face vertex index, a value from 0 to 2.
+
+    TODO: make this take a primitive group
     */
     inline BlendData& getBlendData(uint32_t faceInd, uint32_t vertInd) {
         assert(hasBlendData());
@@ -513,6 +582,8 @@ public:
     This is invalid if the data has been freed.
 
     @param vertInd The face vertex index in the vertex array.
+
+    TODO: make this take a primitive group
     */
     inline BlendData& getBlendData(uint32_t vertInd) {
         assert(hasBlendData());
@@ -529,6 +600,8 @@ public:
 
     @param faceInd The triangle face index.
     @param vertInd The face vertex index, a value from 0 to 2.
+
+    TODO: make this take a primitive group
     */
     inline TexCoord& getTexCoord(uint32_t faceInd, uint32_t vertInd) {
         assert(hasTexCoords());
@@ -545,6 +618,8 @@ public:
     This is invalid if the data has been freed.
 
     @param vertInd The face vertex index in the vertex array.
+
+    TODO: make this take a primitive group
     */
     inline TexCoord& getTexCoord(uint32_t vertInd) {
         assert(hasTexCoords());
@@ -561,6 +636,8 @@ public:
 
     @param faceInd The triangle face index.
     @param vertInd The face vertex index, a value from 0 to 2.
+
+    TODO: make this take a primitive group
     */
     inline Color& getColor(uint32_t faceInd, uint32_t vertInd) {
         assert(hasColors());
@@ -577,6 +654,8 @@ public:
     This is invalid if the data has been freed.
 
     @param vertInd The face vertex index in the vertex array.
+
+    TODO: make this take a primitive group
     */
     inline Color& getColor(uint32_t vertInd) {
         assert(hasColors());
@@ -653,9 +732,9 @@ public:
 
     @param group The group index.
     */
-    /*inline TriangleGroup& getTriangleGroup(uint8_t groupInd) const {
-        return m_triangleGroups[groupInd];
-    }*/
+    inline PrimitiveGroup& getPrimitiveGroup(uint8_t groupInd) const {
+        return m_primitiveGroups[groupInd];
+    }
 
     /**
     Returns how many verteces are stored in the mesh.
@@ -665,22 +744,24 @@ public:
     }
 
     /**
-    Returns how many triangles are stored in the mesh.
+    Returns how many indices are stored in the mesh.
     */
-    inline uint32_t getNumTri() const {
-        return m_numTri;
+    inline uint32_t getNumInd() const {
+        return m_numIndices;
     }
 
     /**
-    Returns how many triangle groups are stored in the mesh.
+    Returns how many primitive groups are stored in the mesh.
     */
-    /*inline uint8_t getNumGroups() const {
-        return m_numGroups;
-    }*/
+    inline uint8_t getNumPrimitiveGroups() const {
+        return m_numPrimitiveGroups;
+    }
 
 private:
     void initialize(bool allocate) {
         free();
+
+        m_primitiveGroups = new PrimitiveGroup[m_numPrimitiveGroups];
 
         m_positionOffset = 0;
 
@@ -726,11 +807,11 @@ private:
     uint32_t m_numVert;
     uint8_t * m_data;
 
-    uint32_t m_numTri;
+    uint32_t m_numIndices;
     I * m_indices;
 
-    //uint8_t m_numGroups;
-    //TriangleGroup * m_triangleGroups;
+    uint8_t m_numPrimitiveGroups;
+    PrimitiveGroup * m_primitiveGroups;
 
     uint32_t m_positionOffset;
     uint32_t m_normalOffset;

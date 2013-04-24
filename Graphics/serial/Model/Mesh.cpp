@@ -46,7 +46,7 @@ void Mesh::reload(GraphicsBackend * backend) {
 
     IllmeshLoader meshLoader(m_loadArgs.m_path.c_str());
 
-    setFrontentDataInternal(new MeshData<>(meshLoader.m_numInd / 3, meshLoader.m_numVert, meshLoader.m_features));
+    setFrontentDataInternal(new MeshData<>(meshLoader.m_numInd, meshLoader.m_numVert, meshLoader.m_numGroups, meshLoader.m_features));
     
     meshLoader.buildMesh(*getMeshFrontentData());
     frontendBackendTransferInternal(backend, true);
