@@ -16,6 +16,8 @@ void StaticMeshNode::render(RenderQueues& renderQueues) {
         switch(group.m_material->getLoadArgs().m_blendMode) {
         case illGraphics::MaterialLoadArgs::BlendMode::NONE: {
                 {
+                    MeshData<>::PrimitiveGroup& test = m_mesh->getMeshFrontentData()->getPrimitiveGroup(groupInd);
+
                     auto& list = renderQueues.m_depthPassSolidStaticMeshes[group.m_material->getDepthPassProgram()][group.m_material.get()][m_mesh.get()];
 
                     list.emplace_back();

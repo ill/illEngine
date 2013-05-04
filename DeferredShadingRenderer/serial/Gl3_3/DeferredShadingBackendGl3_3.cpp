@@ -25,7 +25,7 @@ inline GLenum getPrimitiveType(MeshData<>::PrimitiveGroup::Type type) {
     case MeshData<>::PrimitiveGroup::Type::TRIANGLE_STRIP:
         return GL_TRIANGLE_STRIP;
     default:
-        LOG_FATAL_ERROR("Unknown Primitive Type");
+        LOG_FATAL_ERROR("Unknown Primitive Type %u", type);
         return 0;
     }
 }
@@ -140,10 +140,22 @@ void DeferredShadingBackendGl3_3::initialize(const glm::uvec2 screenResolution, 
             shaders.push_back(lightVertexShader);
 
             illGraphics::Shader * fragShader = new illGraphics::Shader();
-            fragShader->loadInternal(m_graphicsBackend, "shaders/deferredPhongLighting.frag", GL_FRAGMENT_SHADER, "#define POINT_LIGHT");
+            fragShader->loadInternal(m_graphicsBackend, "shaders/deferredPhongLighting.frag", GL_FRAGMENT_SHADER, "#define POINT_LIGHT\n#define SPECULAR");
 
             shaders.push_back(RefCountPtr<illGraphics::Shader>(fragShader));
             m_deferredPointLightProgram.loadInternal(m_internalShaderProgramLoader, shaders);
+        }
+
+        //point light no specular
+        {
+            std::vector<RefCountPtr<illGraphics::Shader> > shaders;
+            shaders.push_back(lightVertexShader);
+
+            illGraphics::Shader * fragShader = new illGraphics::Shader();
+            fragShader->loadInternal(m_graphicsBackend, "shaders/deferredPhongLighting.frag", GL_FRAGMENT_SHADER, "#define POINT_LIGHT");
+
+            shaders.push_back(RefCountPtr<illGraphics::Shader>(fragShader));
+            m_deferredPointLightNoSpecProgram.loadInternal(m_internalShaderProgramLoader, shaders);
         }
 
         //spot light
@@ -152,10 +164,22 @@ void DeferredShadingBackendGl3_3::initialize(const glm::uvec2 screenResolution, 
             shaders.push_back(lightVertexShader);
 
             illGraphics::Shader * fragShader = new illGraphics::Shader();
-            fragShader->loadInternal(m_graphicsBackend, "shaders/deferredPhongLighting.frag", GL_FRAGMENT_SHADER, "#define SPOT_LIGHT");
+            fragShader->loadInternal(m_graphicsBackend, "shaders/deferredPhongLighting.frag", GL_FRAGMENT_SHADER, "#define SPOT_LIGHT\n#define SPECULAR");
 
             shaders.push_back(RefCountPtr<illGraphics::Shader>(fragShader));
             m_deferredSpotLightProgram.loadInternal(m_internalShaderProgramLoader, shaders);
+        }
+
+        //spot light no specular 
+        {
+            std::vector<RefCountPtr<illGraphics::Shader> > shaders;
+            shaders.push_back(lightVertexShader);
+
+            illGraphics::Shader * fragShader = new illGraphics::Shader();
+            fragShader->loadInternal(m_graphicsBackend, "shaders/deferredPhongLighting.frag", GL_FRAGMENT_SHADER, "#define SPOT_LIGHT");
+
+            shaders.push_back(RefCountPtr<illGraphics::Shader>(fragShader));
+            m_deferredSpotLightNoSpecProgram.loadInternal(m_internalShaderProgramLoader, shaders);
         }
 
         //direction light
@@ -606,7 +630,7 @@ void DeferredShadingBackendGl3_3::depthPass(illRendererCommon::RenderQueues& ren
                         GLuint startInd = primitiveGroup.m_beginIndex;
                         GLuint numInd = primitiveGroup.m_numIndices;
                         GLuint endInd = startInd + numInd;
-
+                        
                         glDrawRangeElements(getPrimitiveType(primitiveGroup.m_type), startInd, endInd, numInd, GL_UNSIGNED_SHORT, (char *)NULL + startInd * sizeof(uint16_t));
                     }
                                         
@@ -904,6 +928,8 @@ void DeferredShadingBackendGl3_3::renderGbuffer(illRendererCommon::RenderQueues&
                         GLuint numInd = primitiveGroup.m_numIndices;
                         GLuint endInd = startInd + numInd;
 
+                        LOG_DEBUG("Primitive Group %u", meshInfo.m_meshInfo.m_primitiveGroup);
+
                         glDrawRangeElements(getPrimitiveType(primitiveGroup.m_type), startInd, endInd, numInd, GL_UNSIGNED_SHORT, (char *)NULL + startInd * sizeof(uint16_t));
                     }
                 }
@@ -991,15 +1017,29 @@ void DeferredShadingBackendGl3_3::renderLights(illRendererCommon::RenderQueues& 
         GLuint prog;
         illGraphics::Mesh * lightVolume;
 
+        bool hasSpecular = true;
+
         switch(lightType) {
         case illGraphics::LightBase::Type::POINT:
             prog = getProgram(m_deferredPointLightProgram);
             lightVolume = &m_pointLightVolume;
             break;
 
+        case illGraphics::LightBase::Type::POINT_NOSPECULAR:
+            prog = getProgram(m_deferredPointLightNoSpecProgram);
+            lightVolume = &m_pointLightVolume;
+            hasSpecular = false;
+            break;
+
         case illGraphics::LightBase::Type::SPOT:
             prog = getProgram(m_deferredSpotLightProgram);
             lightVolume = &m_spotLightVolume;
+            break;
+
+        case illGraphics::LightBase::Type::SPOT_NOSPECULAR:
+            prog = getProgram(m_deferredSpotLightNoSpecProgram);
+            lightVolume = &m_spotLightVolume;
+            hasSpecular = false;
             break;
 
         /*case illGraphics::LightBase::Type::DIRECTIONAL: TODO
@@ -1015,7 +1055,10 @@ void DeferredShadingBackendGl3_3::renderLights(illRendererCommon::RenderQueues& 
         glUniform1i(getProgramUniformLocation(prog, "depthBuffer"), 0);
         glUniform1i(getProgramUniformLocation(prog, "normalBuffer"), 1);
         glUniform1i(getProgramUniformLocation(prog, "diffuseBuffer"), 2);
-        glUniform1i(getProgramUniformLocation(prog, "specularBuffer"), 3);
+
+        if(hasSpecular) {
+            glUniform1i(getProgramUniformLocation(prog, "specularBuffer"), 3);
+        }
 
         GLint posAttrib = getProgramAttribLocation(prog, "positionIn");
         glEnableVertexAttribArray(posAttrib);
@@ -1031,6 +1074,7 @@ void DeferredShadingBackendGl3_3::renderLights(illRendererCommon::RenderQueues& 
 
             switch(lightType) {
             case illGraphics::LightBase::Type::POINT:
+            case illGraphics::LightBase::Type::POINT_NOSPECULAR:
                 glUniform1f(getProgramUniformLocation(prog, "attenuationStart"), 
                     static_cast<illGraphics::PointLight*>(light)->m_attenuationStart);
 
@@ -1056,6 +1100,7 @@ void DeferredShadingBackendGl3_3::renderLights(illRendererCommon::RenderQueues& 
                 break;
 
             case illGraphics::LightBase::Type::SPOT:
+            case illGraphics::LightBase::Type::SPOT_NOSPECULAR:
                 glUniform1f(getProgramUniformLocation(prog, "attenuationStart"), 
                     static_cast<illGraphics::SpotLight*>(light)->m_attenuationStart);
 
@@ -1094,6 +1139,11 @@ void DeferredShadingBackendGl3_3::renderLights(illRendererCommon::RenderQueues& 
             for(auto nodeIter = lightNodes.begin(); nodeIter != lightNodes.end(); nodeIter++) {
                 auto node = *nodeIter;
                 
+                if(lightType == illGraphics::LightBase::Type::SPOT || lightType == illGraphics::LightBase::Type::SPOT_NOSPECULAR) {
+                    glUniform3fv(getProgramUniformLocation(prog, "lightDirection"), 1,
+                        glm::value_ptr(glm::mat3(camera.getModelView() * node->getTransform()) * glm::vec3(0.0f, 0.0f, -1.0f)));
+                }
+
                 if(m_debugOcclusion) {
                     planes[0] = m_occlusionCamera->getFarVal() / (m_occlusionCamera->getFarVal() - m_occlusionCamera->getNearVal());
                     planes[1] = (m_occlusionCamera->getFarVal() * m_occlusionCamera->getNearVal()) / (m_occlusionCamera->getFarVal() - m_occlusionCamera->getNearVal()); //normally this is negated in a left handed coordinate system
@@ -1111,7 +1161,9 @@ void DeferredShadingBackendGl3_3::renderLights(illRendererCommon::RenderQueues& 
                 
                     switch(lightType) {
                     case illGraphics::LightBase::Type::POINT:
+                    case illGraphics::LightBase::Type::POINT_NOSPECULAR:
                     case illGraphics::LightBase::Type::SPOT:
+                    case illGraphics::LightBase::Type::SPOT_NOSPECULAR:
                         glUniform3fv(getProgramUniformLocation(prog, "lightPosition"), 
                             1, glm::value_ptr(getTransformPosition(m_occlusionCamera->getModelView() * node->getTransform())));
                         
@@ -1145,7 +1197,9 @@ void DeferredShadingBackendGl3_3::renderLights(illRendererCommon::RenderQueues& 
 
                     switch(lightType) {
                     case illGraphics::LightBase::Type::POINT:
+                    case illGraphics::LightBase::Type::POINT_NOSPECULAR:
                     case illGraphics::LightBase::Type::SPOT:
+                    case illGraphics::LightBase::Type::SPOT_NOSPECULAR:
                         /*
                         if light volume intersects far plane, back face culling, otherwise front face culling
                         assuming the light center and attenuation end as sphere radius will suffice as a good test, 
@@ -1200,7 +1254,9 @@ void DeferredShadingBackendGl3_3::renderLights(illRendererCommon::RenderQueues& 
                 
                 switch(lightType) {
                 case illGraphics::LightBase::Type::POINT:
+                case illGraphics::LightBase::Type::POINT_NOSPECULAR:
                 case illGraphics::LightBase::Type::SPOT:
+                case illGraphics::LightBase::Type::SPOT_NOSPECULAR:
                     glUniform3fv(getProgramUniformLocation(prog, "lightPosition"), 
                         1, glm::value_ptr(getTransformPosition(camera.getModelView() * node->getTransform())));
                         
@@ -1323,7 +1379,9 @@ void DeferredShadingBackendGl3_3::renderLights(illRendererCommon::RenderQueues& 
 
                 switch(lightType) {
                 case illGraphics::LightBase::Type::POINT:
+                case illGraphics::LightBase::Type::POINT_NOSPECULAR:
                 case illGraphics::LightBase::Type::SPOT:
+                case illGraphics::LightBase::Type::SPOT_NOSPECULAR:
                     /*
                     if light volume intersects far plane, back face culling, otherwise front face culling
                     assuming the light center and attenuation end as sphere radius will suffice as a good test, 
@@ -1623,8 +1681,61 @@ void renderDebugPointLight(const glm::vec3& position, const illGraphics::PointLi
     glPopMatrix();
 }
 
-void renderDebugSpotLight(const glm::vec3& position, const illGraphics::SpotLight& light) {
+void renderDebugSpotLight(const glm::vec3& position, glm::vec3& direction, const illGraphics::SpotLight& light) {
     renderDebugLightPos(position);
+    
+    glm::vec3 endPos = direction * light.m_attenuationEnd;
+    glm::mediump_float coneDir = glm::degrees(glm::acos(light.m_coneEnd));
+    
+    glm::vec3 pt0a = glm::mat3(glm::rotate(coneDir, glm::vec3(1.0f, 0.0f, 0.0f))) * endPos + position;
+    glm::vec3 pt0b = glm::mat3(glm::rotate(-coneDir, glm::vec3(1.0f, 0.0f, 0.0f))) * endPos + position;
+
+    glm::vec3 pt1a = glm::mat3(glm::rotate(coneDir, glm::vec3(0.0f, 1.0f, 0.0f))) * endPos + position;
+    glm::vec3 pt1b = glm::mat3(glm::rotate(-coneDir, glm::vec3(0.0f, 1.0f, 0.0f))) * endPos + position;
+
+    glm::vec3 pt2a = glm::mat3(glm::rotate(coneDir, glm::vec3(0.0f, 0.0f, 1.0f))) * endPos + position;
+    glm::vec3 pt2b = glm::mat3(glm::rotate(-coneDir, glm::vec3(0.0f, 0.0f, 1.0f))) * endPos + position;
+
+    endPos += position;
+
+    glBegin(GL_LINES);
+
+    glColor4f(light.m_color.x, light.m_color.y, light.m_color.z, 1.0f);
+    glVertex3fv(glm::value_ptr(position));
+    glColor4f(light.m_color.x, light.m_color.y, light.m_color.z, 0.1f);
+    glVertex3fv(glm::value_ptr(endPos));
+
+    glColor4f(light.m_color.x, light.m_color.y, light.m_color.z, 0.5f);
+    glVertex3fv(glm::value_ptr(position));
+    glColor4f(light.m_color.x, light.m_color.y, light.m_color.z, 0.1f);
+    glVertex3fv(glm::value_ptr(pt0a));
+
+    glColor4f(light.m_color.x, light.m_color.y, light.m_color.z, 0.5f);
+    glVertex3fv(glm::value_ptr(position));
+    glColor4f(light.m_color.x, light.m_color.y, light.m_color.z, 0.1f);
+    glVertex3fv(glm::value_ptr(pt0b));
+
+    glColor4f(light.m_color.x, light.m_color.y, light.m_color.z, 0.5f);
+    glVertex3fv(glm::value_ptr(position));
+    glColor4f(light.m_color.x, light.m_color.y, light.m_color.z, 0.1f);
+    glVertex3fv(glm::value_ptr(pt1a));
+
+    glColor4f(light.m_color.x, light.m_color.y, light.m_color.z, 0.5f);
+    glVertex3fv(glm::value_ptr(position));
+    glColor4f(light.m_color.x, light.m_color.y, light.m_color.z, 0.1f);
+    glVertex3fv(glm::value_ptr(pt1b));
+
+    glColor4f(light.m_color.x, light.m_color.y, light.m_color.z, 0.5f);
+    glVertex3fv(glm::value_ptr(position));
+    glColor4f(light.m_color.x, light.m_color.y, light.m_color.z, 0.1f);
+    glVertex3fv(glm::value_ptr(pt2a));
+
+    glColor4f(light.m_color.x, light.m_color.y, light.m_color.z, 0.5f);
+    glVertex3fv(glm::value_ptr(position));
+    glColor4f(light.m_color.x, light.m_color.y, light.m_color.z, 0.1f);
+    glVertex3fv(glm::value_ptr(pt2b));
+
+    glEnd();
 }
 
 void DeferredShadingBackendGl3_3::renderDebugLights(illRendererCommon::RenderQueues& renderQueues, const illGraphics::Camera& camera) {
@@ -1666,11 +1777,13 @@ void DeferredShadingBackendGl3_3::renderDebugLights(illRendererCommon::RenderQue
 
                 switch(lightType) {
                 case illGraphics::LightBase::Type::POINT:
+                case illGraphics::LightBase::Type::POINT_NOSPECULAR:
                     renderDebugPointLight(getTransformPosition(node->getTransform()), *static_cast<illGraphics::PointLight *>(light));
                     break;
 
                 case illGraphics::LightBase::Type::SPOT:
-                    renderDebugPointLight(getTransformPosition(node->getTransform()), *static_cast<illGraphics::SpotLight *>(light));
+                case illGraphics::LightBase::Type::SPOT_NOSPECULAR:
+                    renderDebugSpotLight(getTransformPosition(node->getTransform()), glm::mat3(node->getTransform()) * glm::vec3(0.0f, 0.0f, -1.0f), *static_cast<illGraphics::SpotLight *>(light));
                     break;
                 }
             }
@@ -1788,7 +1901,7 @@ void DeferredShadingBackendGl3_3::renderDebugBounds(illRendererCommon::RenderQue
                         glViewport(camera.getViewportCorner().x, camera.getViewportCorner().y,
                             camera.getViewportDimensions().x, camera.getViewportDimensions().y / 2);
                         
-                        renderNodeBounds(meshInfo.m_meshInfo.m_node);
+                        //renderNodeBounds(meshInfo.m_meshInfo.m_node);
                         
                         glMatrixMode(GL_PROJECTION);
                         glLoadIdentity();
@@ -1804,7 +1917,7 @@ void DeferredShadingBackendGl3_3::renderDebugBounds(illRendererCommon::RenderQue
                             camera.getViewportDimensions().x, camera.getViewportDimensions().y / 2);
                     }
 
-                    renderNodeBounds(meshInfo.m_meshInfo.m_node);
+                    //renderNodeBounds(meshInfo.m_meshInfo.m_node);
                 }
             }
         }

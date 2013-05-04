@@ -11,8 +11,11 @@ public:
     enum class Type {
         INVALID,
         POINT,
+        POINT_NOSPECULAR,
         SPOT,
-        DIRECTIONAL
+        SPOT_NOSPECULAR,
+        DIRECTIONAL,
+        DIRECTIONAL_NOSPECULAR
     };
 
     glm::vec3 m_color;
@@ -43,13 +46,13 @@ struct PointLight : public LightBase {
         m_type = Type::POINT;
     }
 
-    PointLight(const glm::vec3& color, glm::mediump_float intensity, 
+    PointLight(const glm::vec3& color, glm::mediump_float intensity, bool specular,
         glm::mediump_float attenuationStart, glm::mediump_float attenuationEnd) 
         : LightBase(color, intensity),
         m_attenuationStart(attenuationStart),
         m_attenuationEnd(attenuationEnd)
     {
-        m_type = Type::POINT;
+        m_type = specular ? Type::POINT : Type::POINT_NOSPECULAR;
     }
 
     glm::mediump_float m_attenuationStart;
@@ -63,14 +66,14 @@ struct SpotLight : public PointLight {
         m_type = Type::SPOT;
     }
 
-    SpotLight(const glm::vec3& color, glm::mediump_float intensity,
+    SpotLight(const glm::vec3& color, glm::mediump_float intensity, bool specular,
         glm::mediump_float attenuationStart, glm::mediump_float attenuationEnd,
         glm::mediump_float coneStart, glm::mediump_float coneEnd)
-        : PointLight(color, intensity, attenuationStart, attenuationEnd),
+        : PointLight(color, intensity, false, attenuationStart, attenuationEnd),
         m_coneStart(coneStart),
         m_coneEnd(coneEnd)
     {
-        m_type = Type::SPOT;
+        m_type = specular ? Type::SPOT : Type::SPOT_NOSPECULAR;
     }
 
     glm::mediump_float m_coneStart;
@@ -84,11 +87,11 @@ struct DirectionLight : public LightBase {
         m_type = Type::DIRECTIONAL;
     }
 
-    DirectionLight(const glm::vec3& color, glm::mediump_float intensity, const glm::vec3 direction)
+    DirectionLight(const glm::vec3& color, glm::mediump_float intensity, bool specular, const glm::vec3 direction)
         : LightBase(color, intensity),
         m_direction(direction)
     {
-        m_type = Type::DIRECTIONAL;
+        m_type = specular ? Type::DIRECTIONAL : Type::DIRECTIONAL_NOSPECULAR;
     }
 
     glm::vec3 m_direction;

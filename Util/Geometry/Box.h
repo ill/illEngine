@@ -47,7 +47,7 @@ struct Box {
         m_min = sphere.m_center - sphere.m_radius;
         m_max = sphere.m_center + sphere.m_radius;
     }
-
+    
     /**
     Fixes the box so all coordinate components of m_min are less than m_max
 
