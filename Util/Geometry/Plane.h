@@ -14,7 +14,7 @@ Useful in view frustum culling and collision detection when not relying on a phy
 template <typename T = glm::mediump_float>
 struct Plane {
     inline Plane() {}
-
+    
     /**
     Copy constructor
     */
@@ -33,13 +33,23 @@ struct Plane {
         m_distance(distance)
     {}
 
+    /**
+    Constructs a plane from just a 4 element vector.
+    @param vec A 4 element vector.  The x,y,z portion is the normal
+        and the w portion is the distance
+    */
+    inline Plane(const glm::detail::tvec4<T> vec)
+        : m_normal(vec),
+        m_distance(vec.w)
+    {}
+
     inline ~Plane() {}
 
     /**
     Normalizes the plane.
     Just don't let the normal vector have a length of zero.
     */
-    inline Plane normalize() {
+    inline Plane normalize() const {
         Plane res;
 
         T denom = 1 / glm::length(m_normal);
@@ -51,11 +61,35 @@ struct Plane {
     }
 
     /**
+    Transforms a plane.
+    The transform passed in should be the inverse transpose
+    or be an orthogonal matrix.
+
+    http://stackoverflow.com/questions/7685495/transforming-a-3d-plane-by-4x4-matrix
+    */
+    inline Plane transform(glm::detail::tmat4x4<T> xform) const {
+        Plane res;
+
+        //transforming the normal is simple
+        res.m_normal = glm::detail::tvec3<T>(xform * glm::detail::tvec4<T>(m_normal, (T)0));
+        
+        //first find a point on the plane and transform that
+        //glm::detail::tvec3<T> point = glm::detail::tvec3<T>(xform * glm::detail::tvec4<T>(m_normal * m_distance, (T)1));
+
+        //then get the distance again
+        //res.m_distance = -glm::dot(point, res.m_normal);
+
+        //and this is based on PhysX source code.  Seems a bit more simple and efficient.
+        //This doesn't seem to work...
+        res.m_distance = m_distance - glm::dot(getTransformPosition(xform), res.m_normal);
+
+        return res;
+    }
+
+    /**
     Returns the distance from from the plane to a point.
     */
     inline T distance(const glm::detail::tvec3<T>& point) const {
-        T test = glm::dot(m_normal, point) + m_distance;
-
         return glm::dot(m_normal, point) + m_distance;
     }
 

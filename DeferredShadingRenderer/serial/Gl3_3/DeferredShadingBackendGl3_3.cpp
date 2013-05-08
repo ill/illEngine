@@ -182,17 +182,53 @@ void DeferredShadingBackendGl3_3::initialize(const glm::uvec2 screenResolution, 
             m_deferredSpotLightNoSpecProgram.loadInternal(m_internalShaderProgramLoader, shaders);
         }
 
-        //direction light
-        /*{
+        //point volume light
+        {
             std::vector<RefCountPtr<illGraphics::Shader> > shaders;
             shaders.push_back(lightVertexShader);
 
             illGraphics::Shader * fragShader = new illGraphics::Shader();
-            fragShader->loadInternal(m_graphicsBackend, "shaders/deferredPhongLighting.frag", GL_FRAGMENT_SHADER, "#define DIRECTIONAL_LIGHT");
+            fragShader->loadInternal(m_graphicsBackend, "shaders/deferredPhongLighting.frag", GL_FRAGMENT_SHADER, "#define POINT_LIGHT\n#define VOLUME_LIGHT\n#define SPECULAR");
 
             shaders.push_back(RefCountPtr<illGraphics::Shader>(fragShader));
-            m_deferredDirectionLightProgram.loadInternal(m_internalShaderProgramLoader, shaders);
-        }*/
+            m_deferredDirectionVolumeLightProgram.loadInternal(m_internalShaderProgramLoader, shaders);
+        }
+
+        //point volume light no specular
+        {
+            std::vector<RefCountPtr<illGraphics::Shader> > shaders;
+            shaders.push_back(lightVertexShader);
+
+            illGraphics::Shader * fragShader = new illGraphics::Shader();
+            fragShader->loadInternal(m_graphicsBackend, "shaders/deferredPhongLighting.frag", GL_FRAGMENT_SHADER, "#define POINT_LIGHT\n#define VOLUME_LIGHT");
+
+            shaders.push_back(RefCountPtr<illGraphics::Shader>(fragShader));
+            m_deferredDirectionVolumeLightNoSpecProgram.loadInternal(m_internalShaderProgramLoader, shaders);
+        }
+
+        //direction volume light
+        {
+            std::vector<RefCountPtr<illGraphics::Shader> > shaders;
+            shaders.push_back(lightVertexShader);
+
+            illGraphics::Shader * fragShader = new illGraphics::Shader();
+            fragShader->loadInternal(m_graphicsBackend, "shaders/deferredPhongLighting.frag", GL_FRAGMENT_SHADER, "#define DIRECTIONAL_LIGHT\n#define VOLUME_LIGHT\n#define SPECULAR");
+
+            shaders.push_back(RefCountPtr<illGraphics::Shader>(fragShader));
+            m_deferredDirectionVolumeLightProgram.loadInternal(m_internalShaderProgramLoader, shaders);
+        }
+
+        //direction volume light no specular
+        {
+            std::vector<RefCountPtr<illGraphics::Shader> > shaders;
+            shaders.push_back(lightVertexShader);
+
+            illGraphics::Shader * fragShader = new illGraphics::Shader();
+            fragShader->loadInternal(m_graphicsBackend, "shaders/deferredPhongLighting.frag", GL_FRAGMENT_SHADER, "#define DIRECTIONAL_LIGHT\n#define VOLUME_LIGHT");
+
+            shaders.push_back(RefCountPtr<illGraphics::Shader>(fragShader));
+            m_deferredDirectionVolumeLightNoSpecProgram.loadInternal(m_internalShaderProgramLoader, shaders);
+        }
     }
     
     m_volumeRenderProgram = shaderProgramManager->getResource(illGraphics::ShaderProgram::SHPRG_POSITIONS | illGraphics::ShaderProgram::SHPRG_FORWARD);
@@ -1042,10 +1078,27 @@ void DeferredShadingBackendGl3_3::renderLights(illRendererCommon::RenderQueues& 
             hasSpecular = false;
             break;
 
-        /*case illGraphics::LightBase::Type::DIRECTIONAL: TODO
-            prog = getProgram(m_deferredDirectionalLightProgram);
+        case illGraphics::LightBase::Type::POINT_VOLUME:
+            prog = getProgram(m_deferredPointVolumeLightProgram);
             lightVolume = &m_quad;
-            break;*/
+            break;
+
+        case illGraphics::LightBase::Type::POINT_VOLUME_NOSPECULAR:
+            prog = getProgram(m_deferredPointVolumeLightNoSpecProgram);
+            lightVolume = &m_quad;
+            hasSpecular = false;
+            break;
+
+        case illGraphics::LightBase::Type::DIRECTIONAL_VOLUME:
+            prog = getProgram(m_deferredDirectionVolumeLightProgram);
+            lightVolume = &m_quad;
+            break;
+
+        case illGraphics::LightBase::Type::DIRECTIONAL_VOLUME_NOSPECULAR:
+            prog = getProgram(m_deferredDirectionVolumeLightNoSpecProgram);
+            lightVolume = &m_quad;
+            hasSpecular = false;
+            break;
         }
 
         glUseProgram(prog);
@@ -1132,8 +1185,49 @@ void DeferredShadingBackendGl3_3::renderLights(illRendererCommon::RenderQueues& 
 
                 break;
 
-            /*case illGraphics::LightBase::Type::DIRECTIONAL: TODO
-                break;*/
+            case illGraphics::LightBase::Type::POINT_VOLUME:
+            case illGraphics::LightBase::Type::POINT_VOLUME_NOSPECULAR:
+            case illGraphics::LightBase::Type::DIRECTIONAL_VOLUME:
+            case illGraphics::LightBase::Type::DIRECTIONAL_VOLUME_NOSPECULAR:
+
+                if(lightType == illGraphics::LightBase::Type::POINT_VOLUME || lightType == illGraphics::LightBase::Type::POINT_VOLUME_NOSPECULAR) {
+                    glUniform3fv(getProgramUniformLocation(prog, "lightPosition"), 
+                        1, glm::value_ptr(glm::mat3(camera.getModelView()) * static_cast<illGraphics::VolumeLight*>(light)->m_vector));
+                }
+                else {
+                    glUniform3fv(getProgramUniformLocation(prog, "lightDirection"), 1,
+                        glm::value_ptr(glm::mat3(camera.getModelView()) * static_cast<illGraphics::VolumeLight*>(light)->m_vector));
+                }                
+                                
+                //bind VBO
+                {
+                    GLuint buffer = *((GLuint *) m_box.getMeshBackendData() + 0);
+                    glBindBuffer(GL_ARRAY_BUFFER, buffer);
+                }
+
+                //bind IBO
+                {
+                    GLuint buffer = *((GLuint *) m_box.getMeshBackendData() + 1);
+                    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, buffer);
+                }
+
+                glVertexAttribPointer(posAttrib, 3, GL_FLOAT, GL_FALSE, (GLsizei) m_box.getMeshFrontentData()->getVertexSize(), (char *)NULL + m_box.getMeshFrontentData()->getPositionOffset());
+
+                //transform the planes into eye space
+                {
+                    glm::vec4 eyePlanes[illGraphics::MAX_LIGHT_VOLUME_PLANES];
+
+                    for(size_t plane = 0; plane < illGraphics::MAX_LIGHT_VOLUME_PLANES; plane++) {
+                        Plane<> eyePlane = static_cast<illGraphics::VolumeLight*>(light)->m_planes[plane].transform(/*glm::transpose(glm::inverse(*/camera.getModelView()/*))*/);
+                        eyePlanes[plane] = glm::vec4(eyePlane.m_normal, eyePlane.m_distance);
+                    }
+
+                    glUniform4fv(getProgramUniformLocation(prog, "attenuationPlanes"), 12, glm::value_ptr(eyePlanes[0]));
+                }
+
+                glUniform1fv(getProgramUniformLocation(prog, "attenuationStarts"), 12, static_cast<illGraphics::VolumeLight*>(light)->m_planeFalloff);                
+                
+                break;
             }
 
             for(auto nodeIter = lightNodes.begin(); nodeIter != lightNodes.end(); nodeIter++) {
@@ -1167,10 +1261,29 @@ void DeferredShadingBackendGl3_3::renderLights(illRendererCommon::RenderQueues& 
                         glUniform3fv(getProgramUniformLocation(prog, "lightPosition"), 
                             1, glm::value_ptr(getTransformPosition(m_occlusionCamera->getModelView() * node->getTransform())));
                         
+                        glUniformMatrix4fv(getProgramUniformLocation(prog, "modelViewProjection"), 
+                            1, false, glm::value_ptr(glm::scale(m_occlusionCamera->getModelViewProjection() * node->getTransform(), volumeScale)));
+                
+                        glUniformMatrix4fv(getProgramUniformLocation(prog, "modelView"), 
+                            1, false, glm::value_ptr(glm::scale(m_occlusionCamera->getModelView() * node->getTransform(), volumeScale)));
+
                         break;
 
-                    case illGraphics::LightBase::Type::DIRECTIONAL:
-                        //TODO:
+                    case illGraphics::LightBase::Type::POINT_VOLUME:
+                    case illGraphics::LightBase::Type::POINT_VOLUME_NOSPECULAR:
+                    case illGraphics::LightBase::Type::DIRECTIONAL_VOLUME:
+                    case illGraphics::LightBase::Type::DIRECTIONAL_VOLUME_NOSPECULAR:
+
+                        {
+                            glm::mat4 centerTransform = glm::translate(node->getWorldBoundingVolume().getCenter());
+
+                            glUniformMatrix4fv(getProgramUniformLocation(prog, "modelViewProjection"), 
+                                1, false, glm::value_ptr(glm::scale(m_occlusionCamera->getModelViewProjection() * centerTransform, node->getWorldBoundingVolume().getDimensions())));
+                
+                            glUniformMatrix4fv(getProgramUniformLocation(prog, "modelView"), 
+                                1, false, glm::value_ptr(glm::scale(m_occlusionCamera->getModelView() * centerTransform, node->getWorldBoundingVolume().getDimensions())));
+                        }
+
                         break;
                     }
 
@@ -1195,17 +1308,16 @@ void DeferredShadingBackendGl3_3::renderLights(illRendererCommon::RenderQueues& 
                         glDrawRangeElements(GL_TRIANGLES, 0, m_box.getMeshFrontentData()->getNumInd(), m_box.getMeshFrontentData()->getNumInd(), GL_UNSIGNED_SHORT, (char *)NULL);
                     }
 
+                    /*
+                    if light volume intersects far plane, back face culling, otherwise front face culling
+                    assuming the light center and attenuation end as sphere radius will suffice as a good test, 
+                    unless your light is HUGE or the draw distance is TINY
+                    in that case, you're doing it wrong!!!!
+                    */
+
                     switch(lightType) {
                     case illGraphics::LightBase::Type::POINT:
                     case illGraphics::LightBase::Type::POINT_NOSPECULAR:
-                    case illGraphics::LightBase::Type::SPOT:
-                    case illGraphics::LightBase::Type::SPOT_NOSPECULAR:
-                        /*
-                        if light volume intersects far plane, back face culling, otherwise front face culling
-                        assuming the light center and attenuation end as sphere radius will suffice as a good test, 
-                        unless your light is HUGE or the draw distance is TINY
-                        in that case, you're doing it wrong!!!!
-                        */
                         if(camera.getViewFrustum().m_far.distance(getTransformPosition(node->getTransform())) 
                                 < static_cast<illGraphics::PointLight*>(light)->m_attenuationEnd) {
                             glCullFace(GL_BACK);
@@ -1213,11 +1325,30 @@ void DeferredShadingBackendGl3_3::renderLights(illRendererCommon::RenderQueues& 
                         else {
                             glCullFace(GL_FRONT);
                         }
-
                         break;
 
-                    case illGraphics::LightBase::Type::DIRECTIONAL:
-                        //TODO:
+                    case illGraphics::LightBase::Type::SPOT:
+                    case illGraphics::LightBase::Type::SPOT_NOSPECULAR:                        
+                        if(camera.getViewFrustum().m_far.distance(getTransformPosition(node->getTransform())) 
+                                < static_cast<illGraphics::SpotLight*>(light)->m_attenuationEnd) {
+                            glCullFace(GL_BACK);
+                        }
+                        else {
+                            glCullFace(GL_FRONT);
+                        }
+                        break;
+
+                    case illGraphics::LightBase::Type::POINT_VOLUME:
+                    case illGraphics::LightBase::Type::POINT_VOLUME_NOSPECULAR:
+                    case illGraphics::LightBase::Type::DIRECTIONAL_VOLUME:
+                    case illGraphics::LightBase::Type::DIRECTIONAL_VOLUME_NOSPECULAR:
+                        if(camera.getViewFrustum().m_far.distance(getTransformPosition(node->getTransform())) 
+                                < static_cast<illGraphics::SpotLight*>(light)->m_attenuationEnd) {
+                            glCullFace(GL_BACK);
+                        }
+                        else {
+                            glCullFace(GL_FRONT);
+                        }
                         break;
                     }
                     
@@ -1245,13 +1376,7 @@ void DeferredShadingBackendGl3_3::renderLights(illRendererCommon::RenderQueues& 
 
                     glUniform2fv(getProgramUniformLocation(prog, "planes"), 1, planes);
                 }
-                                
-                glUniformMatrix4fv(getProgramUniformLocation(prog, "modelViewProjection"), 
-                    1, false, glm::value_ptr(glm::scale(camera.getModelViewProjection() * node->getTransform(), volumeScale)));
-                
-                glUniformMatrix4fv(getProgramUniformLocation(prog, "modelView"), 
-                    1, false, glm::value_ptr(glm::scale(camera.getModelView() * node->getTransform(), volumeScale)));
-                
+                               
                 switch(lightType) {
                 case illGraphics::LightBase::Type::POINT:
                 case illGraphics::LightBase::Type::POINT_NOSPECULAR:
@@ -1260,13 +1385,32 @@ void DeferredShadingBackendGl3_3::renderLights(illRendererCommon::RenderQueues& 
                     glUniform3fv(getProgramUniformLocation(prog, "lightPosition"), 
                         1, glm::value_ptr(getTransformPosition(camera.getModelView() * node->getTransform())));
                         
+                    glUniformMatrix4fv(getProgramUniformLocation(prog, "modelViewProjection"), 
+                        1, false, glm::value_ptr(glm::scale(camera.getModelViewProjection() * node->getTransform(), volumeScale)));
+                
+                    glUniformMatrix4fv(getProgramUniformLocation(prog, "modelView"), 
+                        1, false, glm::value_ptr(glm::scale(camera.getModelView() * node->getTransform(), volumeScale)));
+
                     break;
 
-                case illGraphics::LightBase::Type::DIRECTIONAL:
-                    //TODO:
+                case illGraphics::LightBase::Type::POINT_VOLUME:
+                case illGraphics::LightBase::Type::POINT_VOLUME_NOSPECULAR:
+                case illGraphics::LightBase::Type::DIRECTIONAL_VOLUME:
+                case illGraphics::LightBase::Type::DIRECTIONAL_VOLUME_NOSPECULAR:
+
+                    {
+                        glm::mat4 centerTransform = glm::translate(node->getWorldBoundingVolume().getCenter());
+
+                        glUniformMatrix4fv(getProgramUniformLocation(prog, "modelViewProjection"), 
+                            1, false, glm::value_ptr(glm::scale(camera.getModelViewProjection() * centerTransform, node->getWorldBoundingVolume().getDimensions())));
+                
+                        glUniformMatrix4fv(getProgramUniformLocation(prog, "modelView"), 
+                            1, false, glm::value_ptr(glm::scale(camera.getModelView() * centerTransform, node->getWorldBoundingVolume().getDimensions())));
+                    }
+
                     break;
                 }
-
+                
                 //render stencil prepass
 
                 GLuint query = 0;
@@ -1380,14 +1524,6 @@ void DeferredShadingBackendGl3_3::renderLights(illRendererCommon::RenderQueues& 
                 switch(lightType) {
                 case illGraphics::LightBase::Type::POINT:
                 case illGraphics::LightBase::Type::POINT_NOSPECULAR:
-                case illGraphics::LightBase::Type::SPOT:
-                case illGraphics::LightBase::Type::SPOT_NOSPECULAR:
-                    /*
-                    if light volume intersects far plane, back face culling, otherwise front face culling
-                    assuming the light center and attenuation end as sphere radius will suffice as a good test, 
-                    unless your light is HUGE or the draw distance is TINY
-                    in that case, you're doing it wrong!!!!
-                    */
                     if(camera.getViewFrustum().m_far.distance(getTransformPosition(node->getTransform())) 
                             < static_cast<illGraphics::PointLight*>(light)->m_attenuationEnd) {
                         glCullFace(GL_BACK);
@@ -1395,11 +1531,30 @@ void DeferredShadingBackendGl3_3::renderLights(illRendererCommon::RenderQueues& 
                     else {
                         glCullFace(GL_FRONT);
                     }
-
                     break;
 
-                case illGraphics::LightBase::Type::DIRECTIONAL:
-                    //TODO:
+                case illGraphics::LightBase::Type::SPOT:
+                case illGraphics::LightBase::Type::SPOT_NOSPECULAR:                        
+                    if(camera.getViewFrustum().m_far.distance(getTransformPosition(node->getTransform())) 
+                            < static_cast<illGraphics::SpotLight*>(light)->m_attenuationEnd) {
+                        glCullFace(GL_BACK);
+                    }
+                    else {
+                        glCullFace(GL_FRONT);
+                    }
+                    break;
+
+                case illGraphics::LightBase::Type::POINT_VOLUME:
+                case illGraphics::LightBase::Type::POINT_VOLUME_NOSPECULAR:
+                case illGraphics::LightBase::Type::DIRECTIONAL_VOLUME:
+                case illGraphics::LightBase::Type::DIRECTIONAL_VOLUME_NOSPECULAR:
+                    if(camera.getViewFrustum().m_far.distance(getTransformPosition(node->getTransform())) 
+                            < static_cast<illGraphics::SpotLight*>(light)->m_attenuationEnd) {
+                        glCullFace(GL_BACK);
+                    }
+                    else {
+                        glCullFace(GL_FRONT);
+                    }
                     break;
                 }
 
@@ -1738,6 +1893,52 @@ void renderDebugSpotLight(const glm::vec3& position, glm::vec3& direction, const
     glEnd();
 }
 
+void renderVolumePlaneDebug(const Plane<>& plane, const glm::vec4& color) {
+    glm::vec3 x;
+    glm::vec3 y;
+    glm::vec3 z(0.0f, 0.0f, 1.0f);
+
+    if(eqVec(plane.m_normal, z)) {
+        x = glm::vec3(1.0f, 0.0f, 0.0f);
+        y = glm::vec3(0.0f, 1.0f, 0.0f);
+    }
+    else {
+        x = glm::cross(plane.m_normal, z);
+        y = glm::cross(plane.m_normal, x);
+    }
+
+    glm::vec3 P0 = -plane.m_normal * plane.m_distance;  //arbitrary point
+    glm::vec3 farX = x * 10000.0f;
+    glm::vec3 farY = y * 10000.0f;
+    glm::vec3 P1 = P0 - farX - farY;
+    glm::vec3 P2 = P0 + farX - farY;
+    glm::vec3 P3 = P0 + farX + farY;
+    glm::vec3 P4 = P0 - farX + farY;
+
+    glm::vec3 PN = P0 + plane.m_normal * 20.0f;
+
+    glBegin(GL_QUADS);
+        glColor4fv(glm::value_ptr(color));
+        glVertex3fv(glm::value_ptr(P1));
+        glVertex3fv(glm::value_ptr(P2));
+        glVertex3fv(glm::value_ptr(P3));
+        glVertex3fv(glm::value_ptr(P4));
+    glEnd();
+
+    glBegin(GL_LINES);
+        glColor4f(1.0f, 0.0f, 0.0f, 1.0f);
+        glVertex3fv(glm::value_ptr(P0));
+        glColor4f(1.0f, 0.0f, 0.0f, 1.0f);
+        glVertex3fv(glm::value_ptr(PN));
+    glEnd();
+}
+
+void renderDebugVolumeLight(const illGraphics::VolumeLight& light) {
+    for(size_t plane = 0; plane < illGraphics::MAX_LIGHT_VOLUME_PLANES; plane++) {
+        renderVolumePlaneDebug(light.m_planes[plane], glm::vec4(light.m_color, 0.01f));
+    }
+}
+
 void DeferredShadingBackendGl3_3::renderDebugLights(illRendererCommon::RenderQueues& renderQueues, const illGraphics::Camera& camera) {
     //manually go in to 3D mode while using fixed function pipeline in older OpenGL
     glMatrixMode(GL_PROJECTION);
@@ -1784,6 +1985,13 @@ void DeferredShadingBackendGl3_3::renderDebugLights(illRendererCommon::RenderQue
                 case illGraphics::LightBase::Type::SPOT:
                 case illGraphics::LightBase::Type::SPOT_NOSPECULAR:
                     renderDebugSpotLight(getTransformPosition(node->getTransform()), glm::mat3(node->getTransform()) * glm::vec3(0.0f, 0.0f, -1.0f), *static_cast<illGraphics::SpotLight *>(light));
+                    break;
+
+                case illGraphics::LightBase::Type::POINT_VOLUME:
+                case illGraphics::LightBase::Type::POINT_VOLUME_NOSPECULAR:
+                case illGraphics::LightBase::Type::DIRECTIONAL_VOLUME:
+                case illGraphics::LightBase::Type::DIRECTIONAL_VOLUME_NOSPECULAR:
+                    renderDebugVolumeLight(*static_cast<illGraphics::VolumeLight *>(light));
                     break;
                 }
             }
@@ -1901,7 +2109,7 @@ void DeferredShadingBackendGl3_3::renderDebugBounds(illRendererCommon::RenderQue
                         glViewport(camera.getViewportCorner().x, camera.getViewportCorner().y,
                             camera.getViewportDimensions().x, camera.getViewportDimensions().y / 2);
                         
-                        //renderNodeBounds(meshInfo.m_meshInfo.m_node);
+                        renderNodeBounds(meshInfo.m_meshInfo.m_node);
                         
                         glMatrixMode(GL_PROJECTION);
                         glLoadIdentity();
@@ -1917,7 +2125,7 @@ void DeferredShadingBackendGl3_3::renderDebugBounds(illRendererCommon::RenderQue
                             camera.getViewportDimensions().x, camera.getViewportDimensions().y / 2);
                     }
 
-                    //renderNodeBounds(meshInfo.m_meshInfo.m_node);
+                    renderNodeBounds(meshInfo.m_meshInfo.m_node);
                 }
             }
         }
@@ -2062,6 +2270,10 @@ void DeferredShadingBackendGl3_3::render(illRendererCommon::RenderQueues& render
             break;
         }
     }
+
+    glDisable(GL_CULL_FACE);
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
     if(m_debugLights) {
         renderDebugLights(renderQueues, camera);

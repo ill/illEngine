@@ -87,8 +87,10 @@ private:
     illGraphics::ShaderProgram m_deferredPointLightNoSpecProgram;
     illGraphics::ShaderProgram m_deferredSpotLightProgram;
     illGraphics::ShaderProgram m_deferredSpotLightNoSpecProgram;
-    illGraphics::ShaderProgram m_deferredDirectionLightProgram;
-    illGraphics::ShaderProgram m_deferredDirectionLightNoSpecProgram;
+    illGraphics::ShaderProgram m_deferredPointVolumeLightProgram;
+    illGraphics::ShaderProgram m_deferredPointVolumeLightNoSpecProgram;
+    illGraphics::ShaderProgram m_deferredDirectionVolumeLightProgram;
+    illGraphics::ShaderProgram m_deferredDirectionVolumeLightNoSpecProgram;
     RefCountPtr<illGraphics::ShaderProgram> m_volumeRenderProgram;
 
     //TODO: have these be some kind of utility meshes?

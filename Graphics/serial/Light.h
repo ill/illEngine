@@ -4,7 +4,12 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/quaternion.hpp>
 
+#include "Util/geometry/Plane.h"
+#include "Util/serial/Array.h"
+
 namespace illGraphics {
+
+const size_t MAX_LIGHT_VOLUME_PLANES = 12;
 
 struct LightBase {
 public:
@@ -14,8 +19,10 @@ public:
         POINT_NOSPECULAR,
         SPOT,
         SPOT_NOSPECULAR,
-        DIRECTIONAL,
-        DIRECTIONAL_NOSPECULAR
+        POINT_VOLUME,
+        POINT_VOLUME_NOSPECULAR,
+        DIRECTIONAL_VOLUME,
+        DIRECTIONAL_VOLUME_NOSPECULAR
     };
 
     glm::vec3 m_color;
@@ -80,21 +87,38 @@ struct SpotLight : public PointLight {
     glm::mediump_float m_coneEnd;
 };
 
-struct DirectionLight : public LightBase {
-    DirectionLight()
+struct VolumeLight : public LightBase {
+    VolumeLight()
         : LightBase()
     {
-        m_type = Type::DIRECTIONAL;
+        m_type = Type::DIRECTIONAL_VOLUME;
     }
 
-    DirectionLight(const glm::vec3& color, glm::mediump_float intensity, bool specular, const glm::vec3 direction)
+    VolumeLight(const glm::vec3& color, glm::mediump_float intensity, bool specular, bool directional, const glm::vec3 vector)
         : LightBase(color, intensity),
-        m_direction(direction)
+        m_vector(vector)
     {
-        m_type = specular ? Type::DIRECTIONAL : Type::DIRECTIONAL_NOSPECULAR;
+        m_type = directional 
+            ? specular ? Type::DIRECTIONAL_VOLUME : Type::DIRECTIONAL_VOLUME_NOSPECULAR
+            : specular ? Type::POINT_VOLUME : Type::POINT_VOLUME_NOSPECULAR;
     }
+    
+    /**
+    If this is a directional light, this is the light direction.
+    If this is a point light, this is the origin of the light
+    */
+    glm::vec3 m_vector;
 
-    glm::vec3 m_direction;
+    /**
+    The planes that make up the bounds of the light volume
+    */
+    Plane<> m_planes[MAX_LIGHT_VOLUME_PLANES];
+
+    /**
+    For each plane, this is the reciprocal of the distance from the plane that light
+    begins to fade
+    */
+    glm::mediump_float m_planeFalloff[MAX_LIGHT_VOLUME_PLANES];
 };
 
 }
