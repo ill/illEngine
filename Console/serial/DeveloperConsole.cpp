@@ -56,11 +56,7 @@ void DeveloperConsole::consoleInput(const char * fileName) {
 
     while(!inputFile.eof()) {
         inputFile.getline(line, 256);
-
-        if(inputFile.eof()) {
-            break;
-        }
-
+        
         //ignore lines starting with # to count as comments
         if(line[0] == '#') {
             continue;
@@ -152,6 +148,7 @@ bool DeveloperConsole::getParamString(std::istringstream& argStream, std::string
 }
 
 void DeveloperConsole::parseInput(const char * input) {
+    //since this isn't performance critical code, I'm just using streams and stuff
     std::stringstream inputStream(input);
 
     enum class ParseState {
@@ -193,7 +190,7 @@ void DeveloperConsole::parseInput(const char * input) {
             } break;
 
         case ParseState::COMMAND_ARGS:
-            cmd->callCommand(inputStream.str().c_str());
+            cmd->callCommand(inputStream.str().c_str() + inputStream.tellg());
             return;
 
         case ParseState::DONE: {

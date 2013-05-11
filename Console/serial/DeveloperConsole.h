@@ -8,7 +8,7 @@
 
 namespace illConsole {
 
-static const char * DEFAULT_OUTPUT_FILE = "consoleOut.txt";   //TODO: This should normally be a blank string to disable output
+static const char * DEFAULT_OUTPUT_FILE = "";
 static const size_t DEFUALT_MAX_LINES = 256;
 
 class VariableManager;
@@ -35,7 +35,7 @@ public:
     void parseInput(const char * input);
     
     inline void setOutputFile(const char * fileName) {
-        if(m_outputFileName != fileName) {
+        if(m_outputFileName == fileName) {
             return;
         }
 

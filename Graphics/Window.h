@@ -16,8 +16,8 @@ const float ASPECT_4_3 = 4.0f / 3.0f;
 const float ASPECT_16_9 = 16.0f / 9.0f;
 const float ASPECT_16_10 = 16.0f / 10.0f;
 
-const int DEFAULT_WIDTH = 800;         //TODO: these should be 640x480x16 4:3 by default, once configurations are loadable this will be fixed
-const int DEFAULT_HEIGHT = 600;
+const int DEFAULT_WIDTH = 640;
+const int DEFAULT_HEIGHT = 480;
 const int DEFAULT_BPP = 32;
 const bool DEFAULT_FULL = false;
 const float DEFAULT_ASPECT_RATIO = 0.0f;
@@ -158,22 +158,23 @@ public:
     //inline void clearInputManagers() {
     //    m_inputManagers.clear();
     //}
-
-    inline glm::uvec2 getResolution() const {
-        return glm::uvec2(m_screenWidth, m_screenHeight);
-    }
-
+    
     inline float getAspectRatio() const {
         return m_aspectRatio;
     }
 
-protected:
-    State m_state;
+    inline void setApsectRatio(float aspectRatio) {
+        m_aspectRatioSetting = aspectRatio;
+    }
 
     int m_screenWidth;
     int m_screenHeight;
     int m_screenBPP;
     bool m_fullScreen;
+
+protected:
+    State m_state;
+        
     float m_aspectRatio;
     float m_aspectRatioSetting;
 
