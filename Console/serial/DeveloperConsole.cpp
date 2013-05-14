@@ -46,7 +46,7 @@ void DeveloperConsole::consoleDump(const char * fileName) {
     std::ofstream outputFile(fileName);
 
     for(auto iter = m_lines.begin(); iter != m_lines.end(); iter++) {
-        outputFile << *iter;
+        outputFile << *iter << std::endl;
     }
 }
 
@@ -90,8 +90,9 @@ bool DeveloperConsole::getParamInt(std::istringstream& argStream, int& dest) {
     }
 
     std::streampos pos = argStream.tellg();
+    argStream >> dest;
 
-    if(!(argStream >> dest)) {
+    if(argStream.fail()) {
         printMessage(illLogging::LogDestination::MessageLevel::MT_ERROR, formatString("Expecting an integer parameter at position %d.", pos).c_str());
         return false;
     }
@@ -106,8 +107,9 @@ bool DeveloperConsole::getParamBool(std::istringstream& argStream, bool& dest) {
     }
 
     std::streampos pos = argStream.tellg();
+    argStream >> dest;
 
-    if(!(argStream >> dest)) {
+    if(argStream.fail()) {
         printMessage(illLogging::LogDestination::MessageLevel::MT_ERROR, formatString("Expecting a boolean parameter at position %d.", pos).c_str());
         return false;
     }
@@ -122,8 +124,9 @@ bool DeveloperConsole::getParamFloat(std::istringstream& argStream, float& dest)
     }
 
     std::streampos pos = argStream.tellg();
+    argStream >> dest;
 
-    if(!(argStream >> dest)) {
+    if(argStream.fail()) {
         printMessage(illLogging::LogDestination::MessageLevel::MT_ERROR, formatString("Expecting a float parameter at position %d.", pos).c_str());
         return false;
     }
@@ -138,8 +141,9 @@ bool DeveloperConsole::getParamString(std::istringstream& argStream, std::string
     }
 
     std::streampos pos = argStream.tellg();
+    argStream >> dest;
 
-    if(!(argStream >> dest)) {
+    if(argStream.fail()) {
         printMessage(illLogging::LogDestination::MessageLevel::MT_ERROR, formatString("Expecting a string parameter at position %d.", pos).c_str());
         return false;
     }
@@ -148,33 +152,34 @@ bool DeveloperConsole::getParamString(std::istringstream& argStream, std::string
 }
 
 void DeveloperConsole::parseInput(const char * input) {
+    printMessage(illLogging::LogDestination::MessageLevel::MT_INFO, ("^3>^7 " + std::string(input)).c_str());   //LOL
+
     //since this isn't performance critical code, I'm just using streams and stuff
     std::stringstream inputStream(input);
 
     enum class ParseState {
         BEGINNING,
         COMMAND_ARGS,
-        DONE,
+        PRINT_VAR_VAL,
+        ERROR,
     } parseState = ParseState::BEGINNING;
 
     ConsoleVariable * var = NULL;
+    std::string varName;
     const ConsoleCommand * cmd = NULL;
 
-    while(!inputStream.eof()) {
+    while(!inputStream.eof() && parseState != ParseState::ERROR) {
         switch(parseState) {
         case ParseState::BEGINNING: {
             std::string token;
             inputStream >> token;
-
-            if(inputStream.eof()) {
-                break;
-            }
-
+            
             //expect a variable name first or a command
             var = m_variableManager->getVariable(token.c_str());
 
             if(var) {
-                parseState = ParseState::DONE;
+                parseState = ParseState::PRINT_VAR_VAL;
+                varName = token;
                 continue;
             }
 
@@ -186,6 +191,7 @@ void DeveloperConsole::parseInput(const char * input) {
             }
 
             printMessage(illLogging::LogDestination::MessageLevel::MT_ERROR, formatString("Invalid variable or command name %s", token.c_str()).c_str());
+            parseState = ParseState::ERROR;
 
             } break;
 
@@ -193,18 +199,20 @@ void DeveloperConsole::parseInput(const char * input) {
             cmd->callCommand(inputStream.str().c_str() + inputStream.tellg());
             return;
 
-        case ParseState::DONE: {
-            std::string token;
-            inputStream >> token;
-
-            if(!inputStream.eof()) {
-                printMessage(illLogging::LogDestination::MessageLevel::MT_ERROR, "Unexpected tokens after variable name. Using just a variable name prints the value.");
-            }
-
-            printMessage(illLogging::LogDestination::MessageLevel::MT_INFO, formatString("%s: %s", var->getValue()).c_str());
-
-            } break;
+        case ParseState::PRINT_VAR_VAL: 
+            printMessage(illLogging::LogDestination::MessageLevel::MT_ERROR, "Unexpected tokens after variable name. Using just a variable name prints the value.");
+            return;
         }
+    }
+    
+    switch(parseState) {
+    case ParseState::COMMAND_ARGS:
+        cmd->callCommand(NULL);
+        break;
+
+    case ParseState::PRINT_VAR_VAL:
+        printMessage(illLogging::LogDestination::MessageLevel::MT_INFO, formatString("%s: %s", varName.c_str(), var->getValue()).c_str());
+        break;
     }
 }
 
