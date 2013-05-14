@@ -169,14 +169,16 @@ void SdlWindow::pollEvents () {
                 //this will probably handle multichar inputs wrong
 
                 if(event.key.keysym.sym == SDLK_BACKSPACE) {
-                    size_t textSize = strnlen(m_typingDestination->m_destination + m_typingDestination->m_selectionStart, 
-                        m_typingDestination->m_destinationLimit - m_typingDestination->m_selectionStart) + 1;
+                    if(m_typingDestination->m_selectionStart > 0) {
+                        size_t textSize = strnlen(m_typingDestination->m_destination + m_typingDestination->m_selectionStart, 
+                            m_typingDestination->m_destinationLimit - m_typingDestination->m_selectionStart) + 1;
 
-                    memmove(m_typingDestination->m_destination + m_typingDestination->m_selectionStart - 1, 
-                        m_typingDestination->m_destination + m_typingDestination->m_selectionStart,
-                        textSize);
+                        memmove(m_typingDestination->m_destination + m_typingDestination->m_selectionStart - 1, 
+                            m_typingDestination->m_destination + m_typingDestination->m_selectionStart,
+                            textSize);
 
-                    --m_typingDestination->m_selectionStart;
+                        --m_typingDestination->m_selectionStart;
+                    }
 
                     handledTypeEvent = true;
                 }

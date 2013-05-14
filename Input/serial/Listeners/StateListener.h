@@ -48,6 +48,10 @@ struct StateListener : public ListenerBase {
         }
     }
 
+    virtual void reset() {
+        onBinRelease();
+    }
+
     /**
     The function to override and give custom behavior to.  
     This is called any time a state input changes to either pressed or released.

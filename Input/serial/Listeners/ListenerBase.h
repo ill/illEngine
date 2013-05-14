@@ -11,6 +11,11 @@ struct ListenerBase {
     virtual ~ListenerBase() {}
 
     /**
+    Happens when resetting the state of a listener to a neutral state, such as when the inptu context this is a part of is popped.
+    */
+    virtual void reset() {}
+
+    /**
     Happens when a button of some sort is pressed
     */
     virtual void onBinPress() = 0;

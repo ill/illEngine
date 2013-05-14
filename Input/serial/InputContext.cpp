@@ -1,7 +1,14 @@
 #include "InputContext.h"
 #include "Logging/logging.h"
+#include "Listeners/ListenerBase.h"
 
 namespace illInput {
+
+void InputContext::resetListeners() {
+    for(auto iter = m_inputMapping.begin(); iter != m_inputMapping.end(); iter++) {
+        iter->second->reset();
+    }
+}
 
 void InputContext::bindInput(const char * action, ListenerBase * input) {
     m_inputMapping[action] = input;

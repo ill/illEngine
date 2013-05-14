@@ -32,9 +32,7 @@ public:
         m_stack.push_back(input);
     }
 
-    inline void popInputContext() {
-        m_stack.pop_back();
-    }
+    void popInputContext();
 
     /**
     Looks up an input listener bound to an input based on contexts on the stack.

@@ -6,6 +6,12 @@
 
 namespace illInput {
 
+void InputContextStack::popInputContext() {
+    //reset states of all input listeners
+    m_stack.back()->resetListeners();    
+    m_stack.pop_back();
+}
+
 ListenerBase * InputContextStack::lookupBinding(const char *action) {
     for(std::vector<InputContext *>::reverse_iterator iter = m_stack.rbegin(); iter != m_stack.rend(); iter++) {
         ListenerBase * retVal = (*iter)->lookupBinding(action);

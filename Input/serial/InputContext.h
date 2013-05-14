@@ -22,6 +22,8 @@ private:
     typedef std::map<std::string, ValueListener *> ValueBindMap;
 
 public:
+    void resetListeners();
+
     void bindInput(const char * action, ListenerBase * input);
     void bindInput(const char * action, ValueListener * input);
 
