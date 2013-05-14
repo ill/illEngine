@@ -26,7 +26,9 @@ so these are the hardcoded enums for now.
 
 Normally I'd try to detect multiple devices and let them be bound per player.
 */
-enum InputType {
+enum class InputType {
+    INVALID,
+    PC_KEYBOARD_TYPE,       ///<typing on the keyboard, so send all characters, modifiers, arrow keys, etc...
     PC_KEYBOARD,            ///<keys on the keyboard
     PC_MOUSE_BUTTON,        ///<buttons on the mouse
     PC_MOUSE_WHEEL,         ///<wheels on the mouse

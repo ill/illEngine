@@ -9,66 +9,172 @@ const int32_t HEADER = 0x424D4603;   //"BMF" followed by format specifier 3 in b
 
 namespace illGraphics {
 
-glm::mediump_float BitmapFont::getLineWidth(char const ** text) const {
-    if(m_state != RES_LOADED) {
-        LOG_FATAL_ERROR("Attempting to get line width of bitmap font when it's not loaded.");
-    }
-
-    glm::mediump_float curX = 0;
-
-    //go through the string until a newline and get dimensions of every character
-    while (**text && **text != '\n') {
-        //check if color code
-        if(getColorCode(text, glm::vec4())) {
-            continue;
-        }
-        
-        //parse special characters
-        switch (**text) {
-        case ' ': //space
-
-            curX += m_spacingHorz;
-            *text++;
-            continue;
-
-        case '\t': //tab
-
-            curX += m_spacingHorz * 4.0f;
-            *text++;
-            continue;
-        }
-
-        curX += m_charData[(unsigned char) (**text)].m_advance;
-        *text++;
-    }
-    
-    return curX;
-}
-
 glm::vec2 BitmapFont::getPrintDimensions(const char * text) const {
-    glm::mediump_float curX = 0;
+    glm::vec2 res(0.0f);
     glm::mediump_float maxX = 0;
-    glm::mediump_float curY = 0;
+    size_t currPos = 0;
+    size_t lastChar = strlen(text);
 
     //go through the string and get dimensions of every character
-    while (*text) {
-        curX = getLineWidth(&text);
+    while(text[currPos]) {
+        size_t stopPos = lastChar;
 
-        if (*text == '\n') {
-            text++;
-            curY += m_lineHeight;
+        {
+            const char * newLineChar = strchr(text + currPos, '\n');
+
+            if(newLineChar) {
+                stopPos = newLineChar - text;
+            }
         }
 
-        if (curX > maxX) {
-            maxX = curX;
+        res = getCharLocation(text, stopPos, currPos, res);
+
+        if(res.x > maxX) {
+            maxX = res.x;
+        }
+
+        if(text[currPos] == '\n') {
+            currPos++;
+            res.y += m_lineHeight;
         }
     }
 
-    return glm::vec2(curX > maxX ? curX : maxX, curY + m_lineHeight);
+    return glm::vec2(maxX, res.y + m_lineHeight);
 }
 
-bool BitmapFont::getColorCode(const char ** text, glm::vec4& destination) {
-    return false;   //TODO
+glm::vec2 BitmapFont::getCharLocation(const char * text, size_t charPos, size_t& currPos, glm::vec2 startLocation) const {
+    if(m_state != RES_LOADED) {
+        LOG_FATAL_ERROR("Attempting to get character location of bitmap font when it's not loaded.");
+    }
+    
+    while(text[currPos] && currPos < charPos) {
+        //eat the color code
+        {
+            const char * newPos = getColorCode(text + currPos, glm::vec4());            
+            currPos = newPos - text;
+        }
+
+        //parse special characters
+        switch (text[currPos]) {
+        case '\n':    //newline
+            startLocation = glm::vec2(0.0f, startLocation.y - getLineHeight());
+            break;
+
+        case ' ': //space
+            startLocation.x += 5.0f;
+            break;
+
+        case '\t': //tab
+            startLocation.x += getSpacingHorz() * 4.0f;
+            break;
+
+        default:
+            startLocation.x += getCharData(text[currPos]).m_advance;
+            break;
+        }
+        
+        currPos++;
+    }
+
+    return startLocation;
+}
+
+const char * BitmapFont::getColorCode(const char * text, glm::vec4& destination) {
+    //TODO: hex digit parsing
+    enum class ParseState {
+        BEGIN,
+        CARAT,
+        //HEX,
+        //HEX_DIGITS
+    } parseState = ParseState::BEGIN;
+
+    size_t numReadHex = 0;
+    
+    const char * currText = text;
+
+    while(*currText) {
+        switch(parseState) {
+        case ParseState::BEGIN:
+            if(*currText == '^') {
+                parseState = ParseState::CARAT;
+                currText++;
+            }
+            /*else if(*currText == '#') {
+                parseState = ParseState::HEX;
+                currText++;
+            }*/
+            else {
+                return text;
+            }
+
+            break;
+
+        case ParseState::CARAT:
+            if(*currText == '^') {
+                //escape
+                return currText;
+            }
+            else if(!isdigit(*currText)) {
+                //not a digit
+                return text;
+            }
+            else {
+                //return the right color
+                switch(*currText) {
+                case '0':   //black
+                    destination = glm::vec4(0.0f, 0.0f, 0.0f, 1.0);
+                    break;
+
+                case '1':   //red
+                    destination = glm::vec4(1.0f, 0.0f, 0.0f, 1.0);
+                    break;
+
+                case '2':   //green
+                    destination = glm::vec4(0.0f, 1.0f, 0.0f, 1.0);
+                    break;
+
+                case '3':   //yellow
+                    destination = glm::vec4(1.0f, 1.0f, 0.0f, 1.0);
+                    break;
+
+                case '4':   //blue
+                    destination = glm::vec4(0.0f, 0.0f, 1.0f, 1.0);
+                    break;
+
+                case '5':   //cyan
+                    destination = glm::vec4(0.0f, 1.0f, 1.0f, 1.0);
+                    break;
+
+                case '6':   //magenta
+                    destination = glm::vec4(1.0f, 0.0f, 1.0f, 1.0);
+                    break;
+
+                case '7':   //white
+                    destination = glm::vec4(1.0f, 1.0f, 1.0f, 1.0);
+                    break;
+
+                case '8':   //purple
+                    destination = glm::vec4(0.5f, 0.0f, 0.5f, 1.0);
+                    break;
+
+                case '9':   //gray
+                    destination = glm::vec4(0.5f, 0.5f, 0.5f, 1.0);
+                    break;
+                }
+
+                return ++currText;
+            }            
+
+            break;
+
+        /*case ParseState::HEX:
+
+
+            break;*/
+        }        
+    }
+
+    return text;
 }
 
 void BitmapFont::unload() {
@@ -252,9 +358,16 @@ void BitmapFont::readChars(illFileSystem::File * file, size_t size, unsigned int
     
     //create a mesh data object with 2 triangles per character and 4 verteces per character to create quads
     m_mesh.unload();
-    m_mesh.setFrontentDataInternal(new MeshData<>(numChars << 1, numChars << 2, MF_POSITION | MF_TEX_COORD));
+    m_mesh.setFrontentDataInternal(new MeshData<>(numChars << 2, numChars << 2, 1, MF_POSITION | MF_TEX_COORD));
     
     uint16_t * indeces = m_mesh.getMeshFrontentData()->getIndices();
+
+    {
+        auto primGroup = m_mesh.getMeshFrontentData()->getPrimitiveGroup(0);
+        primGroup.m_beginIndex = 0;
+        primGroup.m_numIndices = m_mesh.getMeshFrontentData()->getNumInd();
+        primGroup.m_type = MeshData<>::PrimitiveGroup::Type::TRIANGLE_FAN;
+    }
 
     for(unsigned int currChar = 0; currChar < numChars; currChar++) {
         unsigned char character;
@@ -308,35 +421,27 @@ void BitmapFont::readChars(illFileSystem::File * file, size_t size, unsigned int
             */
 
             //set the character index buffer data
-            size_t firstIndex = currChar * 6;
-            size_t firstVertex = currChar << 2;
+            size_t currVert = currChar << 2;
 
-            m_charData[character].m_meshIndex = (uint16_t) firstIndex;
+            m_charData[character].m_meshIndex = (uint16_t) currVert;
 
-            //tri 1
-            indeces[firstIndex] = (uint16_t) firstVertex;                                                                               //vtx 0
-            indeces[firstIndex + 1] = (uint16_t) firstVertex + 1;                                                                       //vtx 1
-            indeces[firstIndex + 2] = (uint16_t) firstVertex + 2;                                                                       //vtx 2
-
-            //tri 2
-            indeces[firstIndex + 3] = (uint16_t) firstVertex + 2;                                                                       //vtx 2
-            indeces[firstIndex + 4] = (uint16_t) firstVertex + 3;                                                                       //vtx 3
-            indeces[firstIndex + 5] = (uint16_t) firstVertex;                                                                           //vtx 0
+            indeces[currVert] = (uint16_t) currVert;                                                                               //vtx 0
+            indeces[currVert + 1] = (uint16_t) currVert + 1;                                                                       //vtx 1
+            indeces[currVert + 2] = (uint16_t) currVert + 2;                                                                       //vtx 2
+            indeces[currVert + 3] = (uint16_t) currVert + 3;                                                                       //vtx 3
 
             //set the character vertex buffer data
             //positions
-            m_mesh.getMeshFrontentData()->getPosition((uint32_t) firstVertex) = glm::vec3(xOffset, yOffset, 0.0f);                         //vtx 0
-            m_mesh.getMeshFrontentData()->getPosition((uint32_t) firstVertex + 1) = glm::vec3(xOffset + width, yOffset, 0.0f);             //vtx 1
-            m_mesh.getMeshFrontentData()->getPosition((uint32_t) firstVertex + 2) = glm::vec3(xOffset + width, yOffset + height, 0.0f);    //vtx 2
-            m_mesh.getMeshFrontentData()->getPosition((uint32_t) firstVertex + 3) = glm::vec3(xOffset, yOffset + height, 0.0f);            //vtx 3
+            m_mesh.getMeshFrontentData()->getPosition((uint32_t) currVert) = glm::vec3(xOffset, m_lineHeight - (yOffset + height) - m_lineBase, 0.0f);                      //vtx 0
+            m_mesh.getMeshFrontentData()->getPosition((uint32_t) currVert + 1) = glm::vec3(xOffset + width, m_lineHeight - (yOffset + height) - m_lineBase, 0.0f);          //vtx 1
+            m_mesh.getMeshFrontentData()->getPosition((uint32_t) currVert + 2) = glm::vec3(xOffset + width, m_lineHeight - yOffset - m_lineBase, 0.0f);                     //vtx 2
+            m_mesh.getMeshFrontentData()->getPosition((uint32_t) currVert + 3) = glm::vec3(xOffset, m_lineHeight - yOffset - m_lineBase, 0.0f);                             //vtx 3
 
             //tex coords
-            m_mesh.getMeshFrontentData()->getTexCoord((uint32_t) firstVertex) = glm::vec2(left, bottom);                                   //vtx 0
-            m_mesh.getMeshFrontentData()->getTexCoord((uint32_t) firstVertex + 1) = glm::vec2(right, bottom);                              //vtx 1
-            m_mesh.getMeshFrontentData()->getTexCoord((uint32_t) firstVertex + 2) = glm::vec2(right, top);                                 //vtx 2
-            m_mesh.getMeshFrontentData()->getTexCoord((uint32_t) firstVertex + 3) = glm::vec2(left, top);                                  //vtx 3
-
-            //int x = 5;
+            m_mesh.getMeshFrontentData()->getTexCoord((uint32_t) currVert) = glm::vec2(left, bottom);                                   //vtx 0
+            m_mesh.getMeshFrontentData()->getTexCoord((uint32_t) currVert + 1) = glm::vec2(right, bottom);                              //vtx 1
+            m_mesh.getMeshFrontentData()->getTexCoord((uint32_t) currVert + 2) = glm::vec2(right, top);                                 //vtx 2
+            m_mesh.getMeshFrontentData()->getTexCoord((uint32_t) currVert + 3) = glm::vec2(left, top);                                  //vtx 3
         }
 
         //read the texture page
@@ -351,7 +456,7 @@ void BitmapFont::readChars(illFileSystem::File * file, size_t size, unsigned int
         file->seekAhead(1);
     }
 
-    for(unsigned int ind = 0; ind < m_mesh.getMeshFrontentData()->getNumInd(); ind++) {
+    /*for(unsigned int ind = 0; ind < m_mesh.getMeshFrontentData()->getNumInd(); ind++) {
         LOG_DEBUG("ind %u %u", ind, indeces[ind]);
     }
 
@@ -361,7 +466,7 @@ void BitmapFont::readChars(illFileSystem::File * file, size_t size, unsigned int
 
     for(unsigned int ind = 0; ind < m_mesh.getMeshFrontentData()->getNumVert(); ind++) {
         LOG_DEBUG("tex %u %f %f", ind, m_mesh.getMeshFrontentData()->getTexCoord(ind).x, m_mesh.getMeshFrontentData()->getTexCoord(ind).y);
-    }
+    }*/
 
     m_mesh.frontendBackendTransferInternal(m_loader);
 }

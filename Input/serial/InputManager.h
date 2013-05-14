@@ -5,9 +5,10 @@
 #include <set>
 
 #include "InputContextStack.h"
+#include "InputBinding.h"
 
 namespace illInput {
-    
+
 /**
 Manages input contexts by player and input devices.
 
@@ -18,6 +19,11 @@ Or you can hook up multiple controllers or mice.
 */
 class InputManager {
 public:
+    enum class ActionType {
+        CONSOLE_COMMAND,
+        CONTROL
+    };
+
     void addPlayer(int player);
     void removePlayer(int player);
 
@@ -33,6 +39,10 @@ public:
     void bindDevice(int device, int player);
     void unbindDevice(int device, int player);
 
+    void bindAction(int player, const InputBinding& inputBinding, const char * action, ActionType actionType);
+    void unbindAction(int player, const InputBinding& inputBinding, const char * action);    
+    const std::map<std::string, ActionType>* getInputActionBindings(int player, const InputBinding& inputBinding) const;
+
     inline void clearDevices() {
         m_deviceToPlayer.clear();
     }
@@ -40,10 +50,12 @@ public:
     const std::set<int> * getPlayersForDevice(int device);
 
     InputContextStack * getInputContextStack(int player);
-    
+
 private:
-    std::map<int, std::set<int> > m_deviceToPlayer;
+    std::map<int, std::set<int>> m_deviceToPlayer;
     std::map<int, InputContextStack> m_playerToInputContext;
+
+    std::map<int, std::map<InputBinding, std::map<std::string, ActionType>>> m_playerInputActionBindings;
 };
 
 }

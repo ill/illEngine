@@ -8,7 +8,7 @@ Logger stuff for communication
 #include "Logging/logging.h"
 
 //whether or not to log video debug messages
-#define ENABLE_LOG_DEBUG_GRAPHICS 1
+#define ENABLE_LOG_DEBUG_GRAPHICS 0
 
 ///////////////////////////////
 #if ENABLE_LOG_DEBUG_GRAPHICS
@@ -20,7 +20,7 @@ Logger stuff for communication
 ///////////////////////////////
 #else
 
-#define ENABLE_LOG_DEBUG_GRAPHICS(message, ...) do {\
+#define LOG_DEBUG_GRAPHICS(message, ...) do {\
    sizeof(message);\
 } while(0)
 

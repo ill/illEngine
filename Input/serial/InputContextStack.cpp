@@ -6,9 +6,9 @@
 
 namespace illInput {
 
-ListenerBase * InputContextStack::lookupBinding(const InputBinding& binding) {
+ListenerBase * InputContextStack::lookupBinding(const char *action) {
     for(std::vector<InputContext *>::reverse_iterator iter = m_stack.rbegin(); iter != m_stack.rend(); iter++) {
-        ListenerBase * retVal = (*iter)->lookupBinding(binding);
+        ListenerBase * retVal = (*iter)->lookupBinding(action);
 
         if(retVal != NULL) {
             return retVal;
@@ -18,9 +18,9 @@ ListenerBase * InputContextStack::lookupBinding(const InputBinding& binding) {
     return NULL;
 }
 
-ValueListener * InputContextStack::lookupValueBinding(const InputBinding& binding) {
+ValueListener * InputContextStack::lookupValueBinding(const char * action) {
     for(std::vector<InputContext *>::reverse_iterator iter = m_stack.rbegin(); iter != m_stack.rend(); iter++) {
-        ValueListener * retVal = (*iter)->lookupValueBinding(binding);
+        ValueListener * retVal = (*iter)->lookupValueBinding(action);
 
         if(retVal != NULL) {
             return retVal;

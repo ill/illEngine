@@ -10,6 +10,8 @@
 #include "Input/serial/Listeners/ListenerBase.h"
 #include "Input/serial/Listeners/ValueListener.h"
 
+#include "Console/serial/DeveloperConsole.h"
+
 #include "SdlWindow.h"
 #include "sdlInputEnum.h"
 
@@ -23,9 +25,6 @@ void SdlWindow::initialize() {
     uninitialize();
 
     SDL_Init(SDL_INIT_VIDEO);
-    //disable key repeat
-    SDL_EnableKeyRepeat(0, 0);
-
     m_state = WIN_INITIALIZING;
 
     Uint32 sdlFlags = SDL_WINDOW_SHOWN;//| SDL_WINDOW_BORDERLESS | SDL_WINDOW_INPUT_GRABBED;
@@ -88,34 +87,142 @@ void SdlWindow::resize() {
     m_state = WIN_WINDOWED;
 }
 
+void SdlWindow::beginTypingInput(TypingInfo* destination) {
+    m_typingDestination = destination;
+    SDL_StartTextInput();
+
+    SDL_Rect rect = {
+        (int) destination->m_editRectCorner.x, 
+        (int) destination->m_editRectCorner.y,
+        (int) destination->m_editRectSize.x, 
+        (int) destination->m_editRectSize.y
+    };
+
+    SDL_SetTextInputRect(&rect);
+}
+
+void SdlWindow::endTypingInput() {
+    m_typingDestination = NULL;
+    SDL_StopTextInput();
+}
+
 void SdlWindow::pollEvents () {
     //handle events and input
     SDL_Event event;
 
     while(SDL_PollEvent(&event))
     {
+        bool handledTypeEvent = m_typingDestination && SDL_HasEvent(SDL_TEXTINPUT);
         illInput::InputBinding inputBinding;
 
         switch(event.type)
         {
+        case SDL_TEXTINPUT:            
+            if(m_typingDestination) {
+                //insert new text
+                size_t typeTextSize = strlen(event.text.text);
+                size_t moveTextSize = strlen(m_typingDestination->m_destination + m_typingDestination->m_selectionStart);
+                size_t maxPos = m_typingDestination->m_destinationLimit - 1;
+
+                //truncate text being added if it won't fit to the string
+                size_t realTypeTextSize = glm::min(typeTextSize, maxPos - m_typingDestination->m_selectionStart);
+                
+                size_t newPos = m_typingDestination->m_selectionStart + realTypeTextSize;
+
+                //move the text if it'll fit
+                if(realTypeTextSize == typeTextSize) {
+                    size_t realMoveTextSize = glm::min(maxPos - newPos, moveTextSize);
+
+                    memmove(m_typingDestination->m_destination + newPos, m_typingDestination->m_destination + m_typingDestination->m_selectionStart,
+                        realMoveTextSize);
+
+                    //null terminate
+                    m_typingDestination->m_destination[newPos + realMoveTextSize] = 0;
+                }
+                else {
+                    m_typingDestination->m_destination[maxPos] = 0;
+                }
+
+                memcpy(m_typingDestination->m_destination + m_typingDestination->m_selectionStart, event.text.text, realTypeTextSize);
+
+                m_typingDestination->m_selectionStart += realTypeTextSize;
+            }
+            break;
+        case SDL_TEXTEDITING:
+            /*
+            Update the composition text.
+            Update the cursor position.
+            Update the selection length (if any).
+            */
+            if(m_typingDestination) {
+                //I don't know how this event works...
+            }
+
+            /*composition = event.edit.text;
+            cursor = event.edit.start;
+            selection_len = event.edit.length;*/
+            break;
+
         case SDL_KEYDOWN: {
-            inputBinding.m_deviceType = PC_KEYBOARD;
-            inputBinding.m_input = event.key.keysym.sym;
+            if(m_typingDestination) {
+                //handle the del and backspace keys since type event doesn't seem to
+                //this will probably handle multichar inputs wrong
 
-            //TODO: I could really use some nice functional programming right about now to avoid this code duplication
-            //Figure it out later and put it in the base class, or leave it...  C++ can do functional programming so it should work
+                if(event.key.keysym.sym == SDLK_BACKSPACE) {
+                    size_t textSize = strnlen(m_typingDestination->m_destination + m_typingDestination->m_selectionStart, 
+                        m_typingDestination->m_destinationLimit - m_typingDestination->m_selectionStart) + 1;
 
-            const std::set<int> * players = m_inputManager->getPlayersForDevice(inputBinding.m_deviceType);
+                    memmove(m_typingDestination->m_destination + m_typingDestination->m_selectionStart - 1, 
+                        m_typingDestination->m_destination + m_typingDestination->m_selectionStart,
+                        textSize);
 
-            if(players != NULL) {
-                for(std::set<int>::const_iterator iter = players->begin(); iter != players->end(); iter++) {
-                    illInput::InputContextStack * inputs = m_inputManager->getInputContextStack(*iter);
+                    --m_typingDestination->m_selectionStart;
 
-                    if(inputs != NULL) {
-                        illInput::ListenerBase * inputListener = inputs->lookupBinding(inputBinding);
+                    handledTypeEvent = true;
+                }
+                else if(event.key.keysym.sym == SDLK_DELETE) {
+                    size_t textSize = strnlen(m_typingDestination->m_destination + m_typingDestination->m_selectionStart + 1, 
+                        m_typingDestination->m_destinationLimit - m_typingDestination->m_selectionStart + 1) + 1;
 
-                        if(inputListener != NULL) {
-                            inputListener->onBinPress();
+                    memmove(m_typingDestination->m_destination + m_typingDestination->m_selectionStart, 
+                        m_typingDestination->m_destination + m_typingDestination->m_selectionStart + 1,
+                        textSize);
+
+                    handledTypeEvent = true;
+                }
+            }
+            
+            if(!handledTypeEvent) {
+                inputBinding.m_deviceType = (int) SdlPc::InputType::PC_KEYBOARD;
+                inputBinding.m_input = event.key.keysym.sym;
+            
+                const std::set<int> * players = m_inputManager->getPlayersForDevice(inputBinding.m_deviceType);
+
+                if(players != NULL) {
+                    for(auto playerIter = players->cbegin(); playerIter != players->cend(); playerIter++) {
+                        auto inputActions = m_inputManager->getInputActionBindings(*playerIter, inputBinding);
+                        illInput::InputContextStack * inputs = m_inputManager->getInputContextStack(*playerIter);
+
+                        if(inputActions) {
+                            for(auto actionIter = inputActions->cbegin(); actionIter != inputActions->cend(); actionIter++) {
+                                switch(actionIter->second) {
+                                    case illInput::InputManager::ActionType::CONTROL: {
+                                        if(inputs) {
+                                            illInput::ListenerBase * inputListener = inputs->lookupBinding(actionIter->first.c_str());
+
+                                            if(inputListener != NULL) {
+                                                inputListener->onBinPress();
+                                            }
+                                        }
+                                    } break;
+
+                                    case illInput::InputManager::ActionType::CONSOLE_COMMAND: {
+                                        if(m_developerConsole) {
+                                            m_developerConsole->parseInput(actionIter->first.c_str());
+                                        }
+                                    } break;
+                                }
+                            }
                         }
                     }
                 }
@@ -125,23 +232,29 @@ void SdlWindow::pollEvents () {
         break;
 
         case SDL_KEYUP: {
-            inputBinding.m_deviceType = PC_KEYBOARD;
-            inputBinding.m_input = event.key.keysym.sym;
+            if(!handledTypeEvent) {
+                inputBinding.m_deviceType = (int) SdlPc::InputType::PC_KEYBOARD;
+                inputBinding.m_input = event.key.keysym.sym;
 
-            //TODO: I could really use some nice functional programming right about now to avoid this code duplication
-            //Figure it out later and put it in the base class, or leave it...  C++ can do functional programming so it should work
+                const std::set<int> * players = m_inputManager->getPlayersForDevice(inputBinding.m_deviceType);
 
-            const std::set<int> * players = m_inputManager->getPlayersForDevice(inputBinding.m_deviceType);
+                if(players != NULL) {
+                    for(auto playerIter = players->cbegin(); playerIter != players->cend(); playerIter++) {
+                        auto inputActions = m_inputManager->getInputActionBindings(*playerIter, inputBinding);
+                        illInput::InputContextStack * inputs = m_inputManager->getInputContextStack(*playerIter);
 
-            if(players != NULL) {
-                for(std::set<int>::const_iterator iter = players->begin(); iter != players->end(); iter++) {
-                    illInput::InputContextStack * inputs = m_inputManager->getInputContextStack(*iter);
+                        if(inputActions && inputs) {
+                            for(auto actionIter = inputActions->cbegin(); actionIter != inputActions->cend(); actionIter++) {
+                                switch(actionIter->second) {
+                                    case illInput::InputManager::ActionType::CONTROL: {
+                                        illInput::ListenerBase * inputListener = inputs->lookupBinding(actionIter->first.c_str());
 
-                    if(inputs != NULL) {
-                        illInput::ListenerBase * inputListener = inputs->lookupBinding(inputBinding);
-
-                        if(inputListener != NULL) {
-                            inputListener->onBinRelease();
+                                        if(inputListener != NULL) {
+                                            inputListener->onBinRelease();
+                                        }
+                                    } break;
+                                }
+                            }
                         }
                     }
                 }
@@ -151,23 +264,35 @@ void SdlWindow::pollEvents () {
         break;
 
         case SDL_MOUSEBUTTONDOWN: {
-            inputBinding.m_deviceType = PC_MOUSE_BUTTON;
+            inputBinding.m_deviceType = (int) SdlPc::InputType::PC_MOUSE_BUTTON;
             inputBinding.m_input = event.button.button;
-
-            //TODO: I could really use some nice functional programming right about now to avoid this code duplication
-            //Figure it out later and put it in the base class, or leave it...  C++ can do functional programming so it should work
 
             const std::set<int> * players = m_inputManager->getPlayersForDevice(inputBinding.m_deviceType);
 
             if(players != NULL) {
-                for(std::set<int>::const_iterator iter = players->begin(); iter != players->end(); iter++) {
-                    illInput::InputContextStack * inputs = m_inputManager->getInputContextStack(*iter);
+                for(auto playerIter = players->cbegin(); playerIter != players->cend(); playerIter++) {
+                    auto inputActions = m_inputManager->getInputActionBindings(*playerIter, inputBinding);
+                    illInput::InputContextStack * inputs = m_inputManager->getInputContextStack(*playerIter);
 
-                    if(inputs != NULL) {
-                        illInput::ListenerBase * inputListener = inputs->lookupBinding(inputBinding);
+                    if(inputActions) {
+                        for(auto actionIter = inputActions->cbegin(); actionIter != inputActions->cend(); actionIter++) {
+                            switch(actionIter->second) {
+                                case illInput::InputManager::ActionType::CONTROL: {
+                                    if(inputs) {
+                                        illInput::ListenerBase * inputListener = inputs->lookupBinding(actionIter->first.c_str());
 
-                        if(inputListener != NULL) {
-                            inputListener->onBinPress();
+                                        if(inputListener != NULL) {
+                                            inputListener->onBinPress();
+                                        }
+                                    }
+                                } break;
+
+                                case illInput::InputManager::ActionType::CONSOLE_COMMAND: {
+                                    if(m_developerConsole) {
+                                        m_developerConsole->parseInput(actionIter->first.c_str());
+                                    }
+                                } break;
+                            }
                         }
                     }
                 }
@@ -177,23 +302,27 @@ void SdlWindow::pollEvents () {
         break;
 
         case SDL_MOUSEBUTTONUP: {
-            inputBinding.m_deviceType = PC_MOUSE_BUTTON;
+            inputBinding.m_deviceType = (int) SdlPc::InputType::PC_MOUSE_BUTTON;
             inputBinding.m_input = event.button.button;
-
-            //TODO: I could really use some nice functional programming right about now to avoid this code duplication
-            //Figure it out later and put it in the base class, or leave it...  C++ can do functional programming so it should work
 
             const std::set<int> * players = m_inputManager->getPlayersForDevice(inputBinding.m_deviceType);
 
             if(players != NULL) {
-                for(std::set<int>::const_iterator iter = players->begin(); iter != players->end(); iter++) {
-                    illInput::InputContextStack * inputs = m_inputManager->getInputContextStack(*iter);
+                for(auto playerIter = players->cbegin(); playerIter != players->cend(); playerIter++) {
+                    auto inputActions = m_inputManager->getInputActionBindings(*playerIter, inputBinding);
+                    illInput::InputContextStack * inputs = m_inputManager->getInputContextStack(*playerIter);
 
-                    if(inputs != NULL) {
-                        illInput::ListenerBase * inputListener = inputs->lookupBinding(inputBinding);
+                    if(inputActions && inputs) {
+                        for(auto actionIter = inputActions->cbegin(); actionIter != inputActions->cend(); actionIter++) {                            
+                            switch(actionIter->second) {
+                                case illInput::InputManager::ActionType::CONTROL: {
+                                    illInput::ListenerBase * inputListener = inputs->lookupBinding(actionIter->first.c_str());
 
-                        if(inputListener != NULL) {
-                            inputListener->onBinRelease();
+                                    if(inputListener != NULL) {
+                                        inputListener->onBinRelease();
+                                    }
+                                } break;
+                            }
                         }
                     }
                 }
@@ -208,79 +337,176 @@ void SdlWindow::pollEvents () {
             event.wheel.x /= 120;
             event.wheel.y /= 120;
 
-            inputBinding.m_deviceType = PC_MOUSE_WHEEL;            
-
-            //TODO: I could really use some nice functional programming right about now to avoid this code duplication
-            //Figure it out later and put it in the base class, or leave it...  C++ can do functional programming so it should work
+            inputBinding.m_deviceType = (int) SdlPc::InputType::PC_MOUSE_WHEEL;            
 
             const std::set<int> * players = m_inputManager->getPlayersForDevice(inputBinding.m_deviceType);
 
             if(players != NULL) {
-                for(std::set<int>::const_iterator iter = players->begin(); iter != players->end(); iter++) {
-                    illInput::InputContextStack * inputs = m_inputManager->getInputContextStack(*iter);
+                for(auto playerIter = players->cbegin(); playerIter != players->cend(); playerIter++) {
+                    {
+                        inputBinding.m_input = (int)illInput::Axis::AX_X;
 
-                    if(inputs != NULL) {
-                        illInput::ListenerBase * inputListener;
+                        auto inputActions = m_inputManager->getInputActionBindings(*playerIter, inputBinding);
+                        illInput::InputContextStack * inputs = m_inputManager->getInputContextStack(*playerIter);
 
-                        //x axis
-                        inputBinding.m_input = illInput::AX_X;
-                        inputListener = inputs->lookupBinding(inputBinding);
+                        if(inputActions && inputs) {
+                            for(auto actionIter = inputActions->cbegin(); actionIter != inputActions->cend(); actionIter++) {
+                                switch(actionIter->second) {
+                                    case illInput::InputManager::ActionType::CONTROL: {
+                                        illInput::ListenerBase * inputListener = inputs->lookupBinding(actionIter->first.c_str());
 
-                        if(inputListener != NULL) {
-                            inputListener->analogInput((float) event.wheel.x);
-                            inputListener->analogInput(0.0f);
-                        }
+                                        if(inputListener != NULL) {
+                                            inputListener->analogInput((float) event.wheel.x);
+                                            inputListener->analogInput(0.0f);
+                                        }
+                                    } break;
 
-                        //y axis
-                        inputBinding.m_input = illInput::AX_Y;
-                        inputListener = inputs->lookupBinding(inputBinding);
-
-                        if(inputListener != NULL) {
-                            inputListener->analogInput((float) event.wheel.y);
-                            inputListener->analogInput(0.0f);
-                        }
-
-                        //x positive axis
-                        if(event.wheel.x > 0) {
-                            inputBinding.m_input = illInput::AX_X_POS;
-                            inputListener = inputs->lookupBinding(inputBinding);
-
-                            if(inputListener != NULL) {
-                                inputListener->analogInput((float) event.wheel.x);
-                                inputListener->analogInput(0.0f);
+                                    case illInput::InputManager::ActionType::CONSOLE_COMMAND: {
+                                        if(m_developerConsole) {
+                                            m_developerConsole->parseInput(actionIter->first.c_str());
+                                        }
+                                    } break;
+                                }
                             }
                         }
+                    }
 
-                        //x negative axis
-                        if(event.wheel.x < 0) {
-                            inputBinding.m_input = illInput::AX_X_NEG;
-                            inputListener = inputs->lookupBinding(inputBinding);
+                    {
+                        inputBinding.m_input = (int)illInput::Axis::AX_Y;
 
-                            if(inputListener != NULL) {
-                                inputListener->analogInput((float) -event.wheel.x);
-                                inputListener->analogInput(0.0f);
+                        auto inputActions = m_inputManager->getInputActionBindings(*playerIter, inputBinding);
+                        illInput::InputContextStack * inputs = m_inputManager->getInputContextStack(*playerIter);
+
+                        if(inputActions && inputs) {
+                            for(auto actionIter = inputActions->cbegin(); actionIter != inputActions->cend(); actionIter++) {
+                                switch(actionIter->second) {
+                                    case illInput::InputManager::ActionType::CONTROL: {
+                                        illInput::ListenerBase * inputListener = inputs->lookupBinding(actionIter->first.c_str());
+
+                                        if(inputListener != NULL) {
+                                            inputListener->analogInput((float) event.wheel.y);
+                                            inputListener->analogInput(0.0f);
+                                        }
+                                    } break;
+
+                                    case illInput::InputManager::ActionType::CONSOLE_COMMAND: {
+                                        if(m_developerConsole) {
+                                            m_developerConsole->parseInput(actionIter->first.c_str());
+                                        }
+                                    } break;
+                                }
                             }
                         }
+                    }
 
-                        //y positive axis
-                        if(event.wheel.y > 0) {
-                            inputBinding.m_input = illInput::AX_Y_POS;
-                            inputListener = inputs->lookupBinding(inputBinding);
+                    if(event.wheel.x > 0) {
+                        inputBinding.m_input = (int)illInput::Axis::AX_X_POS;
 
-                            if(inputListener != NULL) {
-                                inputListener->analogInput((float) event.wheel.y);
-                                inputListener->analogInput(0.0f);
+                        auto inputActions = m_inputManager->getInputActionBindings(*playerIter, inputBinding);
+                        illInput::InputContextStack * inputs = m_inputManager->getInputContextStack(*playerIter);
+
+                        if(inputActions && inputs) {
+                            for(auto actionIter = inputActions->cbegin(); actionIter != inputActions->cend(); actionIter++) {
+                                switch(actionIter->second) {
+                                    case illInput::InputManager::ActionType::CONTROL: {
+                                        illInput::ListenerBase * inputListener = inputs->lookupBinding(actionIter->first.c_str());
+
+                                        if(inputListener != NULL) {
+                                            inputListener->analogInput((float) event.wheel.x);
+                                            inputListener->analogInput(0.0f);
+                                        }
+                                    } break;
+
+                                    case illInput::InputManager::ActionType::CONSOLE_COMMAND: {
+                                        if(m_developerConsole) {
+                                            m_developerConsole->parseInput(actionIter->first.c_str());
+                                        }
+                                    } break;
+                                }
                             }
                         }
+                    }
 
-                        //y negative axis
-                        if(event.wheel.y < 0) {
-                            inputBinding.m_input = illInput::AX_Y_NEG;
-                            inputListener = inputs->lookupBinding(inputBinding);
+                    if(event.wheel.x < 0) {
+                        inputBinding.m_input = (int)illInput::Axis::AX_X_NEG;
 
-                            if(inputListener != NULL) {
-                                inputListener->analogInput((float) -event.wheel.y);
-                                inputListener->analogInput(0.0f);
+                        auto inputActions = m_inputManager->getInputActionBindings(*playerIter, inputBinding);
+                        illInput::InputContextStack * inputs = m_inputManager->getInputContextStack(*playerIter);
+
+                        if(inputActions && inputs) {
+                            for(auto actionIter = inputActions->cbegin(); actionIter != inputActions->cend(); actionIter++) {
+                                switch(actionIter->second) {
+                                    case illInput::InputManager::ActionType::CONTROL: {
+                                        illInput::ListenerBase * inputListener = inputs->lookupBinding(actionIter->first.c_str());
+
+                                        if(inputListener != NULL) {
+                                            inputListener->analogInput((float) -event.wheel.x);
+                                            inputListener->analogInput(0.0f);
+                                        }
+                                    } break;
+
+                                    case illInput::InputManager::ActionType::CONSOLE_COMMAND: {
+                                        if(m_developerConsole) {
+                                            m_developerConsole->parseInput(actionIter->first.c_str());
+                                        }
+                                    } break;
+                                }
+                            }
+                        }
+                    }
+
+                    if(event.wheel.y > 0) {
+                        inputBinding.m_input = (int)illInput::Axis::AX_Y_POS;
+
+                        auto inputActions = m_inputManager->getInputActionBindings(*playerIter, inputBinding);
+                        illInput::InputContextStack * inputs = m_inputManager->getInputContextStack(*playerIter);
+
+                        if(inputActions && inputs) {
+                            for(auto actionIter = inputActions->cbegin(); actionIter != inputActions->cend(); actionIter++) {
+                                switch(actionIter->second) {
+                                    case illInput::InputManager::ActionType::CONTROL: {
+                                        illInput::ListenerBase * inputListener = inputs->lookupBinding(actionIter->first.c_str());
+
+                                        if(inputListener != NULL) {
+                                            inputListener->analogInput((float) event.wheel.y);
+                                            inputListener->analogInput(0.0f);
+                                        }
+                                    } break;
+
+                                    case illInput::InputManager::ActionType::CONSOLE_COMMAND: {
+                                        if(m_developerConsole) {
+                                            m_developerConsole->parseInput(actionIter->first.c_str());
+                                        }
+                                    } break;
+                                }
+                            }
+                        }
+                    }
+
+                    if(event.wheel.y < 0) {
+                        inputBinding.m_input = (int)illInput::Axis::AX_Y_NEG;
+
+                        auto inputActions = m_inputManager->getInputActionBindings(*playerIter, inputBinding);
+                        illInput::InputContextStack * inputs = m_inputManager->getInputContextStack(*playerIter);
+
+                        if(inputActions && inputs) {
+                            for(auto actionIter = inputActions->cbegin(); actionIter != inputActions->cend(); actionIter++) {
+                                switch(actionIter->second) {
+                                    case illInput::InputManager::ActionType::CONTROL: {
+                                        illInput::ListenerBase * inputListener = inputs->lookupBinding(actionIter->first.c_str());
+
+                                        if(inputListener != NULL) {
+                                            inputListener->analogInput((float) -event.wheel.y);
+                                            inputListener->analogInput(0.0f);
+                                        }
+                                    } break;
+
+                                    case illInput::InputManager::ActionType::CONSOLE_COMMAND: {
+                                        if(m_developerConsole) {
+                                            m_developerConsole->parseInput(actionIter->first.c_str());
+                                        }
+                                    } break;
+                                }
                             }
                         }
                     }
@@ -290,93 +516,205 @@ void SdlWindow::pollEvents () {
         break;
 
         case SDL_MOUSEMOTION: {
-            inputBinding.m_deviceType = PC_MOUSE;            
-
-            //TODO: I could really use some nice functional programming right about now to avoid this code duplication
-            //Figure it out later and put it in the base class, or leave it...  C++ can do functional programming so it should work
+            inputBinding.m_deviceType = (int) SdlPc::InputType::PC_MOUSE;            
 
             const std::set<int> * players = m_inputManager->getPlayersForDevice(inputBinding.m_deviceType);
 
             if(players != NULL) {
-                for(std::set<int>::const_iterator iter = players->begin(); iter != players->end(); iter++) {
-                    illInput::InputContextStack * inputs = m_inputManager->getInputContextStack(*iter);
+                for(auto playerIter = players->cbegin(); playerIter != players->cend(); playerIter++) {
+                    {
+                        inputBinding.m_input = (int)illInput::Axis::AX_VAL;
 
-                    if(inputs != NULL) {
-                        illInput::ListenerBase * inputListener;
+                        auto inputActions = m_inputManager->getInputActionBindings(*playerIter, inputBinding);
+                        illInput::InputContextStack * inputs = m_inputManager->getInputContextStack(*playerIter);
 
-                        //mouse position
-                        {
-                            inputBinding.m_input = illInput::AX_VAL;
+                        if(inputActions && inputs) {
+                            for(auto actionIter = inputActions->cbegin(); actionIter != inputActions->cend(); actionIter++) {
+                                switch(actionIter->second) {
+                                    case illInput::InputManager::ActionType::CONTROL: {
+                                        illInput::ValueListener * valueListener = inputs->lookupValueBinding(actionIter->first.c_str());
 
-                            illInput::ValueListener * valueListener = inputs->lookupValueBinding(inputBinding);
+                                        if(valueListener != NULL) {
+                                            MousePosition pos(event.motion.x, event.motion.y);
 
-                            if(valueListener != NULL) {
-                                MousePosition pos(event.motion.x, event.motion.y);
+                                            valueListener->onChange(CopiedData(&pos, sizeof(MousePosition)));
+                                        }
+                                    } break;
 
-                                valueListener->onChange(CopiedData(&pos, sizeof(MousePosition)));
+                                    case illInput::InputManager::ActionType::CONSOLE_COMMAND: {
+                                        if(m_developerConsole) {
+                                            m_developerConsole->parseInput(actionIter->first.c_str());
+                                        }
+                                    } break;
+                                }
                             }
                         }
-                        
-                        //mouse x axis
-                        inputBinding.m_input = illInput::AX_X;
-                        inputListener = inputs->lookupBinding(inputBinding);
+                    }
 
-                        if(inputListener != NULL) {
-                            inputListener->analogInput((float) event.motion.xrel);
-                        }
+                    {
+                        inputBinding.m_input = (int)illInput::Axis::AX_X;
 
-                        //mouse y axis
-                        inputBinding.m_input = illInput::AX_Y;
-                        inputListener = inputs->lookupBinding(inputBinding);
+                        auto inputActions = m_inputManager->getInputActionBindings(*playerIter, inputBinding);
+                        illInput::InputContextStack * inputs = m_inputManager->getInputContextStack(*playerIter);
 
-                        if(inputListener != NULL) {
-                            inputListener->analogInput((float) event.motion.yrel);
-                        }
+                        if(inputActions && inputs) {
+                            for(auto actionIter = inputActions->cbegin(); actionIter != inputActions->cend(); actionIter++) {
+                                switch(actionIter->second) {
+                                    case illInput::InputManager::ActionType::CONTROL: {
+                                        illInput::ListenerBase * inputListener = inputs->lookupBinding(actionIter->first.c_str());
 
-                        //mouse x positive axis
-                        if(event.motion.xrel > 0) {
-                            inputBinding.m_input = illInput::AX_X_POS;
-                            inputListener = inputs->lookupBinding(inputBinding);
+                                        if(inputListener != NULL) {
+                                            inputListener->analogInput((float) event.motion.xrel);
+                                        }
+                                    } break;
 
-                            if(inputListener != NULL) {
-                                inputListener->analogInput((float) event.motion.xrel);
+                                    case illInput::InputManager::ActionType::CONSOLE_COMMAND: {
+                                        if(m_developerConsole) {
+                                            m_developerConsole->parseInput(actionIter->first.c_str());
+                                        }
+                                    } break;
+                                }
                             }
                         }
+                    }
 
-                        //mouse x negative axis
-                        if(event.motion.xrel < 0) {
-                            inputBinding.m_input = illInput::AX_X_NEG;
-                            inputListener = inputs->lookupBinding(inputBinding);
+                    {
+                        inputBinding.m_input = (int)illInput::Axis::AX_Y;
 
-                            if(inputListener != NULL) {
-                                inputListener->analogInput((float) -event.motion.xrel);
+                        auto inputActions = m_inputManager->getInputActionBindings(*playerIter, inputBinding);
+                        illInput::InputContextStack * inputs = m_inputManager->getInputContextStack(*playerIter);
+
+                        if(inputActions && inputs) {
+                            for(auto actionIter = inputActions->cbegin(); actionIter != inputActions->cend(); actionIter++) {
+                                switch(actionIter->second) {
+                                    case illInput::InputManager::ActionType::CONTROL: {
+                                        illInput::ListenerBase * inputListener = inputs->lookupBinding(actionIter->first.c_str());
+
+                                        if(inputListener != NULL) {
+                                            inputListener->analogInput((float) event.motion.yrel);
+                                        }
+                                    } break;
+
+                                    case illInput::InputManager::ActionType::CONSOLE_COMMAND: {
+                                        if(m_developerConsole) {
+                                            m_developerConsole->parseInput(actionIter->first.c_str());
+                                        }
+                                    } break;
+                                }
                             }
                         }
+                    }
 
-                        //mouse y positive axis
-                        if(event.motion.yrel > 0) {
-                            inputBinding.m_input = illInput::AX_Y_POS;
-                            inputListener = inputs->lookupBinding(inputBinding);
+                    if(event.motion.xrel > 0) {
+                        inputBinding.m_input = (int)illInput::Axis::AX_X_POS;
 
-                            if(inputListener != NULL) {
-                                inputListener->analogInput((float) event.motion.yrel);
+                        auto inputActions = m_inputManager->getInputActionBindings(*playerIter, inputBinding);
+                        illInput::InputContextStack * inputs = m_inputManager->getInputContextStack(*playerIter);
+
+                        if(inputActions && inputs) {
+                            for(auto actionIter = inputActions->cbegin(); actionIter != inputActions->cend(); actionIter++) {
+                                switch(actionIter->second) {
+                                    case illInput::InputManager::ActionType::CONTROL: {
+                                        illInput::ListenerBase * inputListener = inputs->lookupBinding(actionIter->first.c_str());
+
+                                        if(inputListener != NULL) {
+                                            inputListener->analogInput((float) event.motion.xrel);
+                                        }
+                                    } break;
+
+                                    case illInput::InputManager::ActionType::CONSOLE_COMMAND: {
+                                        if(m_developerConsole) {
+                                            m_developerConsole->parseInput(actionIter->first.c_str());
+                                        }
+                                    } break;
+                                }
                             }
                         }
+                    }
 
-                        //mouse y negative axis
-                        if(event.motion.yrel < 0) {
-                            inputBinding.m_input = illInput::AX_Y_NEG;
-                            inputListener = inputs->lookupBinding(inputBinding);
+                    if(event.motion.xrel < 0) {
+                        inputBinding.m_input = (int)illInput::Axis::AX_X_NEG;
 
-                            if(inputListener != NULL) {
-                                inputListener->analogInput((float) -event.motion.yrel);
+                        auto inputActions = m_inputManager->getInputActionBindings(*playerIter, inputBinding);
+                        illInput::InputContextStack * inputs = m_inputManager->getInputContextStack(*playerIter);
+
+                        if(inputActions && inputs) {
+                            for(auto actionIter = inputActions->cbegin(); actionIter != inputActions->cend(); actionIter++) {
+                                switch(actionIter->second) {
+                                    case illInput::InputManager::ActionType::CONTROL: {
+                                        illInput::ListenerBase * inputListener = inputs->lookupBinding(actionIter->first.c_str());
+
+                                        if(inputListener != NULL) {
+                                            inputListener->analogInput((float) -event.motion.xrel);
+                                        }
+                                    } break;
+
+                                    case illInput::InputManager::ActionType::CONSOLE_COMMAND: {
+                                        if(m_developerConsole) {
+                                            m_developerConsole->parseInput(actionIter->first.c_str());
+                                        }
+                                    } break;
+                                }
+                            }
+                        }
+                    }
+
+                    if(event.motion.yrel > 0) {
+                        inputBinding.m_input = (int)illInput::Axis::AX_Y_POS;
+
+                        auto inputActions = m_inputManager->getInputActionBindings(*playerIter, inputBinding);
+                        illInput::InputContextStack * inputs = m_inputManager->getInputContextStack(*playerIter);
+
+                        if(inputActions && inputs) {
+                            for(auto actionIter = inputActions->cbegin(); actionIter != inputActions->cend(); actionIter++) {
+                                switch(actionIter->second) {
+                                    case illInput::InputManager::ActionType::CONTROL: {
+                                        illInput::ListenerBase * inputListener = inputs->lookupBinding(actionIter->first.c_str());
+
+                                        if(inputListener != NULL) {
+                                            inputListener->analogInput((float) event.motion.yrel);
+                                        }
+                                    } break;
+
+                                    case illInput::InputManager::ActionType::CONSOLE_COMMAND: {
+                                        if(m_developerConsole) {
+                                            m_developerConsole->parseInput(actionIter->first.c_str());
+                                        }
+                                    } break;
+                                }
+                            }
+                        }
+                    }
+
+                    if(event.motion.yrel < 0) {
+                        inputBinding.m_input = (int)illInput::Axis::AX_Y_NEG;
+
+                        auto inputActions = m_inputManager->getInputActionBindings(*playerIter, inputBinding);
+                        illInput::InputContextStack * inputs = m_inputManager->getInputContextStack(*playerIter);
+
+                        if(inputActions && inputs) {
+                            for(auto actionIter = inputActions->cbegin(); actionIter != inputActions->cend(); actionIter++) {
+                                switch(actionIter->second) {
+                                    case illInput::InputManager::ActionType::CONTROL: {
+                                        illInput::ListenerBase * inputListener = inputs->lookupBinding(actionIter->first.c_str());
+
+                                        if(inputListener != NULL) {
+                                            inputListener->analogInput((float) -event.motion.yrel);
+                                        }
+                                    } break;
+
+                                    case illInput::InputManager::ActionType::CONSOLE_COMMAND: {
+                                        if(m_developerConsole) {
+                                            m_developerConsole->parseInput(actionIter->first.c_str());
+                                        }
+                                    } break;
+                                }
                             }
                         }
                     }
                 }
             }
         }
-
         break;
 
         case SDL_QUIT:

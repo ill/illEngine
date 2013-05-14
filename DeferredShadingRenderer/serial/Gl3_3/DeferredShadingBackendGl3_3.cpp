@@ -964,7 +964,7 @@ void DeferredShadingBackendGl3_3::renderGbuffer(illRendererCommon::RenderQueues&
                         GLuint numInd = primitiveGroup.m_numIndices;
                         GLuint endInd = startInd + numInd;
 
-                        LOG_DEBUG("Primitive Group %u", meshInfo.m_meshInfo.m_primitiveGroup);
+                        //LOG_DEBUG("Primitive Group %u", meshInfo.m_meshInfo.m_primitiveGroup);
 
                         glDrawRangeElements(getPrimitiveType(primitiveGroup.m_type), startInd, endInd, numInd, GL_UNSIGNED_SHORT, (char *)NULL + startInd * sizeof(uint16_t));
                     }

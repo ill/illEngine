@@ -24,6 +24,18 @@ const float DEFAULT_ASPECT_RATIO = 0.0f;
 
 class Window {
 public:
+    /**
+    I may rewrite this later.  For now it works with SDL text input.
+    */
+    struct TypingInfo {
+        char * m_destination;
+        size_t m_destinationLimit;
+        size_t m_selectionStart;
+        size_t m_selectionLength;
+        glm::vec2 m_editRectCorner;
+        glm::vec2 m_editRectSize;
+    };
+
     enum State {
         WIN_UNINITIALIZED,      ///<The window isn't ready for anything and must be initialized
         WIN_INITIALIZING,       ///<The window is currently initializing either for the first time or after a video mode change
@@ -58,6 +70,10 @@ public:
     If in full screen or switching to full screen or out of fullscreen, any screen changes require a full reinitializing.
     */
     virtual void resize() = 0;
+
+    virtual void beginTypingInput(TypingInfo* destination) = 0;
+
+    virtual void endTypingInput() = 0;
 
     /**
     Polls the window input events

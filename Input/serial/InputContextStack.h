@@ -6,7 +6,6 @@
 namespace illInput {
 
 struct InputContext;
-struct InputBinding;
 struct ListenerBase;
 struct ValueListener;
 
@@ -41,13 +40,13 @@ public:
     Looks up an input listener bound to an input based on contexts on the stack.
     Returns empty pointer if no binding is found.
     */
-    ListenerBase * lookupBinding(const InputBinding& binding);
+    ListenerBase * lookupBinding(const char * action);
 
     /**
     Looks up a value input listener bound to an input based on contexts on the stack.
     Returns empty pointer if no binding is found.
     */
-    ValueListener * lookupValueBinding(const InputBinding& binding);
+    ValueListener * lookupValueBinding(const char * action);
 
 private:
     std::vector<InputContext *> m_stack;

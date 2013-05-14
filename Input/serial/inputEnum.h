@@ -5,8 +5,8 @@ namespace illInput {
 /**
 Enumerates the axis types in a joystick or mouse
 */
-enum Axis {
-    AX_VAL,     ///<Mouse position on screen
+enum class Axis {
+    AX_VAL,     ///<The raw value, such as mouse position on screen
 
     AX_X,       ///<X axis
     AX_Y,       ///<Y axis

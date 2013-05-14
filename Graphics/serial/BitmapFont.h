@@ -49,14 +49,6 @@ public:
     virtual void reload(GraphicsBackend * backend);
     
     /**
-    Gets the width of a line of text in the buffer provided.
-    Stops at the next newline and sets the text pointer to point to the character after the newline.
-
-    This is unscaled so if rendering a scaled font multiply this by the horizontal scale.
-    */
-    glm::mediump_float getLineWidth(char const ** text) const;
-
-    /**
     Gets the rectangular dimensions that would be taken up by some text.
 
     This is unscaled so if rendering a scaled font multiply this by the horizontal and vertical scale
@@ -64,35 +56,45 @@ public:
     glm::vec2 getPrintDimensions(const char * text) const;
 
     /**
+    Gets the location of a character in some text given the character's position in the string.
+    @param text The text operating on
+    @param charPos Which character position in the text to look for.
+    @param currPos Which character is the search starting on.  This also write the position in the string when returning.  You can use this to continue from a previous search
+    @param startLocation Which position previously found to start from.
+    */
+    glm::vec2 getCharLocation(const char * text, size_t charPos, size_t& currPos, glm::vec2 startLocation = glm::vec2(0.0f)) const;
+
+    /**
     Gets the color code from a block of text.
-    First checks if this is in fact a color code and returns true.  If not a color code, nothing happens and returns false.
-
-    Sets the text pointer to point to the character after the color code.
-
+    First checks if this is in fact a color code.
+    It returns the character pointer to the next part of the string after the color code, or the same part of the string that was passed in if this wasn't a color code.
+    
     Color codes can start with a carat and a number 0 through 9.  This matches the Quake 3 color codes. http://www.computerhope.com/issues/ch000658.htm
     ^0 : black
     ^1 : red
     ^2 : green
     ^3 : yellow
     ^4 : blue
-    ^5 : light blue
-    ^6 : pink
+    ^5 : cyan
+    ^6 : magenta
     ^7 : white
 
     //these don't come from Quake 3, I added them myself
     ^8 : purple
     ^9 : gray
 
+    You can escape a ^ followed by a number by writing ^^ then a number so it's not a color code.
+
     Color codes can also start with the pound character and followed by either an RGB or RGBA hex color.
     #FFFFFF would be white with alpha of 1 for example
     #00000022 would be barely visible black
 
+    You can escape a hex color code by typing ## instead of just #.
+
     The color code determines what color the following text after the color code will be.  This can let users create colorful player names :D
     Also it's useful for coloring your own text.
-
-    @return Whether or not that was a color code.
     */
-    static bool getColorCode(const char ** text, glm::vec4& destination); 
+    static const char * getColorCode(const char * text, glm::vec4& destination); 
 
     inline glm::mediump_float getPaddingUp() const {
         return m_paddingUp;

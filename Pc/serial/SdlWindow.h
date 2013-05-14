@@ -13,6 +13,10 @@ namespace illGraphics {
 class GraphicsBackend;
 }
 
+namespace illConsole {
+class DeveloperConsole;
+};
+
 namespace SdlPc {
 
 //move these constants later
@@ -33,18 +37,25 @@ class SdlWindow : public illGraphics::Window {
 public:
     SdlWindow()
         : illGraphics::Window(),
-        m_window(NULL)
+        m_window(NULL),
+        m_developerConsole(NULL),
+        m_typingDestination(NULL)
     {}
 
     ~SdlWindow();
    
-    void initialize();
-    void uninitialize();
-    void resize();
-    void pollEvents();
+    //void begin
 
-    void beginFrame() {}
-    void endFrame();
+    virtual void beginTypingInput(TypingInfo* destination);
+    virtual void endTypingInput();
+
+    virtual void initialize();
+    virtual void uninitialize();
+    virtual void resize();
+    virtual void pollEvents();
+
+    virtual void beginFrame() {}
+    virtual void endFrame();
 
     //TODO: this is done this way for now, but in the future don't do it this way.
     inline void setBackend(illGraphics::GraphicsBackend * graphicsBackend) {
@@ -55,7 +66,11 @@ public:
         m_inputManager = inputManager;
     }
 
+    illConsole::DeveloperConsole * m_developerConsole;
+
 private:
+    TypingInfo* m_typingDestination;
+
     //TODO: for now it's hardcoded to have one of each of these
     illGraphics::GraphicsBackend * m_graphicsBackend;
     illInput::InputManager * m_inputManager;

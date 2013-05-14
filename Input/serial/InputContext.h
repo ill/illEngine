@@ -1,6 +1,7 @@
 #ifndef ILL_INPUT_CONTEXT_H__
 #define ILL_INPUT_CONTEXT_H__
 
+#include <string>
 #include <map>
 #include "InputBinding.h"
 
@@ -17,26 +18,26 @@ Bind InputBinding objects, which represent some input like a key on a keyboard, 
 */
 struct InputContext {
 private:
-    typedef std::map<InputBinding, ListenerBase *> BindMap;
-    typedef std::map<InputBinding, ValueListener *> ValueBindMap;
+    typedef std::map<std::string, ListenerBase *> BindMap;
+    typedef std::map<std::string, ValueListener *> ValueBindMap;
 
 public:
-    void bindInput(const InputBinding& binding, ListenerBase * input);
-    void bindInput(const InputBinding& binding, ValueListener * input);
+    void bindInput(const char * action, ListenerBase * input);
+    void bindInput(const char * action, ValueListener * input);
 
-    void unbindInput(const InputBinding& binding);
+    void unbindInput(const char * action);
 
     /**
     Looks up an input listener bound to an input.
     Returns empty pointer no binding is found.
     */
-    ListenerBase * lookupBinding(const InputBinding& binding);
+    ListenerBase * lookupBinding(const char * action);
 
     /**
     Looks up a value listener bound to an input.
     Returns empty pointer no binding is found.
     */
-    ValueListener * lookupValueBinding(const InputBinding& binding);
+    ValueListener * lookupValueBinding(const char * action);
 
 private:
     BindMap m_inputMapping;

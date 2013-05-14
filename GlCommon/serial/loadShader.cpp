@@ -102,7 +102,7 @@ void GlBackend::loadShaderInternal(void ** shaderData, const char * path, unsign
 
     ///////////////////////////////////////////
     //print info log
-#if ENABLE_LOG_DEBUG_GRAPHICS
+#if ENABLE_LOG_DEBUG_GRAPHICS && !defined(NDEBUG)
     GLint infologLength = 0;
     GLint charsWritten = 0;
     GLchar *infoLog;
