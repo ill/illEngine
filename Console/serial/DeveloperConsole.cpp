@@ -152,8 +152,6 @@ bool DeveloperConsole::getParamString(std::istringstream& argStream, std::string
 }
 
 void DeveloperConsole::parseInput(const char * input) {
-    printMessage(illLogging::LogDestination::MessageLevel::MT_INFO, ("^3>^7 " + std::string(input)).c_str());   //LOL
-
     //since this isn't performance critical code, I'm just using streams and stuff
     std::stringstream inputStream(input);
 
