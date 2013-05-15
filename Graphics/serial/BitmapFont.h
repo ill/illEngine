@@ -56,7 +56,9 @@ public:
     glm::vec2 getPrintDimensions(const char * text) const;
 
     /**
-    Gets the location of a character in some text given the character's position in the string.
+    Gets the location of a character in some text given the character's position in the string.  Use this for rendering the character
+    at the right position or something.  This is unscaled so if rendering a scaled font, multiply this by the horizontal and vertical scale.
+
     @param text The text operating on
     @param charPos Which character position in the text to look for.
     @param currPos Which character is the search starting on.  This also write the position in the string when returning.  You can use this to continue from a previous search

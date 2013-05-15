@@ -27,11 +27,20 @@ void DeferredShadingScene::render(const illGraphics::Camera& camera, size_t view
 
     bool needsQuerySetup = true;
 
+    m_debugNumTraversedCells = 0;
+    m_debugNumEmptyCells = 0;
+    m_debugNumCulledCells = 0;
+    m_debugNumRenderedNodes = 0;
+    m_debugNumCulledNodes = 0;
+
     while(!frustumIterator.atEnd()) {
         unsigned int currentCell = getGridVolume().indexForCell(frustumIterator.getCurrentPosition());
 
+        ++m_debugNumTraversedCells;
+
         //check if cell is empty
         if(getSceneNodeCell(currentCell).empty() && getStaticNodeCell(currentCell).size() == 0) {
+            ++m_debugNumEmptyCells;
             frustumIterator.forward();
             continue;
         }
@@ -67,9 +76,11 @@ void DeferredShadingScene::render(const illGraphics::Camera& camera, size_t view
 
                     if(node->getOcclusionCull() && node->getLastNonvisibleFrame(viewport) == m_frameCounter - 1) {
                         static_cast<DeferredShadingBackend *>(m_rendererBackend)->occlusionQueryNode(camera, node, viewport);
+                        ++m_debugNumCulledNodes;
                     }
                     else {
                         node->render(m_renderQueues);
+                        ++m_debugNumRenderedNodes;
                     }
                 }
             }
@@ -89,9 +100,11 @@ void DeferredShadingScene::render(const illGraphics::Camera& camera, size_t view
 
                     if(node->getOcclusionCull() && node->getLastNonvisibleFrame(viewport) == m_frameCounter - 1) {
                         static_cast<DeferredShadingBackend *>(m_rendererBackend)->occlusionQueryNode(camera, node, viewport);
+                        ++m_debugNumCulledNodes;
                     }
                     else {
                         node->render(m_renderQueues);
+                        ++m_debugNumRenderedNodes;
                     }
                 }
             }
@@ -101,6 +114,9 @@ void DeferredShadingScene::render(const illGraphics::Camera& camera, size_t view
 
             //draw objects for the depth pass
             static_cast<DeferredShadingBackend *>(m_rendererBackend)->depthPass(m_renderQueues, camera, cellQuery, viewport);
+        }
+        else {
+            ++m_debugNumCulledCells;
         }
     }
 

@@ -55,6 +55,12 @@ public:
     bool m_performCull;
     bool m_debugPerObjectCull;
 
+    int m_debugNumTraversedCells;
+    int m_debugNumEmptyCells;
+    int m_debugNumCulledCells;
+    int m_debugNumRenderedNodes;
+    int m_debugNumCulledNodes;
+
 protected:
     uint64_t m_frameCounter;
 

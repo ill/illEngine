@@ -150,19 +150,19 @@ protected:
         size_t numInteractionCells = interactionCellNumber.x * interactionCellNumber.y * interactionCellNumber.z;
 
         m_sceneNodes = new NodeContainer[numCells];
-        LOG_DEBUG("Allocated %u Scene Node Cells. Each cell is %u bytes. Allocated %u bytes, %f megabytes.", numCells, sizeof(NodeContainer), numCells * sizeof(NodeContainer), (float) numCells * sizeof(NodeContainer) / 1024.0f / 1024.0f);
+        //LOG_DEBUG("Allocated %u Scene Node Cells. Each cell is %u bytes. Allocated %u bytes, %f megabytes.", numCells, sizeof(NodeContainer), numCells * sizeof(NodeContainer), (float) numCells * sizeof(NodeContainer) / 1024.0f / 1024.0f);
 
         m_staticSceneNodes = new StaticNodeContainer[numCells];
-        LOG_DEBUG("Allocated %u Static Scene Node Cells. Each cell is %u bytes. Allocated %u bytes, %f megabytes.", numCells, sizeof(StaticNodeContainer), numCells * sizeof(StaticNodeContainer), (float) numCells * sizeof(NodeContainer) / 1024.0f / 1024.0f);
+        //LOG_DEBUG("Allocated %u Static Scene Node Cells. Each cell is %u bytes. Allocated %u bytes, %f megabytes.", numCells, sizeof(StaticNodeContainer), numCells * sizeof(StaticNodeContainer), (float) numCells * sizeof(NodeContainer) / 1024.0f / 1024.0f);
 
         m_lightNodes = new LightNodeContainer[numInteractionCells];
-        LOG_DEBUG("Allocated %u Light Node Cells. Each cell is %u bytes. Allocated %u bytes, %f megabytes.", numInteractionCells, sizeof(LightNodeContainer), numInteractionCells * sizeof(LightNodeContainer), (float) numInteractionCells * sizeof(LightNodeContainer) / 1024.0f / 1024.0f);
+        //LOG_DEBUG("Allocated %u Light Node Cells. Each cell is %u bytes. Allocated %u bytes, %f megabytes.", numInteractionCells, sizeof(LightNodeContainer), numInteractionCells * sizeof(LightNodeContainer), (float) numInteractionCells * sizeof(LightNodeContainer) / 1024.0f / 1024.0f);
 
         m_staticLightNodes = new StaticLightNodeContainer[numInteractionCells];
-        LOG_DEBUG("Allocated %u Static Light Cells. Each cell is %u bytes. Allocated %u bytes, %f megabytes.", numInteractionCells, sizeof(StaticLightNodeContainer), numInteractionCells * sizeof(StaticLightNodeContainer), (float) numInteractionCells * sizeof(StaticLightNodeContainer) / 1024.0f / 1024.0f);
+        //LOG_DEBUG("Allocated %u Static Light Cells. Each cell is %u bytes. Allocated %u bytes, %f megabytes.", numInteractionCells, sizeof(StaticLightNodeContainer), numInteractionCells * sizeof(StaticLightNodeContainer), (float) numInteractionCells * sizeof(StaticLightNodeContainer) / 1024.0f / 1024.0f);
 
-        LOG_DEBUG("Scene cells take %u bytes, %f megabytes", (numCells * sizeof(NodeContainer) + numCells * sizeof(StaticNodeContainer) + numInteractionCells * sizeof(LightNodeContainer) + numInteractionCells * sizeof(StaticLightNodeContainer)),
-            (float) (numCells * sizeof(NodeContainer) + numCells * sizeof(StaticNodeContainer) + numInteractionCells * sizeof(LightNodeContainer) + numInteractionCells * sizeof(StaticLightNodeContainer)) / 1024.0f / 1024.0f);
+        //LOG_DEBUG("Scene cells take %u bytes, %f megabytes", (numCells * sizeof(NodeContainer) + numCells * sizeof(StaticNodeContainer) + numInteractionCells * sizeof(LightNodeContainer) + numInteractionCells * sizeof(StaticLightNodeContainer)),
+        //    (float) (numCells * sizeof(NodeContainer) + numCells * sizeof(StaticNodeContainer) + numInteractionCells * sizeof(LightNodeContainer) + numInteractionCells * sizeof(StaticLightNodeContainer)) / 1024.0f / 1024.0f);
     }
 
 private:
