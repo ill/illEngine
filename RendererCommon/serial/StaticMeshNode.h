@@ -10,11 +10,19 @@ namespace illRendererCommon {
 
 class StaticMeshNode : public GraphicsNode {
 public:
+    enum class OccluderType {
+        ALWAYS,
+        LIMITED,
+        NEVER
+    };
+
     inline StaticMeshNode(GraphicsScene * scene,
             const glm::mat4& transform, const Box<>& boundingVol,
+            OccluderType occluderType = OccluderType::ALWAYS,
             State initialState = State::IN_SCENE)
         : GraphicsNode(scene, transform, boundingVol, Type::MESH, initialState),
-        m_meshId(-1)
+        m_meshId(-1),
+        m_occluderType(occluderType)
     {}
 
     virtual ~StaticMeshNode() {}
@@ -57,6 +65,7 @@ public:
         bool m_visible;
     };
 
+    OccluderType m_occluderType;
     std::vector<PrimitiveGroupInfo> m_primitiveGroups;
 };
 

@@ -27,6 +27,27 @@ namespace illDeferredShadingRenderer {
 
 class DeferredShadingBackend : public illRendererCommon::RendererBackend {
 public:
+    static inline uint64_t codeFrame(uint64_t frame) {
+        return /*0x00FFFFFFFFFFFFFF*/0x7FFFFFFFFFFFFFFF & frame;
+    }
+
+    /*
+    static inline uint64_t encodeDuration(uint64_t frame) {
+        return (frame & 0x7F) << 56;
+    }
+
+    static inline uint8_t decodeDuration(uint64_t frame) {
+        return (frame & 0x7F00000000000000) >> 56;
+    }*/
+
+    static inline uint64_t encodeVisible(bool frame) {
+        return frame ? 0x8000000000000000 : 0;
+    }
+
+    static inline bool decodeVisible(uint64_t frame) {
+        return (0x8000000000000000 & frame) != 0;
+    }
+
     DeferredShadingBackend(illGraphics::GraphicsBackend * backend)
         : RendererBackend(backend),
         m_state(State::UNINITIALIZED),
@@ -66,8 +87,10 @@ public:
     @param lastViewedFrames The lastViewedFrames cells inside the scene that results will be written to.
     @param lastFrameCounter The last frame that happened as tracked by the scene making this call.
         If a cell was visible during the last frame, this will be the value written as the last visible frame.
+    @param successDuration If a query was successful, adds this number to the frame counter to make the query result last for that many frames.
+    @param failureDuration If a query failed, adds this number to the frame counter to make the query result last for that many frames.
     */
-    virtual void retreiveCellQueries(std::unordered_map<size_t, Array<uint64_t>>& lastViewedFrames, uint64_t lastFrameCounter) = 0;
+    virtual void retreiveCellQueries(std::unordered_map<size_t, Array<uint64_t>>& lastViewedFrames, uint64_t lastFrameCounter, uint64_t successDuration, uint64_t failureDuration) = 0;
     
     /**
     TODO: document

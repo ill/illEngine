@@ -15,7 +15,8 @@ void StaticMeshNode::render(RenderQueues& renderQueues) {
 
         switch(group.m_material->getLoadArgs().m_blendMode) {
         case illGraphics::MaterialLoadArgs::BlendMode::NONE: {
-                {
+                
+                if(m_occluderType == OccluderType::ALWAYS || (m_occluderType == OccluderType::LIMITED && renderQueues.m_depthPassObjects < renderQueues.m_depthPassLimit)) {
                     MeshData<>::PrimitiveGroup& test = m_mesh->getMeshFrontentData()->getPrimitiveGroup(groupInd);
 
                     auto& list = renderQueues.m_depthPassSolidStaticMeshes[group.m_material->getDepthPassProgram()][group.m_material.get()][m_mesh.get()];
@@ -23,6 +24,8 @@ void StaticMeshNode::render(RenderQueues& renderQueues) {
                     list.emplace_back();
                     list.back().m_node = this;
                     list.back().m_primitiveGroup = groupInd;
+
+                    ++renderQueues.m_depthPassObjects;
                 }
                 
                 {

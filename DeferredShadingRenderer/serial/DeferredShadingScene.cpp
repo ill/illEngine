@@ -8,13 +8,23 @@
 namespace illDeferredShadingRenderer {
 
 void DeferredShadingScene::setupFrame() {
-    static_cast<DeferredShadingBackend *>(m_rendererBackend)->retreiveCellQueries(m_lastVisibleFrames, m_frameCounter);
+    uint64_t visibilityDuration = m_queryVisibilityDuration;
+    uint64_t invisibilityDuration = m_queryInvisibilityDuration;
+
+    if(m_numFramesOverflowed > 0) {
+        visibilityDuration += m_queryVisibilityDurationGrowth * m_numFramesOverflowed;
+        invisibilityDuration += m_queryInvisibilityDurationGrowth * m_numFramesOverflowed;
+    }
+
+    static_cast<DeferredShadingBackend *>(m_rendererBackend)->retreiveCellQueries(m_queryFrames, m_frameCounter, visibilityDuration, invisibilityDuration);
     static_cast<DeferredShadingBackend *>(m_rendererBackend)->retreiveNodeQueries(m_frameCounter);
     static_cast<DeferredShadingBackend *>(m_rendererBackend)->setupFrame();
+   
     ++m_frameCounter;
 }
 
-void DeferredShadingScene::render(const illGraphics::Camera& camera, size_t viewport) {    
+void DeferredShadingScene::render(const illGraphics::Camera& camera, size_t viewport) {
+    m_renderQueues.m_depthPassObjects = 75;
     static_cast<DeferredShadingBackend *>(m_rendererBackend)->setupViewport(camera);
 
     //get the frustum iterator
@@ -31,10 +41,23 @@ void DeferredShadingScene::render(const illGraphics::Camera& camera, size_t view
     m_debugNumEmptyCells = 0;
     m_debugNumCulledCells = 0;
     m_debugNumRenderedNodes = 0;
-    m_debugNumCulledNodes = 0;
+    m_debugNumUnqueried = 0;
+    
+    size_t numQueries = 0;
+    size_t numQueriesNeeded = 0;
+    
+    //std::set<unsigned int> debugCellSet;
+    
+    bool recordedOverflow = false;
 
     while(!frustumIterator.atEnd()) {
         unsigned int currentCell = getGridVolume().indexForCell(frustumIterator.getCurrentPosition());
+
+        /*if(debugCellSet.find(currentCell) != debugCellSet.end()) {
+            LOG_ERROR("Cell %u traversed multiple times", currentCell);
+        }
+
+        debugCellSet.insert(currentCell);*/
 
         ++m_debugNumTraversedCells;
 
@@ -45,21 +68,52 @@ void DeferredShadingScene::render(const illGraphics::Camera& camera, size_t view
             continue;
         }
 
-        //do an occlusion query for the cell
-        if(needsQuerySetup) {
-            static_cast<DeferredShadingBackend *>(m_rendererBackend)->setupQuery();
-            needsQuerySetup = false;
-        }
+        ++numQueriesNeeded;
 
-        void * cellQuery = static_cast<DeferredShadingBackend *>(m_rendererBackend)->occlusionQueryCell(
-            camera, vec3cast<unsigned int, glm::mediump_float>(frustumIterator.getCurrentPosition()) * getGridVolume().getCellDimensions() 
-                + getGridVolume().getCellDimensions() * 0.5f, 
-            getGridVolume().getCellDimensions(), currentCell, viewport);
+        //do an occlusion query for the cell
+        void * cellQuery = NULL;
+
+        uint64_t test = m_queryFrames.at(viewport)[currentCell];
+
+        bool visibile = DeferredShadingBackend::decodeVisible(m_queryFrames.at(viewport)[currentCell]);
+        uint64_t lastQueryFrame = DeferredShadingBackend::codeFrame(m_queryFrames.at(viewport)[currentCell]);
+                
+        if(numQueries >= m_maxQueries) {
+            ++m_debugNumUnqueried;
+
+            if(!recordedOverflow) {
+                ++m_numFramesOverflowed;
+                recordedOverflow = true;
+            }
+        }
+        else if(lastQueryFrame <= m_frameCounter) {
+            ++numQueries;
+
+            if(needsQuerySetup) {
+                static_cast<DeferredShadingBackend *>(m_rendererBackend)->setupQuery();
+                needsQuerySetup = false;
+            }
+
+            cellQuery = static_cast<DeferredShadingBackend *>(m_rendererBackend)->occlusionQueryCell(
+                camera, vec3cast<unsigned int, glm::mediump_float>(frustumIterator.getCurrentPosition()) * getGridVolume().getCellDimensions() 
+                    + getGridVolume().getCellDimensions() * 0.5f, 
+                getGridVolume().getCellDimensions(), currentCell, viewport);
+        }
+        else {
+            /*if(lastVisFrame > m_frameCounter) {
+                LOG_DEBUG("\tCell %u Unqueried frame: %u lastVis: %u", currentCell, m_frameCounter, lastVisFrame);
+            }
+            else {
+                LOG_DEBUG("\tCell %u Unqueried due to overflow", currentCell);
+            }*/
+
+            ++m_debugNumUnqueried;
+        }
 
         frustumIterator.forward();
 
-        //if cell was visible last frame and has objects in it
-        if(m_lastVisibleFrames.at(viewport)[currentCell] == m_frameCounter - 1 || !m_performCull) {
+        //if cell was visible last frames and has objects in it
+        if((visibile && lastQueryFrame >= m_frameCounter) || !m_performCull) {
             //add all nodes in the cell to the render queues
             {
                 auto& currCell = getSceneNodeCell(currentCell);
@@ -76,7 +130,6 @@ void DeferredShadingScene::render(const illGraphics::Camera& camera, size_t view
 
                     if(node->getOcclusionCull() && node->getLastNonvisibleFrame(viewport) == m_frameCounter - 1) {
                         static_cast<DeferredShadingBackend *>(m_rendererBackend)->occlusionQueryNode(camera, node, viewport);
-                        ++m_debugNumCulledNodes;
                     }
                     else {
                         node->render(m_renderQueues);
@@ -100,7 +153,6 @@ void DeferredShadingScene::render(const illGraphics::Camera& camera, size_t view
 
                     if(node->getOcclusionCull() && node->getLastNonvisibleFrame(viewport) == m_frameCounter - 1) {
                         static_cast<DeferredShadingBackend *>(m_rendererBackend)->occlusionQueryNode(camera, node, viewport);
-                        ++m_debugNumCulledNodes;
                     }
                     else {
                         node->render(m_renderQueues);
@@ -120,6 +172,16 @@ void DeferredShadingScene::render(const illGraphics::Camera& camera, size_t view
         }
     }
 
+    if(numQueries < m_maxQueries) {        
+        m_numFramesOverflowed = 0;
+    }
+
+    //LOG_DEBUG("Num Queries needed %u.  Countdown %u.  Num performed %u", numQueriesNeeded, m_resetRequeryDurationCountdown, numQueries);
+
+    m_debugNumOverflowedQueries = m_numFramesOverflowed;
+    m_debugRequeryDuration = m_queryVisibilityDuration;    
+    m_debugNumQueries = numQueries;
+
     static_cast<DeferredShadingBackend *>(m_rendererBackend)->render(m_renderQueues, camera, viewport);
 
     ++m_renderAccessCounter;
@@ -127,11 +189,12 @@ void DeferredShadingScene::render(const illGraphics::Camera& camera, size_t view
     m_renderQueues.m_depthPassSolidStaticMeshes.clear();
     m_renderQueues.m_lights.clear();
     m_renderQueues.m_solidStaticMeshes.clear();
+    m_renderQueues.m_depthPassObjects = 0;
 }
 
 size_t DeferredShadingScene::registerViewport() {
     size_t res = m_returnViewportId++;
-    Array<uint64_t>& framesArray = m_lastVisibleFrames[res];
+    Array<uint64_t>& framesArray = m_queryFrames[res];
 
     size_t numCells = getGridVolume().getCellNumber().x * getGridVolume().getCellNumber().y * getGridVolume().getCellNumber().z;
 
@@ -142,7 +205,7 @@ size_t DeferredShadingScene::registerViewport() {
 }
 
 void DeferredShadingScene::freeViewport(size_t viewport) {
-    m_lastVisibleFrames.erase(viewport);
+    m_queryFrames.erase(viewport);
 }
 
 }

@@ -237,6 +237,9 @@ void DeferredShadingBackendGl3_3::initialize(const glm::uvec2 screenResolution, 
     m_box.setFrontentDataInternal(new MeshData<>(Box<>(glm::vec3(-0.5f), glm::vec3(0.5f)), MF_POSITION)); 
     m_box.frontendBackendTransferInternal(m_graphicsBackend);
 
+    //setup the query cache
+    glGenQueries(100000, m_queryCacheTest);
+
     ERROR_CHECK_OPENGL;
 
     m_state = State::INITIALIZED;
@@ -278,6 +281,8 @@ void DeferredShadingBackendGl3_3::setupFrame() {
     glStencilMask(0xff);
 
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
+
+    m_currentQuery = 0;
 }
 
 void DeferredShadingBackendGl3_3::setupViewport(const illGraphics::Camera& camera) {
@@ -301,21 +306,22 @@ void DeferredShadingBackendGl3_3::setupViewport(const illGraphics::Camera& camer
     setupGbuffer();
 }
 
-void DeferredShadingBackendGl3_3::retreiveCellQueries(std::unordered_map<size_t, Array<uint64_t>>& lastViewedFrames, uint64_t lastFrameCounter) {    
+void DeferredShadingBackendGl3_3::retreiveCellQueries(std::unordered_map<size_t, Array<uint64_t>>& lastViewedFrames, uint64_t lastFrameCounter, uint64_t successDuration, uint64_t failureDuration) {    
     for(auto iter = m_cellQueries.begin(); iter != m_cellQueries.end(); iter++) {
         CellQuery& cellQuery = *iter;
 
         if(m_performCull) {
             GLint result;
             glGetQueryObjectiv(cellQuery.m_query, GL_QUERY_RESULT, &result);
-
-            if(result) {
-                lastViewedFrames.at(cellQuery.m_viewport)[cellQuery.m_cellArrayIndex] = lastFrameCounter;
-            }
+            
+            lastViewedFrames.at(cellQuery.m_viewport)[cellQuery.m_cellArrayIndex] = 
+                codeFrame(lastFrameCounter + (result != 0 ? successDuration : failureDuration)) 
+                | encodeVisible(result != 0);
         }
 
         //TODO: figure out if deleting queries as soon as I used them is bad for performance, maintaining my own pool might be kindof useless though since GL does it too
-        glDeleteQueries(1, &cellQuery.m_query);
+        //I figured it out, it's very bad for performance
+        //glDeleteQueries(1, &cellQuery.m_query);
     }
 
     m_cellQueries.clear();
@@ -382,7 +388,7 @@ void renderQueryBox(const illGraphics::Camera& camera, const illGraphics::Mesh& 
 
     glUniformMatrix4fv(getProgramUniformLocation(program, "modelViewProjection"), 1, false, glm::value_ptr(camera.getModelViewProjection() * boxTransform));
 
-    glBeginQuery(/*GL_SAMPLES_PASSED*/GL_ANY_SAMPLES_PASSED, query);
+    glBeginQuery(GL_ANY_SAMPLES_PASSED_CONSERVATIVE, query);
 
 #ifdef VERIFY_RENDER_STATE
     /**
@@ -454,7 +460,7 @@ void renderQueryBox(const illGraphics::Camera& camera, const illGraphics::Mesh& 
 #endif
 
     glDrawRangeElements(GL_TRIANGLES, 0, boxMesh.getMeshFrontentData()->getNumInd(), boxMesh.getMeshFrontentData()->getNumInd(), GL_UNSIGNED_SHORT, (char *)NULL);
-    glEndQuery(/*GL_SAMPLES_PASSED*/GL_ANY_SAMPLES_PASSED);
+    glEndQuery(GL_ANY_SAMPLES_PASSED_CONSERVATIVE);
 }
 
 void * DeferredShadingBackendGl3_3::occlusionQueryCell(const illGraphics::Camera& camera, const glm::vec3& cellCenter, const glm::vec3& cellSize,
@@ -466,7 +472,8 @@ void * DeferredShadingBackendGl3_3::occlusionQueryCell(const illGraphics::Camera
 
     m_cellQueries.emplace_back();
     
-    glGenQueries(1, &m_cellQueries.back().m_query);
+    //glGenQueries(1, &m_cellQueries.back().m_query);
+    m_cellQueries.back().m_query = m_queryCacheTest[m_currentQuery++];
     m_cellQueries.back().m_cellArrayIndex = cellArrayIndex;
     m_cellQueries.back().m_viewport = viewport;
 
@@ -517,7 +524,7 @@ void DeferredShadingBackendGl3_3::depthPass(illRendererCommon::RenderQueues& ren
     //enable backface culling
     glEnable(GL_CULL_FACE);
 
-    if(m_performCull) {
+    if(cellOcclusionQuery && m_performCull) {
         glBeginConditionalRender(*(GLuint *) cellOcclusionQuery, GL_ANY_SAMPLES_PASSED/*_CONSERVATIVE*/);//TODO: Does conservative not work here?
     }
 
@@ -682,7 +689,7 @@ void DeferredShadingBackendGl3_3::depthPass(illRendererCommon::RenderQueues& ren
         glDisableVertexAttribArray(posAttrib);
     }
 
-    if(m_performCull) {
+    if(cellOcclusionQuery && m_performCull) {
         glEndConditionalRender();
     }
 
@@ -2177,21 +2184,24 @@ void DeferredShadingBackendGl3_3::renderDebugBounds(illRendererCommon::RenderQue
 }
 
 void DeferredShadingBackendGl3_3::render(illRendererCommon::RenderQueues& renderQueues, const illGraphics::Camera& camera, size_t viewport) {
-    //disable depth mask
-    glDepthMask(GL_FALSE);
+    //enable depth mask
+    glDepthMask(GL_TRUE);
 
     //enable color mask
     glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
 
     //enable depth func equal
-    glDepthFunc(GL_EQUAL);
+    glDepthFunc(GL_LEQUAL);
     
     //reenable face culling
     glEnable(GL_CULL_FACE);
 
     renderGbuffer(renderQueues, camera);
 
-    if(m_debugMode == DebugMode::NONE || m_debugMode == DebugMode::DIFFUSE_ACCUMULATION || m_debugMode == DebugMode::SPECULAR_ACCUMULATION) {
+    //enable depth mask
+    glDepthMask(GL_FALSE);
+
+    if(m_debugMode == DebugMode::NONE || m_debugMode == DebugMode::DIFFUSE_ACCUMULATION || m_debugMode == DebugMode::SPECULAR_ACCUMULATION) {                
         //set up the FBO for rendering to the diffuse buffer
         GLenum mrt[3] = {GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1};
 

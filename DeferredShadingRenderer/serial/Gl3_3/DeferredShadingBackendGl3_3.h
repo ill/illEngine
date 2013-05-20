@@ -28,7 +28,7 @@ public:
 
     virtual void setupFrame();
     virtual void setupViewport(const illGraphics::Camera& camera);
-    virtual void retreiveCellQueries(std::unordered_map<size_t, Array<uint64_t>>& lastViewedFrames, uint64_t lastFrameCounter);
+    virtual void retreiveCellQueries(std::unordered_map<size_t, Array<uint64_t>>& lastViewedFrames, uint64_t lastFrameCounter, uint64_t successDuration, uint64_t failureDuration);
     virtual void retreiveNodeQueries(uint64_t lastFrameCounter);
 
     virtual void setupQuery();
@@ -102,6 +102,10 @@ private:
 
     std::vector<CellQuery> m_cellQueries;
     std::vector<NodeQuery> m_nodeQueries;
+
+    //testing
+    size_t m_currentQuery;
+    GLuint m_queryCacheTest[100000];
 };
 
 }

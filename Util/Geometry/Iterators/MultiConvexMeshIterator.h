@@ -33,15 +33,27 @@ public:
             LOG_FATAL_ERROR("calling getCurrentPosition() on multimesh iterator when at end");
         }
 
-        return m_iterators[m_currentIter].getCurrentPosition();
+        return m_iterators[m_currentIter % m_iterators.size()].getCurrentPosition();
     }
 
     /**
     Whether or not all cells in the iterator have been rasterized.
     */
     inline bool atEnd() const {
-        return m_currentIter >= m_iterators.size() 
-            || (m_currentIter == m_iterators.size() - 1 && m_iterators[m_currentIter].atEnd());
+        /*return m_currentIter >= m_iterators.size() 
+            || (m_currentIter == m_iterators.size() - 1 && m_iterators[m_currentIter].atEnd());*/
+
+        if(m_iterators.empty()) {
+            return true;
+        }
+
+        for(size_t iter = 0; iter < m_iterators.size(); iter++) {
+            if(!m_iterators[iter].atEnd()) {
+                return false;
+            }
+        }
+
+        return true;
     }
 
     /**
@@ -52,14 +64,40 @@ public:
             LOG_FATAL_ERROR("calling forward() on multimesh iterator when at end");
         }
 
-        if(m_iterators[m_currentIter].atEnd()) {
-            m_currentIter++;
-        }
-        else {
-            m_iterators[m_currentIter].forward();
+        do {
+            ++m_currentIter;
+        } while(m_iterators[m_currentIter % m_iterators.size()].atEnd());
 
-            if(m_iterators[m_currentIter].atEnd()) {
-                m_currentIter++;
+        //don't advance the iterator yet if it's its first time being switched to
+        if(m_currentIter >= m_iterators.size()) {
+            int numSkipped = 0;
+
+            //are you ready for some spagghetti code?  TODO: figure out how to unspaghettify it
+            while(true) {
+                if(m_iterators[m_currentIter % m_iterators.size()].atEnd()) {
+                    ++m_currentIter;
+                    ++numSkipped;
+
+                    if(numSkipped == m_iterators.size()) {
+                        return;
+                    }
+
+                    continue;
+                }
+
+                m_iterators[m_currentIter % m_iterators.size()].forward();
+                
+                if(m_iterators[m_currentIter % m_iterators.size()].atEnd()) {
+                    ++m_currentIter;
+                    ++numSkipped;
+
+                    if(numSkipped == m_iterators.size()) {
+                        return;
+                    }
+                }
+                else {
+                    return;
+                }
             }
         }
     }

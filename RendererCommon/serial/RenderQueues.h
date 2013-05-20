@@ -37,6 +37,16 @@ struct RenderQueues {
     */
     bool m_queueLights;
         
+    /**
+    When adding objects to the depth pass, don't add limited occluders if there are at least this many objects to draw
+    */
+    size_t m_depthPassLimit;
+
+    /**
+    How many objects have already been added to the depth pass.
+    */
+    size_t m_depthPassObjects;
+
     //TODO: for now using std::maps, I may in the future use something more efficient if needed, maybe radix sort lists of radix sorted lists, etc...
 
     /**
