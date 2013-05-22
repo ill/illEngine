@@ -89,8 +89,10 @@ public:
         If a cell was visible during the last frame, this will be the value written as the last visible frame.
     @param successDuration If a query was successful, adds this number to the frame counter to make the query result last for that many frames.
     @param failureDuration If a query failed, adds this number to the frame counter to make the query result last for that many frames.
+    @param randomAddMax Adds a random number between 0 and this number to every query frame duration to help reduce query starvation
     */
-    virtual void retreiveCellQueries(std::unordered_map<size_t, Array<uint64_t>>& lastViewedFrames, uint64_t lastFrameCounter, uint64_t successDuration, uint64_t failureDuration) = 0;
+    virtual void retreiveCellQueries(std::unordered_map<size_t, Array<uint64_t>>& lastViewedFrames, uint64_t lastFrameCounter, 
+        uint64_t successDuration, uint64_t failureDuration, uint64_t randomAddMax = 0) = 0;
     
     /**
     TODO: document

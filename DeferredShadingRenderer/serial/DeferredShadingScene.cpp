@@ -1,5 +1,3 @@
-#include <new>
-
 #include "DeferredShadingRenderer/serial/DeferredShadingScene.h"
 #include "DeferredShadingRenderer/DeferredShadingBackend.h"
 #include "Util/Geometry/Iterators/MultiConvexMeshIterator.h"
@@ -16,7 +14,8 @@ void DeferredShadingScene::setupFrame() {
         invisibilityDuration += m_queryInvisibilityDurationGrowth * m_numFramesOverflowed;
     }
 
-    static_cast<DeferredShadingBackend *>(m_rendererBackend)->retreiveCellQueries(m_queryFrames, m_frameCounter, visibilityDuration, invisibilityDuration);
+    static_cast<DeferredShadingBackend *>(m_rendererBackend)->retreiveCellQueries(m_queryFrames, m_frameCounter, 
+        visibilityDuration, invisibilityDuration, m_numFramesOverflowed * 2);
     static_cast<DeferredShadingBackend *>(m_rendererBackend)->retreiveNodeQueries(m_frameCounter);
     static_cast<DeferredShadingBackend *>(m_rendererBackend)->setupFrame();
    
@@ -75,45 +74,43 @@ void DeferredShadingScene::render(const illGraphics::Camera& camera, size_t view
 
         uint64_t test = m_queryFrames.at(viewport)[currentCell];
 
-        bool visibile = DeferredShadingBackend::decodeVisible(m_queryFrames.at(viewport)[currentCell]);
+        bool visible = DeferredShadingBackend::decodeVisible(m_queryFrames.at(viewport)[currentCell]);
         uint64_t lastQueryFrame = DeferredShadingBackend::codeFrame(m_queryFrames.at(viewport)[currentCell]);
                 
-        if(numQueries >= m_maxQueries) {
-            ++m_debugNumUnqueried;
-
-            if(!recordedOverflow) {
-                ++m_numFramesOverflowed;
-                recordedOverflow = true;
-            }
-        }
-        else if(lastQueryFrame <= m_frameCounter) {
-            ++numQueries;
-
-            if(needsQuerySetup) {
-                static_cast<DeferredShadingBackend *>(m_rendererBackend)->setupQuery();
-                needsQuerySetup = false;
+        //time to query
+        if(lastQueryFrame <= m_frameCounter) {
+            if(numQueries >= m_maxQueries) {  //check if queries overflowed
+                if(!recordedOverflow) {
+                    ++m_numFramesOverflowed;
+                    recordedOverflow = true;
+                }
             }
 
-            cellQuery = static_cast<DeferredShadingBackend *>(m_rendererBackend)->occlusionQueryCell(
-                camera, vec3cast<unsigned int, glm::mediump_float>(frustumIterator.getCurrentPosition()) * getGridVolume().getCellDimensions() 
-                    + getGridVolume().getCellDimensions() * 0.5f, 
-                getGridVolume().getCellDimensions(), currentCell, viewport);
-        }
-        else {
-            /*if(lastVisFrame > m_frameCounter) {
-                LOG_DEBUG("\tCell %u Unqueried frame: %u lastVis: %u", currentCell, m_frameCounter, lastVisFrame);
+            if(numQueries >= m_maxQueries && !visible) {  //if queries overflowed, force visible cells to requery to avoid blinking
+                ++m_debugNumUnqueried;
             }
             else {
-                LOG_DEBUG("\tCell %u Unqueried due to overflow", currentCell);
-            }*/
+                ++numQueries;
 
+                if(needsQuerySetup) {
+                    static_cast<DeferredShadingBackend *>(m_rendererBackend)->setupQuery();
+                    needsQuerySetup = false;
+                }
+
+                cellQuery = static_cast<DeferredShadingBackend *>(m_rendererBackend)->occlusionQueryCell(
+                    camera, vec3cast<unsigned int, glm::mediump_float>(frustumIterator.getCurrentPosition()) * getGridVolume().getCellDimensions() 
+                        + getGridVolume().getCellDimensions() * 0.5f, 
+                    getGridVolume().getCellDimensions(), currentCell, viewport);
+            }
+        }
+        else {
             ++m_debugNumUnqueried;
         }
-
+        
         frustumIterator.forward();
 
         //if cell was visible last frames and has objects in it
-        if((visibile && lastQueryFrame >= m_frameCounter) || !m_performCull) {
+        if((visible && lastQueryFrame >= m_frameCounter) || !m_performCull) {
             //add all nodes in the cell to the render queues
             {
                 auto& currCell = getSceneNodeCell(currentCell);

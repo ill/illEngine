@@ -306,7 +306,8 @@ void DeferredShadingBackendGl3_3::setupViewport(const illGraphics::Camera& camer
     setupGbuffer();
 }
 
-void DeferredShadingBackendGl3_3::retreiveCellQueries(std::unordered_map<size_t, Array<uint64_t>>& lastViewedFrames, uint64_t lastFrameCounter, uint64_t successDuration, uint64_t failureDuration) {    
+void DeferredShadingBackendGl3_3::retreiveCellQueries(std::unordered_map<size_t, Array<uint64_t>>& lastViewedFrames, uint64_t lastFrameCounter, 
+        uint64_t successDuration, uint64_t failureDuration, uint64_t randomAddMax) {    
     for(auto iter = m_cellQueries.begin(); iter != m_cellQueries.end(); iter++) {
         CellQuery& cellQuery = *iter;
 
@@ -315,7 +316,7 @@ void DeferredShadingBackendGl3_3::retreiveCellQueries(std::unordered_map<size_t,
             glGetQueryObjectiv(cellQuery.m_query, GL_QUERY_RESULT, &result);
             
             lastViewedFrames.at(cellQuery.m_viewport)[cellQuery.m_cellArrayIndex] = 
-                codeFrame(lastFrameCounter + (result != 0 ? successDuration : failureDuration)) 
+                codeFrame(lastFrameCounter + (result != 0 ? successDuration : failureDuration) + (std::rand() % (randomAddMax + 1))) 
                 | encodeVisible(result != 0);
         }
 
@@ -1736,6 +1737,8 @@ void DeferredShadingBackendGl3_3::renderFinish() {
 
     glColor3f(1.0f, 1.0f, 1.0f);
 
+    glDisable(GL_BLEND);
+
     glBindTexture(GL_TEXTURE_2D, m_renderTextures[REN_DIFFUSE_ACCUMULATION]);
 
     glBegin(GL_QUADS);
@@ -1751,6 +1754,8 @@ void DeferredShadingBackendGl3_3::renderFinish() {
     glTexCoord2f(1.0f, 0.0f);
     glVertex2f(1.0f, 0.0f);
     glEnd();
+
+    glEnable(GL_BLEND);
 
     glBindTexture(GL_TEXTURE_2D, m_renderTextures[REN_SPECULAR_ACCUMULATION]);
 

@@ -28,7 +28,8 @@ public:
 
     virtual void setupFrame();
     virtual void setupViewport(const illGraphics::Camera& camera);
-    virtual void retreiveCellQueries(std::unordered_map<size_t, Array<uint64_t>>& lastViewedFrames, uint64_t lastFrameCounter, uint64_t successDuration, uint64_t failureDuration);
+    virtual void retreiveCellQueries(std::unordered_map<size_t, Array<uint64_t>>& lastViewedFrames, uint64_t lastFrameCounter, 
+        uint64_t successDuration, uint64_t failureDuration, uint64_t randomAddMax = 0);
     virtual void retreiveNodeQueries(uint64_t lastFrameCounter);
 
     virtual void setupQuery();

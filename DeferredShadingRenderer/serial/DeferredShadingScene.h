@@ -23,9 +23,9 @@ public:
         m_maxQueries(4000),
         m_returnViewportId(0),
         m_queryVisibilityDuration(30),
-        m_queryInvisibilityDuration(2),
+        m_queryInvisibilityDuration(1),
         m_queryVisibilityDurationGrowth(8),
-        m_queryInvisibilityDurationGrowth(3),
+        m_queryInvisibilityDurationGrowth(1),
         m_numFramesOverflowed(0),
         m_performCull(true),
         m_debugPerObjectCull(false)
