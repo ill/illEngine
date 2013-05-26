@@ -15,6 +15,7 @@ void DeferredShadingScene::setupFrame() {
     }
 
     static_cast<DeferredShadingBackend *>(m_rendererBackend)->retreiveCellQueries(m_queryFrames, m_frameCounter, 
+        //1, 1, 0);     //to test missing cells
         visibilityDuration, invisibilityDuration, m_numFramesOverflowed * 2);
     static_cast<DeferredShadingBackend *>(m_rendererBackend)->retreiveNodeQueries(m_frameCounter);
     static_cast<DeferredShadingBackend *>(m_rendererBackend)->setupFrame();

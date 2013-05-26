@@ -31,8 +31,15 @@ public:
     inline void pushInputContext(InputContext * input) {
         m_stack.push_back(input);
     }
+    
+    /**
+    TODO: document
+    */
+    //TODO: make functions to just remove an element or to insert an element
+    bool findInputContextStackPos(InputContext * input, size_t& dest);
+    void replaceInputContext(InputContext * input, size_t stackPos);
 
-    void popInputContext();
+    InputContext * popInputContext();
 
     /**
     Looks up an input listener bound to an input based on contexts on the stack.

@@ -6,10 +6,29 @@
 
 namespace illInput {
 
-void InputContextStack::popInputContext() {
+InputContext * InputContextStack::popInputContext() {
+    InputContext * res = m_stack.back();
+
     //reset states of all input listeners
-    m_stack.back()->resetListeners();    
+    res->resetListeners(); 
     m_stack.pop_back();
+
+    return res;
+}
+
+bool InputContextStack::findInputContextStackPos(InputContext * input, size_t& dest) {
+    for(size_t pos = 0; pos < m_stack.size(); pos++) {
+        if(m_stack[pos] == input) {
+            dest = pos;
+            return true;
+        }
+    }
+    
+    return false;
+}
+
+void InputContextStack::replaceInputContext(InputContext * input, size_t stackPos) {
+    m_stack[stackPos] = input;
 }
 
 ListenerBase * InputContextStack::lookupBinding(const char *action) {

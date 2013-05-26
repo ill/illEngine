@@ -1031,6 +1031,11 @@ void DeferredShadingBackendGl3_3::renderEmissivePass(illRendererCommon::RenderQu
 }
 
 void DeferredShadingBackendGl3_3::renderLights(illRendererCommon::RenderQueues& renderQueues, const illGraphics::Camera& camera, size_t viewport) {
+    if(m_debugOcclusion) {
+        glViewport(camera.getViewportCorner().x, camera.getViewportCorner().y + camera.getViewportDimensions().y / 2,
+            camera.getViewportDimensions().x, camera.getViewportDimensions().y / 2);
+    }
+    
     if(m_stencilLightingPass) {    
         glEnable(GL_STENCIL_TEST);
     }
@@ -1233,7 +1238,7 @@ void DeferredShadingBackendGl3_3::renderLights(illRendererCommon::RenderQueues& 
                     glUniform4fv(getProgramUniformLocation(prog, "attenuationPlanes"), 12, glm::value_ptr(eyePlanes[0]));
                 }
 
-                glUniform1fv(getProgramUniformLocation(prog, "attenuationStarts"), 12, static_cast<illGraphics::VolumeLight*>(light)->m_planeFalloff);                
+                glUniform1fv(getProgramUniformLocation(prog, "attenuationStarts"), 12, static_cast<illGraphics::VolumeLight*>(light)->m_planeFalloff);
                 
                 break;
             }
@@ -1290,9 +1295,54 @@ void DeferredShadingBackendGl3_3::renderLights(illRendererCommon::RenderQueues& 
                 
                             glUniformMatrix4fv(getProgramUniformLocation(prog, "modelView"), 
                                 1, false, glm::value_ptr(glm::scale(m_occlusionCamera->getModelView() * centerTransform, node->getWorldBoundingVolume().getDimensions())));
+
+                            break;
                         }
 
                         break;
+                    }
+
+                    if(lightType == illGraphics::LightBase::Type::POINT_VOLUME
+                        || lightType == illGraphics::LightBase::Type::POINT_VOLUME_NOSPECULAR
+                        || lightType == illGraphics::LightBase::Type::DIRECTIONAL_VOLUME
+                        || lightType == illGraphics::LightBase::Type::DIRECTIONAL_VOLUME_NOSPECULAR) {
+
+                        if(lightType == illGraphics::LightBase::Type::POINT_VOLUME || lightType == illGraphics::LightBase::Type::POINT_VOLUME_NOSPECULAR) {
+                            glUniform3fv(getProgramUniformLocation(prog, "lightPosition"), 
+                                1, glm::value_ptr(glm::mat3(m_occlusionCamera->getModelView()) * static_cast<illGraphics::VolumeLight*>(light)->m_vector));
+                        }
+                        else {
+                            glUniform3fv(getProgramUniformLocation(prog, "lightDirection"), 1,
+                                glm::value_ptr(glm::mat3(m_occlusionCamera->getModelView()) * static_cast<illGraphics::VolumeLight*>(light)->m_vector));
+                        }                
+                                
+                        //bind VBO
+                        {
+                            GLuint buffer = *((GLuint *) m_box.getMeshBackendData() + 0);
+                            glBindBuffer(GL_ARRAY_BUFFER, buffer);
+                        }
+
+                        //bind IBO
+                        {
+                            GLuint buffer = *((GLuint *) m_box.getMeshBackendData() + 1);
+                            glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, buffer);
+                        }
+
+                        glVertexAttribPointer(posAttrib, 3, GL_FLOAT, GL_FALSE, (GLsizei) m_box.getMeshFrontentData()->getVertexSize(), (char *)NULL + m_box.getMeshFrontentData()->getPositionOffset());
+
+                        //transform the planes into eye space
+                        {
+                            glm::vec4 eyePlanes[illGraphics::MAX_LIGHT_VOLUME_PLANES];
+
+                            for(size_t plane = 0; plane < illGraphics::MAX_LIGHT_VOLUME_PLANES; plane++) {
+                                Plane<> eyePlane = static_cast<illGraphics::VolumeLight*>(light)->m_planes[plane].transform(/*glm::transpose(glm::inverse(*/m_occlusionCamera->getModelView()/*))*/);
+                                eyePlanes[plane] = glm::vec4(eyePlane.m_normal, eyePlane.m_distance);
+                            }
+
+                            glUniform4fv(getProgramUniformLocation(prog, "attenuationPlanes"), 12, glm::value_ptr(eyePlanes[0]));
+                        }
+
+                        glUniform1fv(getProgramUniformLocation(prog, "attenuationStarts"), 12, static_cast<illGraphics::VolumeLight*>(light)->m_planeFalloff); 
                     }
 
                     //render stencil prepass
@@ -1326,7 +1376,7 @@ void DeferredShadingBackendGl3_3::renderLights(illRendererCommon::RenderQueues& 
                     switch(lightType) {
                     case illGraphics::LightBase::Type::POINT:
                     case illGraphics::LightBase::Type::POINT_NOSPECULAR:
-                        if(camera.getViewFrustum().m_far.distance(getTransformPosition(node->getTransform())) 
+                        if(m_occlusionCamera->getViewFrustum().m_far.distance(getTransformPosition(node->getTransform())) 
                                 < static_cast<illGraphics::PointLight*>(light)->m_attenuationEnd) {
                             glCullFace(GL_BACK);
                         }
@@ -1337,7 +1387,7 @@ void DeferredShadingBackendGl3_3::renderLights(illRendererCommon::RenderQueues& 
 
                     case illGraphics::LightBase::Type::SPOT:
                     case illGraphics::LightBase::Type::SPOT_NOSPECULAR:                        
-                        if(camera.getViewFrustum().m_far.distance(getTransformPosition(node->getTransform())) 
+                        if(m_occlusionCamera->getViewFrustum().m_far.distance(getTransformPosition(node->getTransform())) 
                                 < static_cast<illGraphics::SpotLight*>(light)->m_attenuationEnd) {
                             glCullFace(GL_BACK);
                         }
@@ -1350,7 +1400,7 @@ void DeferredShadingBackendGl3_3::renderLights(illRendererCommon::RenderQueues& 
                     case illGraphics::LightBase::Type::POINT_VOLUME_NOSPECULAR:
                     case illGraphics::LightBase::Type::DIRECTIONAL_VOLUME:
                     case illGraphics::LightBase::Type::DIRECTIONAL_VOLUME_NOSPECULAR:
-                        if(camera.getViewFrustum().m_far.distance(getTransformPosition(node->getTransform())) 
+                        if(m_occlusionCamera->getViewFrustum().m_far.distance(getTransformPosition(node->getTransform())) 
                                 < static_cast<illGraphics::SpotLight*>(light)->m_attenuationEnd) {
                             glCullFace(GL_BACK);
                         }
@@ -1383,6 +1433,49 @@ void DeferredShadingBackendGl3_3::renderLights(illRendererCommon::RenderQueues& 
                     planes[1] = (camera.getFarVal() * camera.getNearVal()) / (camera.getFarVal() - camera.getNearVal()); //normally this is negated in a left handed coordinate system
 
                     glUniform2fv(getProgramUniformLocation(prog, "planes"), 1, planes);
+
+                    if(lightType == illGraphics::LightBase::Type::POINT_VOLUME
+                        || lightType == illGraphics::LightBase::Type::POINT_VOLUME_NOSPECULAR
+                        || lightType == illGraphics::LightBase::Type::DIRECTIONAL_VOLUME
+                        || lightType == illGraphics::LightBase::Type::DIRECTIONAL_VOLUME_NOSPECULAR) {
+
+                        if(lightType == illGraphics::LightBase::Type::POINT_VOLUME || lightType == illGraphics::LightBase::Type::POINT_VOLUME_NOSPECULAR) {
+                            glUniform3fv(getProgramUniformLocation(prog, "lightPosition"), 
+                                1, glm::value_ptr(glm::mat3(camera.getModelView()) * static_cast<illGraphics::VolumeLight*>(light)->m_vector));
+                        }
+                        else {
+                            glUniform3fv(getProgramUniformLocation(prog, "lightDirection"), 1,
+                                glm::value_ptr(glm::mat3(camera.getModelView()) * static_cast<illGraphics::VolumeLight*>(light)->m_vector));
+                        }                
+                                
+                        //bind VBO
+                        {
+                            GLuint buffer = *((GLuint *) m_box.getMeshBackendData() + 0);
+                            glBindBuffer(GL_ARRAY_BUFFER, buffer);
+                        }
+
+                        //bind IBO
+                        {
+                            GLuint buffer = *((GLuint *) m_box.getMeshBackendData() + 1);
+                            glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, buffer);
+                        }
+
+                        glVertexAttribPointer(posAttrib, 3, GL_FLOAT, GL_FALSE, (GLsizei) m_box.getMeshFrontentData()->getVertexSize(), (char *)NULL + m_box.getMeshFrontentData()->getPositionOffset());
+
+                        //transform the planes into eye space
+                        {
+                            glm::vec4 eyePlanes[illGraphics::MAX_LIGHT_VOLUME_PLANES];
+
+                            for(size_t plane = 0; plane < illGraphics::MAX_LIGHT_VOLUME_PLANES; plane++) {
+                                Plane<> eyePlane = static_cast<illGraphics::VolumeLight*>(light)->m_planes[plane].transform(/*glm::transpose(glm::inverse(*/camera.getModelView()/*))*/);
+                                eyePlanes[plane] = glm::vec4(eyePlane.m_normal, eyePlane.m_distance);
+                            }
+
+                            glUniform4fv(getProgramUniformLocation(prog, "attenuationPlanes"), 12, glm::value_ptr(eyePlanes[0]));
+                        }
+
+                        glUniform1fv(getProgramUniformLocation(prog, "attenuationStarts"), 12, static_cast<illGraphics::VolumeLight*>(light)->m_planeFalloff);
+                    }
                 }
                                
                 switch(lightType) {
@@ -1659,40 +1752,6 @@ void DeferredShadingBackendGl3_3::renderLights(illRendererCommon::RenderQueues& 
                 if(!node->getOcclusionCull()) {
                     glDeleteQueries(1, &query);
                 }
-
-                //glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-
-                /*glBegin(GL_QUADS);
-                glVertex3f(1.0f, -1.0f, 1.0f);
-                glVertex3f(1.0f, 1.0f, 1.0f);
-                glVertex3f(-1.0f, 1.0f, 1.0f);
-                glVertex3f(-1.0f, -1.0f, 1.0f);
-
-                glVertex3f(-1.0f, -1.0f, -1.0f);
-                glVertex3f(-1.0f, 1.0f, -1.0f);
-                glVertex3f(1.0f, 1.0f, -1.0f);
-                glVertex3f(1.0f, -1.0f, -1.0f);
-
-                glVertex3f(-1.0f, -1.0f, 1.0f);
-                glVertex3f(-1.0f, 1.0f, 1.0f);
-                glVertex3f(-1.0f, 1.0f, -1.0f);
-                glVertex3f(-1.0f, -1.0f, -1.0f);
-
-                glVertex3f(1.0f, -1.0f, -1.0f);
-                glVertex3f(1.0f, 1.0f, -1.0f);
-                glVertex3f(1.0f, 1.0f, 1.0f);
-                glVertex3f(1.0f, -1.0f, 1.0f);
-
-                glVertex3f(1.0f, 1.0f, 1.0f);
-                glVertex3f(1.0f, 1.0f, -1.0f);
-                glVertex3f(-1.0f, 1.0f, -1.0f);
-                glVertex3f(-1.0f, 1.0f, 1.0f);
-
-                glVertex3f(-1.0f, -1.0f, -1.0f);
-                glVertex3f(1.0f, -1.0f, -1.0f);
-                glVertex3f(1.0f, -1.0f, 1.0f);
-                glVertex3f(-1.0f, -1.0f, 1.0f);
-                glEnd();*/
             }
         }
 
