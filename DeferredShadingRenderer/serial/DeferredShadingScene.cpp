@@ -23,7 +23,7 @@ void DeferredShadingScene::setupFrame() {
     ++m_frameCounter;
 }
 
-void DeferredShadingScene::render(const illGraphics::Camera& camera, size_t viewport) {
+void DeferredShadingScene::render(const illGraphics::Camera& camera, size_t viewport, const MeshEdgeList<>& debugFrustum) {
     m_renderQueues.m_depthPassObjects = 75;
     static_cast<DeferredShadingBackend *>(m_rendererBackend)->setupViewport(camera);
 
@@ -180,7 +180,7 @@ void DeferredShadingScene::render(const illGraphics::Camera& camera, size_t view
     m_debugRequeryDuration = m_queryVisibilityDuration;    
     m_debugNumQueries = numQueries;
 
-    static_cast<DeferredShadingBackend *>(m_rendererBackend)->render(m_renderQueues, camera, viewport);
+    static_cast<DeferredShadingBackend *>(m_rendererBackend)->render(m_renderQueues, camera, viewport, m_grid, debugFrustum);
 
     ++m_renderAccessCounter;
 

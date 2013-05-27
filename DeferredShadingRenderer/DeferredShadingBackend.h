@@ -8,6 +8,10 @@
 #include "RendererCommon/serial/RenderQueues.h"
 #include "Util/serial/Array.h"
 
+//TODO: for debug
+#include "Util/Geometry/MeshEdgeList.h"
+#include "Util/Geometry/GridVolume3D.h"
+
 template <typename Key, typename T, typename Loader> class ResourceManager;
 
 namespace illGraphics {
@@ -148,7 +152,8 @@ public:
     /**
     Now the scene is ready to be deferred shaded.
     */
-    virtual void render(illRendererCommon::RenderQueues& renderQueues, const illGraphics::Camera& camera, size_t viewport) = 0;
+    virtual void render(illRendererCommon::RenderQueues& renderQueues, const illGraphics::Camera& camera, size_t viewport,
+        const GridVolume3D<>& debugGridVolume, const MeshEdgeList<>& debugFrustum) = 0;     //TODO: take out these debug things
     
     //different debug modes
     //TODO: make a debug version of the renderer separate from the real renderer

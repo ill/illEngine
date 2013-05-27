@@ -22,9 +22,9 @@ public:
         m_frameCounter(30),
         m_maxQueries(4000),
         m_returnViewportId(0),
-        m_queryVisibilityDuration(30),
+        m_queryVisibilityDuration(10),
         m_queryInvisibilityDuration(1),
-        m_queryVisibilityDurationGrowth(8),
+        m_queryVisibilityDurationGrowth(4),
         m_queryInvisibilityDurationGrowth(1),
         m_numFramesOverflowed(0),
         m_performCull(true),
@@ -39,7 +39,8 @@ public:
 
     virtual void setupFrame();
 
-    virtual void render(const illGraphics::Camera& camera, size_t viewport);
+    virtual void render(const illGraphics::Camera& camera, size_t viewport, 
+        const MeshEdgeList<>& debugFrustum); //TODO: take out these debug things)
 
     /**
     For every main viewport you will use, you must register it first.

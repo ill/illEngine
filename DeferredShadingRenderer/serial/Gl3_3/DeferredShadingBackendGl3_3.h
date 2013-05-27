@@ -38,7 +38,9 @@ public:
         unsigned int cellArrayIndex, size_t viewport);
     virtual void * occlusionQueryNode(const illGraphics::Camera& camera, illRendererCommon::GraphicsNode * node, size_t viewport);
     virtual void depthPass(illRendererCommon::RenderQueues& renderQueues, const illGraphics::Camera& camera, void * cellOcclusionQuery, size_t viewport);
-    virtual void render(illRendererCommon::RenderQueues& renderQueues, const illGraphics::Camera& camera, size_t viewport);
+
+    virtual void render(illRendererCommon::RenderQueues& renderQueues, const illGraphics::Camera& camera, size_t viewport,
+        const GridVolume3D<>& debugGridVolume, const MeshEdgeList<>& debugFrustum);
 
 private:
     //data storing an occlusion query for a cell

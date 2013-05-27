@@ -8,6 +8,9 @@
 #include "RendererCommon/serial/StaticMeshNode.h"
 #include "RendererCommon/serial/LightNode.h"
 
+void renderSceneDebug(const GridVolume3D<>& gridVolume);
+void renderMeshEdgeListDebug(const MeshEdgeList<>& edgeList);
+
 //#define VERIFY_RENDER_STATE
 
 inline GLenum getPrimitiveType(MeshData<>::PrimitiveGroup::Type type) {
@@ -2247,7 +2250,8 @@ void DeferredShadingBackendGl3_3::renderDebugBounds(illRendererCommon::RenderQue
     }
 }
 
-void DeferredShadingBackendGl3_3::render(illRendererCommon::RenderQueues& renderQueues, const illGraphics::Camera& camera, size_t viewport) {
+void DeferredShadingBackendGl3_3::render(illRendererCommon::RenderQueues& renderQueues, const illGraphics::Camera& camera, size_t viewport,
+        const GridVolume3D<>& debugGridVolume, const MeshEdgeList<>& debugFrustum) {
     //enable depth mask
     glDepthMask(GL_TRUE);
 
@@ -2303,6 +2307,46 @@ void DeferredShadingBackendGl3_3::render(illRendererCommon::RenderQueues& render
 
         //TODO: forward rendering of blended stuff
         //TODO: post processing
+
+        //draw the debug stuff
+        if(m_debugOcclusion) {
+            glUseProgram(0);
+            glEnable(GL_BLEND);
+
+            glEnable(GL_DEPTH_TEST);
+            glDepthFunc(GL_LESS);
+
+            glActiveTexture(GL_TEXTURE1);
+            glDisable(GL_TEXTURE_2D);
+
+            glActiveTexture(GL_TEXTURE2);
+            glDisable(GL_TEXTURE_2D);
+
+            glActiveTexture(GL_TEXTURE3);
+            glDisable(GL_TEXTURE_2D);
+
+            glActiveTexture(GL_TEXTURE0);
+            glEnable(GL_TEXTURE_2D);
+
+            glViewport(camera.getViewportCorner().x, camera.getViewportCorner().y,
+                camera.getViewportDimensions().x, camera.getViewportDimensions().y / 2);
+                        
+            glMatrixMode(GL_PROJECTION);
+            glLoadIdentity();
+
+            glMultMatrixf(glm::value_ptr(m_occlusionCamera->getProjection()));
+
+            glMatrixMode(GL_MODELVIEW);
+            glLoadIdentity();
+
+            glMultMatrixf(glm::value_ptr(m_occlusionCamera->getModelView()));
+
+            renderSceneDebug(debugGridVolume);
+            renderMeshEdgeListDebug(debugFrustum);
+
+            glViewport(camera.getViewportCorner().x, camera.getViewportCorner().y,
+                camera.getViewportDimensions().x, camera.getViewportDimensions().y);
+        }
 
         if(m_debugMode != DebugMode::DIFFUSE_ACCUMULATION && m_debugMode != DebugMode::SPECULAR_ACCUMULATION) {
             //disable face culling
