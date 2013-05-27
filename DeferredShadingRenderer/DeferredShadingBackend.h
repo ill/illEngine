@@ -153,7 +153,8 @@ public:
     Now the scene is ready to be deferred shaded.
     */
     virtual void render(illRendererCommon::RenderQueues& renderQueues, const illGraphics::Camera& camera, size_t viewport,
-        const GridVolume3D<>& debugGridVolume, const MeshEdgeList<>& debugFrustum) = 0;     //TODO: take out these debug things
+        const GridVolume3D<>* debugGridVolume = NULL, MeshEdgeList<>* debugFrustum = NULL, 
+        const std::unordered_map<size_t, Array<uint64_t>>* debugLastViewedFrames = NULL, uint64_t debugFrameCounter = 0) = 0;     //TODO: take out these debug things
     
     //different debug modes
     //TODO: make a debug version of the renderer separate from the real renderer

@@ -70,7 +70,7 @@ public:
         TODO: might redesign this later since this argument isn't needed in other cases
     */
     virtual void render(const illGraphics::Camera& camera, size_t viewport,
-        const MeshEdgeList<>& debugFrustum) = 0; //TODO: take out these debug things)
+        MeshEdgeList<>* debugFrustum = NULL) = 0; //TODO: take out these debug things)
 
     /**
     Returns the grid volume that is used to manage visibility in the scene.

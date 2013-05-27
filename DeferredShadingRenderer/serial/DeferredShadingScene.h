@@ -40,7 +40,7 @@ public:
     virtual void setupFrame();
 
     virtual void render(const illGraphics::Camera& camera, size_t viewport, 
-        const MeshEdgeList<>& debugFrustum); //TODO: take out these debug things)
+        MeshEdgeList<>* debugFrustum = NULL); //TODO: take out these debug things)
 
     /**
     For every main viewport you will use, you must register it first.

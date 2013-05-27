@@ -40,7 +40,8 @@ public:
     virtual void depthPass(illRendererCommon::RenderQueues& renderQueues, const illGraphics::Camera& camera, void * cellOcclusionQuery, size_t viewport);
 
     virtual void render(illRendererCommon::RenderQueues& renderQueues, const illGraphics::Camera& camera, size_t viewport,
-        const GridVolume3D<>& debugGridVolume, const MeshEdgeList<>& debugFrustum);
+        const GridVolume3D<>* debugGridVolume = NULL, MeshEdgeList<>* debugFrustum = NULL, 
+        const std::unordered_map<size_t, Array<uint64_t>>* debugLastViewedFrames = NULL, uint64_t debugFrameCounter = 0);
 
 private:
     //data storing an occlusion query for a cell
