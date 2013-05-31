@@ -2262,7 +2262,8 @@ void DeferredShadingBackendGl3_3::renderDebugBounds(illRendererCommon::RenderQue
 
 void DeferredShadingBackendGl3_3::render(illRendererCommon::RenderQueues& renderQueues, const illGraphics::Camera& camera, size_t viewport,
         const GridVolume3D<>* debugGridVolume, MeshEdgeList<>* debugFrustum,
-        const std::unordered_map<size_t, Array<uint64_t>>* debugLastViewedFrames, uint64_t debugFrameCounter) {
+        const std::unordered_map<size_t, Array<uint64_t>>* debugLastViewedFrames, uint64_t debugFrameCounter,
+        MultiConvexMeshIterator<> * debugMeshIter, std::list<glm::uvec3>* debugTraversals) {
     //enable depth mask
     glDepthMask(GL_TRUE);
 
@@ -2367,6 +2368,19 @@ void DeferredShadingBackendGl3_3::render(illRendererCommon::RenderQueues& render
             glMultMatrixf(glm::value_ptr(m_occlusionCamera->getModelView()));
 
             //renderSceneDebug(*debugGridVolume);
+
+            if(debugMeshIter) {
+                glPointSize(5.0f);
+                glColor4f(1.0f, 0.0, 1.0f, 0.3f);
+                glBegin(GL_POINTS);
+
+                for(auto travIter = debugTraversals->begin(); travIter != debugTraversals->end(); travIter++) {
+                    glVertex3fv(glm::value_ptr(vec3cast<unsigned int, float>(*travIter) * debugGridVolume->getCellDimensions() + debugGridVolume->getCellDimensions() * 0.5f));
+                }
+
+                glEnd();
+            }
+                
             renderMeshEdgeListDebug(*debugFrustum);
 
             //draw the visibility status of a cell

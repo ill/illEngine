@@ -41,7 +41,8 @@ public:
 
     virtual void render(illRendererCommon::RenderQueues& renderQueues, const illGraphics::Camera& camera, size_t viewport,
         const GridVolume3D<>* debugGridVolume = NULL, MeshEdgeList<>* debugFrustum = NULL, 
-        const std::unordered_map<size_t, Array<uint64_t>>* debugLastViewedFrames = NULL, uint64_t debugFrameCounter = 0);
+        const std::unordered_map<size_t, Array<uint64_t>>* debugLastViewedFrames = NULL, uint64_t debugFrameCounter = 0,
+        MultiConvexMeshIterator<> * debugMeshIter = NULL, std::list<glm::uvec3>* debugTraversals = NULL);
 
 private:
     //data storing an occlusion query for a cell
@@ -107,9 +108,9 @@ private:
     std::vector<CellQuery> m_cellQueries;
     std::vector<NodeQuery> m_nodeQueries;
 
-    //testing
+    //testing.  Refactor later to not have a static preallocated array
     size_t m_currentQuery;
-    GLuint m_queryCacheTest[100000];
+    GLuint m_queryCacheTest[100000];    
 };
 
 }

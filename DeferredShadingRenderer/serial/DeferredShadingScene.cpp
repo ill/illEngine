@@ -36,6 +36,21 @@ void DeferredShadingScene::render(const illGraphics::Camera& camera, size_t view
         camera.getViewFrustum().m_nearTipPoint,
         camera.getViewFrustum().m_direction);
 
+    if(m_debugCapturingFrustumIter) {
+        m_debugCapturingFrustumIter = false;
+        //delete m_debugBackupFrustumIterator;
+        //delete m_debugFrustumIterator;
+
+        m_debugFrustumTraversals.clear();
+
+        m_debugBackupFrustumIterator = new MultiConvexMeshIterator<>(frustumIterator);
+        m_debugFrustumIterator = new MultiConvexMeshIterator<>(frustumIterator);
+
+        if(!m_debugFrustumIterator->atEnd()) {
+            m_debugFrustumTraversals.push_back(m_debugFrustumIterator->getCurrentPosition());
+        }
+    }
+
     bool needsQuerySetup = true;
 
     m_debugNumTraversedCells = 0;
@@ -179,7 +194,8 @@ void DeferredShadingScene::render(const illGraphics::Camera& camera, size_t view
     m_debugRequeryDuration = m_queryVisibilityDuration;    
     m_debugNumQueries = numQueries;
 
-    static_cast<DeferredShadingBackend *>(m_rendererBackend)->render(m_renderQueues, camera, viewport, &m_grid, debugFrustum, &m_queryFrames, m_frameCounter);
+    static_cast<DeferredShadingBackend *>(m_rendererBackend)->render(m_renderQueues, camera, viewport, 
+        &m_grid, debugFrustum, &m_queryFrames, m_frameCounter, m_debugFrustumIterator, &m_debugFrustumTraversals);
 
     ++m_renderAccessCounter;
 

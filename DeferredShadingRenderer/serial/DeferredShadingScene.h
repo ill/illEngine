@@ -28,7 +28,11 @@ public:
         m_queryInvisibilityDurationGrowth(1),
         m_numFramesOverflowed(0),
         m_performCull(true),
-        m_debugPerObjectCull(false)
+        m_debugPerObjectCull(false),
+        
+        m_debugCapturingFrustumIter(false),
+        m_debugBackupFrustumIterator(NULL),
+        m_debugFrustumIterator(NULL)
     {
         m_renderQueues.m_queueLights = true;
         m_renderQueues.m_getSolidAffectingLights = false;
@@ -70,6 +74,11 @@ public:
     int m_debugRequeryDuration;
     int m_debugNumRenderedNodes;
     int m_debugNumOverflowedQueries;
+
+    bool m_debugCapturingFrustumIter;
+    MultiConvexMeshIterator<> * m_debugBackupFrustumIterator;
+    MultiConvexMeshIterator<> * m_debugFrustumIterator;
+    std::list<glm::uvec3> m_debugFrustumTraversals;
 
 protected:
 
