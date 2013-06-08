@@ -12,6 +12,7 @@
 
 void renderSceneDebug(const GridVolume3D<>& gridVolume);
 void renderMeshEdgeListDebug(const MeshEdgeList<>& edgeList);
+void renderMeshEdgeListDebugAlgorithmToWorld(const MeshEdgeList<>& edgeList, const ConvexMeshIterator<>& iterator);
 
 //#define VERIFY_RENDER_STATE
 
@@ -92,6 +93,13 @@ void DeferredShadingBackendGl3_3::initialize(const glm::uvec2 screenResolution, 
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
     
+    glBindTexture(GL_TEXTURE_2D, m_renderTextures[REN_OCCLUDERS]);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, screenResolution.x, screenResolution.y, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+
     glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_TEXTURE_2D, m_renderTextures[REN_DEPTH], 0);
     
     // check FBO status
@@ -273,8 +281,11 @@ void DeferredShadingBackendGl3_3::setupGbuffer() {
     glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT1, GL_TEXTURE_2D, m_renderTextures[REN_DIFFUSE], 0);
     glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT2, GL_TEXTURE_2D, m_renderTextures[REN_SPECULAR], 0);
 
-    GLenum mrt[3] = {GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1, GL_COLOR_ATTACHMENT2};
-    glDrawBuffers(3, mrt);
+    //for debugging
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT3, GL_TEXTURE_2D, m_renderTextures[REN_OCCLUDERS], 0);
+
+    GLenum mrt[4] = {GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1, GL_COLOR_ATTACHMENT2, GL_COLOR_ATTACHMENT3};
+    glDrawBuffers(4, mrt);
 }
 
 void DeferredShadingBackendGl3_3::setupFrame() {
@@ -394,7 +405,7 @@ void renderQueryBox(const illGraphics::Camera& camera, const illGraphics::Mesh& 
 
     glUniformMatrix4fv(getProgramUniformLocation(program, "modelViewProjection"), 1, false, glm::value_ptr(camera.getModelViewProjection() * boxTransform));
 
-    glBeginQuery(GL_ANY_SAMPLES_PASSED_CONSERVATIVE, query);
+    glBeginQuery(/*GL_SAMPLES_PASSED*/GL_ANY_SAMPLES_PASSED/*_CONSERVATIVE*/, query);
 
 #ifdef VERIFY_RENDER_STATE
     /**
@@ -466,11 +477,11 @@ void renderQueryBox(const illGraphics::Camera& camera, const illGraphics::Mesh& 
 #endif
 
     glDrawRangeElements(GL_TRIANGLES, 0, boxMesh.getMeshFrontentData()->getNumInd(), boxMesh.getMeshFrontentData()->getNumInd(), GL_UNSIGNED_SHORT, (char *)NULL);
-    glEndQuery(GL_ANY_SAMPLES_PASSED_CONSERVATIVE);
+    glEndQuery(/*GL_SAMPLES_PASSED*/GL_ANY_SAMPLES_PASSED/*_CONSERVATIVE*/);
 }
 
 void * DeferredShadingBackendGl3_3::occlusionQueryCell(const illGraphics::Camera& camera, const glm::vec3& cellCenter, const glm::vec3& cellSize,
-        unsigned int cellArrayIndex, size_t viewport) {
+        unsigned int cellArrayIndex, size_t viewport, bool debugDraw) {
     //generate the occlusion query for the cell
     if(!m_performCull) {
         return NULL;
@@ -488,7 +499,12 @@ void * DeferredShadingBackendGl3_3::occlusionQueryCell(const illGraphics::Camera
             camera.getViewportDimensions().x, camera.getViewportDimensions().y / 2);
     }
     
-    glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);    //debug draw some purple to the normals buffer
+    if(debugDraw) {
+        glColorMask(GL_TRUE, GL_FALSE, GL_FALSE, GL_TRUE);    //debug draw the cell
+    }
+    else {
+        glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
+    }
 
     renderQueryBox(camera, m_box, getProgram(*m_volumeRenderProgram.get()), m_cellQueries.back().m_query, cellCenter, cellSize);
     
@@ -526,6 +542,9 @@ void * DeferredShadingBackendGl3_3::occlusionQueryNode(const illGraphics::Camera
 void DeferredShadingBackendGl3_3::depthPass(illRendererCommon::RenderQueues& renderQueues, const illGraphics::Camera& camera, void * cellOcclusionQuery, size_t viewport) {
     //enable depth write
     glDepthMask(GL_TRUE);
+
+    //this should be disabled, but the debug occlusion rendering shader will draw white to the debug texture
+    glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
     
     //enable backface culling
     glEnable(GL_CULL_FACE);
@@ -2261,9 +2280,9 @@ void DeferredShadingBackendGl3_3::renderDebugBounds(illRendererCommon::RenderQue
 }
 
 void DeferredShadingBackendGl3_3::render(illRendererCommon::RenderQueues& renderQueues, const illGraphics::Camera& camera, size_t viewport,
-        const GridVolume3D<>* debugGridVolume, MeshEdgeList<>* debugFrustum,
+        const GridVolume3D<>* debugGridVolume,
         const std::unordered_map<size_t, Array<uint64_t>>* debugLastViewedFrames, uint64_t debugFrameCounter,
-        MultiConvexMeshIterator<> * debugMeshIter, std::list<glm::uvec3>* debugTraversals) {
+        int debugTraversals) {
     //enable depth mask
     glDepthMask(GL_TRUE);
 
@@ -2367,72 +2386,71 @@ void DeferredShadingBackendGl3_3::render(illRendererCommon::RenderQueues& render
 
             glMultMatrixf(glm::value_ptr(m_occlusionCamera->getModelView()));
 
+            MeshEdgeList<> meshEdgeList = camera.getViewFrustum().getMeshEdgeList();
+            MultiConvexMeshIterator<> frustumIterator;
+    
+            debugGridVolume->orderedMeshIteratorForMesh(frustumIterator, &meshEdgeList,
+                camera.getViewFrustum().m_nearTipPoint,
+                camera.getViewFrustum().m_direction);
+            
             //renderSceneDebug(*debugGridVolume);
-
-            if(debugMeshIter) {
-                glPointSize(5.0f);
-                glColor4f(1.0f, 0.0, 1.0f, 0.3f);
-                glBegin(GL_POINTS);
-
-                for(auto travIter = debugTraversals->begin(); travIter != debugTraversals->end(); travIter++) {
-                    glVertex3fv(glm::value_ptr(vec3cast<unsigned int, float>(*travIter) * debugGridVolume->getCellDimensions() + debugGridVolume->getCellDimensions() * 0.5f));
-                }
-
-                glEnd();
+            for(size_t iter = 0; iter < frustumIterator.m_meshEdgeListCopies.size(); iter++) {
+                renderMeshEdgeListDebugAlgorithmToWorld(frustumIterator.m_meshEdgeListCopies[iter], frustumIterator.m_iterators[iter]);
             }
-                
-            renderMeshEdgeListDebug(*debugFrustum);
+
+            //renderMeshEdgeListDebug(*debugFrustum);
 
             //draw the visibility status of a cell
-            if(!debugFrustum->m_edges.empty()) {
-                ConvexMeshIterator<> meshIter = debugGridVolume->meshIteratorForMesh(debugFrustum);
+            
+            int traversedCells = 0;
 
-                while(!meshIter.atEnd()) {
-                    unsigned int currentCell = debugGridVolume->indexForCell(meshIter.getCurrentPosition());
+            while(!frustumIterator.atEnd() && (debugTraversals == -1 || traversedCells < debugTraversals)) {
+                unsigned int currentCell = debugGridVolume->indexForCell(frustumIterator.getCurrentPosition());
 
-                    bool visible = DeferredShadingBackend::decodeVisible(debugLastViewedFrames->at(viewport)[currentCell]);
-                    uint64_t lastQueryFrame = DeferredShadingBackend::codeFrame(debugLastViewedFrames->at(viewport)[currentCell]);
+                ++traversedCells;
 
-                    Box<> cellBox(debugGridVolume->getCellDimensions() * 0.01f, debugGridVolume->getCellDimensions() - debugGridVolume->getCellDimensions() * 0.01f);
-                    cellBox += vec3cast<unsigned int, glm::mediump_float>(meshIter.getCurrentPosition()) * debugGridVolume->getCellDimensions();
+                bool visible = DeferredShadingBackend::decodeVisible(debugLastViewedFrames->at(viewport)[currentCell]);
+                uint64_t lastQueryFrame = DeferredShadingBackend::codeFrame(debugLastViewedFrames->at(viewport)[currentCell]);
+
+                Box<> cellBox(debugGridVolume->getCellDimensions() * 0.01f, debugGridVolume->getCellDimensions() - debugGridVolume->getCellDimensions() * 0.01f);
+                cellBox += vec3cast<unsigned int, glm::mediump_float>(frustumIterator.getCurrentPosition()) * debugGridVolume->getCellDimensions();
                     
-                    if(visible && lastQueryFrame >= debugFrameCounter) {
-                        glColor4f(0.0f, 1.0f, 0.0f, 0.05f);
-                    }
-                    else {
-                        glColor4f(1.0f, 0.0f, 0.0f, 0.05f);
-                    }
-
-                    glBegin(GL_LINE_LOOP);
-                    glVertex3f(cellBox.m_min.x, cellBox.m_min.y, cellBox.m_min.z);
-                    glVertex3f(cellBox.m_max.x, cellBox.m_min.y, cellBox.m_min.z);
-                    glVertex3f(cellBox.m_max.x, cellBox.m_max.y, cellBox.m_min.z);
-                    glVertex3f(cellBox.m_min.x, cellBox.m_max.y, cellBox.m_min.z);
-                    glEnd();
-
-                    glBegin(GL_LINE_LOOP);
-                    glVertex3f(cellBox.m_min.x, cellBox.m_min.y, cellBox.m_max.z);
-                    glVertex3f(cellBox.m_max.x, cellBox.m_min.y, cellBox.m_max.z);
-                    glVertex3f(cellBox.m_max.x, cellBox.m_max.y, cellBox.m_max.z);
-                    glVertex3f(cellBox.m_min.x, cellBox.m_max.y, cellBox.m_max.z);
-                    glEnd();
-
-                    glBegin(GL_LINES);
-                    glVertex3f(cellBox.m_min.x, cellBox.m_min.y, cellBox.m_min.z);
-                    glVertex3f(cellBox.m_min.x, cellBox.m_min.y, cellBox.m_max.z);
-
-                    glVertex3f(cellBox.m_max.x, cellBox.m_min.y, cellBox.m_min.z);
-                    glVertex3f(cellBox.m_max.x, cellBox.m_min.y, cellBox.m_max.z);
-
-                    glVertex3f(cellBox.m_max.x, cellBox.m_max.y, cellBox.m_min.z);
-                    glVertex3f(cellBox.m_max.x, cellBox.m_max.y, cellBox.m_max.z);
-
-                    glVertex3f(cellBox.m_min.x, cellBox.m_max.y, cellBox.m_min.z);
-                    glVertex3f(cellBox.m_min.x, cellBox.m_max.y, cellBox.m_max.z);
-                    glEnd();
-
-                    meshIter.forward();
+                if(visible && lastQueryFrame >= debugFrameCounter) {
+                    glColor4f(0.0f, 1.0f, 0.0f, 0.05f);
                 }
+                else {
+                    glColor4f(1.0f, 0.0f, 0.0f, 0.05f);
+                }
+
+                glBegin(GL_LINE_LOOP);
+                glVertex3f(cellBox.m_min.x, cellBox.m_min.y, cellBox.m_min.z);
+                glVertex3f(cellBox.m_max.x, cellBox.m_min.y, cellBox.m_min.z);
+                glVertex3f(cellBox.m_max.x, cellBox.m_max.y, cellBox.m_min.z);
+                glVertex3f(cellBox.m_min.x, cellBox.m_max.y, cellBox.m_min.z);
+                glEnd();
+
+                glBegin(GL_LINE_LOOP);
+                glVertex3f(cellBox.m_min.x, cellBox.m_min.y, cellBox.m_max.z);
+                glVertex3f(cellBox.m_max.x, cellBox.m_min.y, cellBox.m_max.z);
+                glVertex3f(cellBox.m_max.x, cellBox.m_max.y, cellBox.m_max.z);
+                glVertex3f(cellBox.m_min.x, cellBox.m_max.y, cellBox.m_max.z);
+                glEnd();
+
+                glBegin(GL_LINES);
+                glVertex3f(cellBox.m_min.x, cellBox.m_min.y, cellBox.m_min.z);
+                glVertex3f(cellBox.m_min.x, cellBox.m_min.y, cellBox.m_max.z);
+
+                glVertex3f(cellBox.m_max.x, cellBox.m_min.y, cellBox.m_min.z);
+                glVertex3f(cellBox.m_max.x, cellBox.m_min.y, cellBox.m_max.z);
+
+                glVertex3f(cellBox.m_max.x, cellBox.m_max.y, cellBox.m_min.z);
+                glVertex3f(cellBox.m_max.x, cellBox.m_max.y, cellBox.m_max.z);
+
+                glVertex3f(cellBox.m_min.x, cellBox.m_max.y, cellBox.m_min.z);
+                glVertex3f(cellBox.m_min.x, cellBox.m_max.y, cellBox.m_max.z);
+                glEnd();
+
+                frustumIterator.forward();
             }
 
             glViewport(camera.getViewportCorner().x, camera.getViewportCorner().y,
@@ -2461,6 +2479,110 @@ void DeferredShadingBackendGl3_3::render(illRendererCommon::RenderQueues& render
         }
     }
     else {
+        //draw the debug stuff
+        if(m_debugOcclusion) {
+            glUseProgram(0);
+            glEnable(GL_BLEND);
+
+            glEnable(GL_DEPTH_TEST);
+            glDepthFunc(GL_LESS);
+
+            glActiveTexture(GL_TEXTURE1);
+            glDisable(GL_TEXTURE_2D);
+
+            glActiveTexture(GL_TEXTURE2);
+            glDisable(GL_TEXTURE_2D);
+
+            glActiveTexture(GL_TEXTURE3);
+            glDisable(GL_TEXTURE_2D);
+
+            glActiveTexture(GL_TEXTURE0);
+            glEnable(GL_TEXTURE_2D);
+
+            glViewport(camera.getViewportCorner().x, camera.getViewportCorner().y,
+                camera.getViewportDimensions().x, camera.getViewportDimensions().y / 2);
+                        
+            glMatrixMode(GL_PROJECTION);
+            glLoadIdentity();
+
+            glMultMatrixf(glm::value_ptr(m_occlusionCamera->getProjection()));
+
+            glMatrixMode(GL_MODELVIEW);
+            glLoadIdentity();
+
+            glMultMatrixf(glm::value_ptr(m_occlusionCamera->getModelView()));
+
+            MeshEdgeList<> meshEdgeList = camera.getViewFrustum().getMeshEdgeList();
+            MultiConvexMeshIterator<> frustumIterator;
+    
+            debugGridVolume->orderedMeshIteratorForMesh(frustumIterator, &meshEdgeList,
+                camera.getViewFrustum().m_nearTipPoint,
+                camera.getViewFrustum().m_direction);
+            
+            //renderSceneDebug(*debugGridVolume);
+            for(size_t iter = 0; iter < frustumIterator.m_meshEdgeListCopies.size(); iter++) {
+                renderMeshEdgeListDebugAlgorithmToWorld(frustumIterator.m_meshEdgeListCopies[iter], frustumIterator.m_iterators[iter]);
+            }
+
+            //renderMeshEdgeListDebug(*debugFrustum);
+
+            //draw the visibility status of a cell
+            
+            int traversedCells = 0;
+
+            while(!frustumIterator.atEnd() && (debugTraversals == -1 || traversedCells < debugTraversals)) {
+                unsigned int currentCell = debugGridVolume->indexForCell(frustumIterator.getCurrentPosition());
+
+                ++traversedCells;
+
+                bool visible = DeferredShadingBackend::decodeVisible(debugLastViewedFrames->at(viewport)[currentCell]);
+                uint64_t lastQueryFrame = DeferredShadingBackend::codeFrame(debugLastViewedFrames->at(viewport)[currentCell]);
+
+                Box<> cellBox(debugGridVolume->getCellDimensions() * 0.01f, debugGridVolume->getCellDimensions() - debugGridVolume->getCellDimensions() * 0.01f);
+                cellBox += vec3cast<unsigned int, glm::mediump_float>(frustumIterator.getCurrentPosition()) * debugGridVolume->getCellDimensions();
+                    
+                if(visible && lastQueryFrame >= debugFrameCounter) {
+                    glColor4f(0.0f, 1.0f, 0.0f, 0.05f);
+                }
+                else {
+                    glColor4f(1.0f, 0.0f, 0.0f, 0.05f);
+                }
+
+                glBegin(GL_LINE_LOOP);
+                glVertex3f(cellBox.m_min.x, cellBox.m_min.y, cellBox.m_min.z);
+                glVertex3f(cellBox.m_max.x, cellBox.m_min.y, cellBox.m_min.z);
+                glVertex3f(cellBox.m_max.x, cellBox.m_max.y, cellBox.m_min.z);
+                glVertex3f(cellBox.m_min.x, cellBox.m_max.y, cellBox.m_min.z);
+                glEnd();
+
+                glBegin(GL_LINE_LOOP);
+                glVertex3f(cellBox.m_min.x, cellBox.m_min.y, cellBox.m_max.z);
+                glVertex3f(cellBox.m_max.x, cellBox.m_min.y, cellBox.m_max.z);
+                glVertex3f(cellBox.m_max.x, cellBox.m_max.y, cellBox.m_max.z);
+                glVertex3f(cellBox.m_min.x, cellBox.m_max.y, cellBox.m_max.z);
+                glEnd();
+
+                glBegin(GL_LINES);
+                glVertex3f(cellBox.m_min.x, cellBox.m_min.y, cellBox.m_min.z);
+                glVertex3f(cellBox.m_min.x, cellBox.m_min.y, cellBox.m_max.z);
+
+                glVertex3f(cellBox.m_max.x, cellBox.m_min.y, cellBox.m_min.z);
+                glVertex3f(cellBox.m_max.x, cellBox.m_min.y, cellBox.m_max.z);
+
+                glVertex3f(cellBox.m_max.x, cellBox.m_max.y, cellBox.m_min.z);
+                glVertex3f(cellBox.m_max.x, cellBox.m_max.y, cellBox.m_max.z);
+
+                glVertex3f(cellBox.m_min.x, cellBox.m_max.y, cellBox.m_min.z);
+                glVertex3f(cellBox.m_min.x, cellBox.m_max.y, cellBox.m_max.z);
+                glEnd();
+
+                frustumIterator.forward();
+            }
+
+            glViewport(camera.getViewportCorner().x, camera.getViewportCorner().y,
+                camera.getViewportDimensions().x, camera.getViewportDimensions().y);
+        }
+
         switch(m_debugMode) {
         case DebugMode::DEPTH:
             renderDebugTexture(m_renderTextures[REN_DEPTH]);
@@ -2476,6 +2598,10 @@ void DeferredShadingBackendGl3_3::render(illRendererCommon::RenderQueues& render
 
         case DebugMode::SPECULAR:
             renderDebugTexture(m_renderTextures[REN_SPECULAR]);
+            break;
+
+        case DebugMode::OCCLUDER_DEBUG:
+            renderDebugTexture(m_renderTextures[REN_OCCLUDERS]);
             break;
         }
 

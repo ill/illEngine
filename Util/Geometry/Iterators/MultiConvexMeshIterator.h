@@ -25,6 +25,17 @@ public:
         : m_currentIter(0)
     {}
     
+    MultiConvexMeshIterator(const MultiConvexMeshIterator& other)
+        : m_currentIter(other.m_currentIter),
+        m_meshEdgeListCopies(other.m_meshEdgeListCopies),
+        m_iterators(other.m_iterators)
+    {
+        //make the iterators point at the local mesh edge list copies
+        for(size_t iter = 0; iter < m_iterators.size(); iter++) {
+            m_iterators[iter].m_meshEdgeList = &m_meshEdgeListCopies[iter];
+        }
+    }
+
     /**
     The current grid cell the iterator is on.
     */

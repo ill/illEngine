@@ -35,14 +35,14 @@ public:
     virtual void setupQuery();
     virtual void endQuery();
     virtual void * occlusionQueryCell(const illGraphics::Camera& camera, const glm::vec3& cellCenter, const glm::vec3& cellSize,
-        unsigned int cellArrayIndex, size_t viewport);
+        unsigned int cellArrayIndex, size_t viewport, bool debugDraw = false);
     virtual void * occlusionQueryNode(const illGraphics::Camera& camera, illRendererCommon::GraphicsNode * node, size_t viewport);
     virtual void depthPass(illRendererCommon::RenderQueues& renderQueues, const illGraphics::Camera& camera, void * cellOcclusionQuery, size_t viewport);
 
     virtual void render(illRendererCommon::RenderQueues& renderQueues, const illGraphics::Camera& camera, size_t viewport,
-        const GridVolume3D<>* debugGridVolume = NULL, MeshEdgeList<>* debugFrustum = NULL, 
+        const GridVolume3D<>* debugGridVolume = NULL,
         const std::unordered_map<size_t, Array<uint64_t>>* debugLastViewedFrames = NULL, uint64_t debugFrameCounter = 0,
-        MultiConvexMeshIterator<> * debugMeshIter = NULL, std::list<glm::uvec3>* debugTraversals = NULL);
+        int debugTraversals = -1);
 
 private:
     //data storing an occlusion query for a cell
@@ -78,6 +78,8 @@ private:
         REN_NORMAL,
         REN_DIFFUSE,
         REN_SPECULAR,
+
+        REN_OCCLUDERS,
 
         REN_DIFFUSE_ACCUMULATION,
         REN_SPECULAR_ACCUMULATION,

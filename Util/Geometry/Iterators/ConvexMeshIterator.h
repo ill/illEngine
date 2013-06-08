@@ -11,6 +11,9 @@
 #include "Util/geometry/MeshEdgeList.h"
 #include "Util/geometry/geomUtil.h"
 
+template <typename W, typename P>
+class MultiConvexMeshIterator;
+
 /**
 Traverses front to back in the a convex mesh edge list that intersects a GridVolume3D.
 
@@ -19,6 +22,8 @@ Traverses front to back in the a convex mesh edge list that intersects a GridVol
 */
 template <typename W = glm::mediump_float, typename P = unsigned int>
 class ConvexMeshIterator {
+    friend MultiConvexMeshIterator<W, P>;
+
 private:
     const static bool LEFT_SIDE = true;
     const static bool RIGHT_SIDE = false;
@@ -133,8 +138,7 @@ public:
 
         return algorithmToWorldCell(m_currentPosition);
     }
-
-private:
+    
     /**
     Maps a point in world space to algorithm space.
     @param worldPoint The point in world space
@@ -211,6 +215,7 @@ private:
         return res;
     }
     
+private:
     /**
     Should be called only from within addPoint()
     */

@@ -131,7 +131,7 @@ public:
         Pass this into the depthPass call afterwards.
     */
     virtual void * occlusionQueryCell(const illGraphics::Camera& camera, const glm::vec3& cellCenter, const glm::vec3& cellSize,
-        unsigned int cellArrayIndex, size_t viewport) = 0;
+        unsigned int cellArrayIndex, size_t viewport, bool debugDraw = false) = 0;
 
     /**
     TODO: document
@@ -153,9 +153,9 @@ public:
     Now the scene is ready to be deferred shaded.
     */
     virtual void render(illRendererCommon::RenderQueues& renderQueues, const illGraphics::Camera& camera, size_t viewport,
-        const GridVolume3D<>* debugGridVolume = NULL, MeshEdgeList<>* debugFrustum = NULL, 
+        const GridVolume3D<>* debugGridVolume = NULL,
         const std::unordered_map<size_t, Array<uint64_t>>* debugLastViewedFrames = NULL, uint64_t debugFrameCounter = 0,
-        MultiConvexMeshIterator<> * debugMeshIter = NULL, std::list<glm::uvec3>* debugTraversals = NULL) = 0;     //TODO: take out these debug things
+        int debugTraversals = -1) = 0;     //TODO: take out these debug things
     
     //different debug modes
     //TODO: make a debug version of the renderer separate from the real renderer
@@ -166,6 +166,8 @@ public:
         NORMAL,
         DIFFUSE,
         SPECULAR,
+
+        OCCLUDER_DEBUG,
 
         DIFFUSE_ACCUMULATION,
         SPECULAR_ACCUMULATION

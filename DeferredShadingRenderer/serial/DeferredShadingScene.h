@@ -20,7 +20,7 @@ public:
             meshManager, materialManager, 
             cellDimensions, cellNumber, interactionCellDimensions, interactionCellNumber, true),
         m_frameCounter(30),
-        m_maxQueries(2000),
+        m_maxQueries(4000),
         m_returnViewportId(0),
         m_queryVisibilityDuration(10),
         m_queryInvisibilityDuration(1),
@@ -30,9 +30,7 @@ public:
         m_performCull(true),
         m_debugPerObjectCull(false),
         
-        m_debugCapturingFrustumIter(false),
-        m_debugBackupFrustumIterator(NULL),
-        m_debugFrustumIterator(NULL)
+        m_debugMaxCellTraversals(-1)
     {
         m_renderQueues.m_queueLights = true;
         m_renderQueues.m_getSolidAffectingLights = false;
@@ -75,10 +73,7 @@ public:
     int m_debugNumRenderedNodes;
     int m_debugNumOverflowedQueries;
 
-    bool m_debugCapturingFrustumIter;
-    MultiConvexMeshIterator<> * m_debugBackupFrustumIterator;
-    MultiConvexMeshIterator<> * m_debugFrustumIterator;
-    std::list<glm::uvec3> m_debugFrustumTraversals;
+    int m_debugMaxCellTraversals;
 
 protected:
 

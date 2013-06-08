@@ -35,22 +35,7 @@ void DeferredShadingScene::render(const illGraphics::Camera& camera, size_t view
     getGridVolume().orderedMeshIteratorForMesh(frustumIterator, &meshEdgeList,
         camera.getViewFrustum().m_nearTipPoint,
         camera.getViewFrustum().m_direction);
-
-    if(m_debugCapturingFrustumIter) {
-        m_debugCapturingFrustumIter = false;
-        //delete m_debugBackupFrustumIterator;
-        //delete m_debugFrustumIterator;
-
-        m_debugFrustumTraversals.clear();
-
-        m_debugBackupFrustumIterator = new MultiConvexMeshIterator<>(frustumIterator);
-        m_debugFrustumIterator = new MultiConvexMeshIterator<>(frustumIterator);
-
-        if(!m_debugFrustumIterator->atEnd()) {
-            m_debugFrustumTraversals.push_back(m_debugFrustumIterator->getCurrentPosition());
-        }
-    }
-
+    
     bool needsQuerySetup = true;
 
     m_debugNumTraversedCells = 0;
@@ -66,7 +51,7 @@ void DeferredShadingScene::render(const illGraphics::Camera& camera, size_t view
     
     bool recordedOverflow = false;
 
-    while(!frustumIterator.atEnd()) {
+    while(!frustumIterator.atEnd() && (m_debugMaxCellTraversals == -1 || m_debugNumTraversedCells < m_debugMaxCellTraversals)) {
         unsigned int currentCell = getGridVolume().indexForCell(frustumIterator.getCurrentPosition());
 
         /*if(debugCellSet.find(currentCell) != debugCellSet.end()) {
@@ -116,7 +101,8 @@ void DeferredShadingScene::render(const illGraphics::Camera& camera, size_t view
                     cellQuery = static_cast<DeferredShadingBackend *>(m_rendererBackend)->occlusionQueryCell(
                         camera, vec3cast<unsigned int, glm::mediump_float>(frustumIterator.getCurrentPosition()) * getGridVolume().getCellDimensions() 
                             + getGridVolume().getCellDimensions() * 0.5f, 
-                        getGridVolume().getCellDimensions(), currentCell, viewport);
+                        getGridVolume().getCellDimensions(), currentCell, viewport, 
+                        m_debugNumTraversedCells == m_debugMaxCellTraversals);
                 }
             }
             else {
@@ -197,7 +183,7 @@ void DeferredShadingScene::render(const illGraphics::Camera& camera, size_t view
     m_debugNumQueries = numQueries;
 
     static_cast<DeferredShadingBackend *>(m_rendererBackend)->render(m_renderQueues, camera, viewport, 
-        &m_grid, debugFrustum, &m_queryFrames, m_frameCounter, m_debugFrustumIterator, &m_debugFrustumTraversals);
+        &m_grid, &m_queryFrames, m_frameCounter, m_debugMaxCellTraversals);
 
     ++m_renderAccessCounter;
 
